@@ -1,0 +1,138 @@
+<html>
+<head>
+<title>Primer</title>
+<style>
+	body {
+		margin: 30px;
+		font-family: Geneva, Verdana;
+		min-width: 720px;
+		width: 800px;
+	}
+	pre {
+		background: #f1f1ef;
+		border: 1px solid black;
+		font-weight: bold;
+		line-height: 140%;
+		padding: 10px;
+		margin: 25px 25px 25px 0px;
+	}
+	a {
+		text-decoration: none;
+		color: blue;
+	}
+	a:hover {
+		background: blue;
+		color: white;
+	}
+</style>
+</head>
+<body>
+<h1>Primer</h1>
+<p>
+Primer is a functional programming language designed by
+<a href="mailto:philip.armitage@gmail.com">Phil Armitage</a>. It's still in the
+early stages of development but the ultimate goal is to produce a simple
+language for learning the basics of functional programming.
+</p>
+<h2>Getting Started</h2>
+<p>Download the latest version (<a href="downloads/">Linux</a>,
+<a href="downloads/">Mac</a>, <a href="downloads/">Windows</a> or
+<a href="downloads/">Source</a>) and unpack the binary to a location
+on your PATH. Create the environment variable PRIMER_LIBRARY_PATH and
+set it to the location you unpacked StandardLibrary.pri to.
+Enter the following program and save it as Factorial.pri
+<pre>
+def x = 5
+
+def Factorial = lambda (x)
+    if (x == 0)
+        return 1;
+    else
+        return x * Factorial(x - 1);
+    end
+end
+
+Show(Factorial(x))
+</pre>
+To run your program at the shell enter
+<pre>
+$ myfpl Factorial.pri
+120
+</pre>
+<h2>Example</h2>
+<p>
+The following is a needlessly complex example to show a few features of the language.
+</p>
+<pre>
+def Double = lambda(x)
+    return x * 2;
+end
+
+Show(Sum(Map(Double, Filter(lambda (x)
+                               return 10 % x == 0;
+                            end,
+                     Cons(Cons([1, 2], 3), 4)))))
+</pre>
+<p>
+Starting with the innermost expression, we use the special form Cons to construct
+a list containing the values [1, 2, 3, 4]. We pass the resultant list, along with an anonymous
+function, to the standard library function Filter.
+</p>
+<p>
+Filter applies the function to each member
+of the list in turn and returns a list containing the values for which the function returns
+true. The lambda expression returns true if its parameter is a factor of 10.
+</p>
+<p>
+The resultant list is then passed to the Map function along with the name of the previously
+defined Double function which simply multiplies its parameter by two. Map and Filter are both
+examples of higher order functions as they take a function as a parameter.
+</p>
+<p>
+The result of Map is
+then passed to the Sum function which returns the sum of the numbers in the list before passing
+that number to the special form Show which prints the result to the screen.
+</p>
+<h2>Reference</h2>
+<p>
+The primitive data types are integer, float, bool and the value nil which represents nothing.
+</p>
+<pre>
+def index = 10
+def pi = 3.14159
+def raining = true
+def pointless = nil
+</pre>
+<p>
+Lists can contain values of any type, including functions, and can be nested to any depth.
+</p>
+<pre>
+def values = [1,2,3,4,5]
+def mixed = [44, true, pi, index * index]
+def functions = [TimesTwo, TimesThree, TimesFour]
+def nested = [0,[1,2,3],[4,[5,6]],7,8,[9]]
+</pre>
+<p>
+Primer is lexically scoped and functions can be nested.
+</p>
+<pre>
+def Outer = lambda (x)
+    def var = 12;
+    def Inner = lambda (y)
+        def var = 14;
+        Show(var + y);
+    end
+    Show(var + x);
+    Inner(x);
+end
+</pre>
+<p>
+Finally, Primer also has:
+<ul>
+	<li>infix operators: +, -, *, /, &lt;, &gt;, &lt;=, &gt;=, ==, !=, &&, || and %</li>
+	<li>a few special forms: Show, Size, Cons, Head and Tail</li>
+	<li>a modest standard library: Append, Map, Filter, Sum, Reverse, Nth, Find and Empty</li>
+</ul>
+</p>
+</body>
+</html>

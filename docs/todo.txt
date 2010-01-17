@@ -1,0 +1,16 @@
+- Map(fn, []) should return [] but currently crashes
+- can't Cons onto []
+- Reverse doesn't work
+- list_eq / list_neq
+- parameter checking (arity and type) of all cases in eval()
+- re-introduce full funcall support (e.g. fn()())
+- printing of lists doesn't have [ and ]
+- returning a function not working correctly (closures!)
+- unit tests
+- strings
+- unary minus
+- Type function, i.e. if (Type(a) == Bool), Integer?(x), Bool?(x), etc
+- paranthesis in operators
+- gc!
+- tail call elimination!
+- reflection support
