@@ -71,4 +71,6 @@ void nodefree(node *p);
 /* print an error with its line number */
 void logerr(char* msg, int line);
 
+bool file_exists(const char * filename);
+
 #endif

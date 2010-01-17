@@ -1,7 +1,7 @@
 BINDIR	= ./
 DBG		= $(CFLAGS) -g3 -D__DEBUG__
 REL		= $(CFLAGS) -O2
-BIN		= pl0
+BIN		= primer
 CC		= gcc
 CFLAGS	= -std=gnu99
 
@@ -25,4 +25,4 @@ parser:
 	bison -y -d parser.y
 
 clean:
-	rm lex.yy.c y.tab.c y.tab.h *.o pl0
+	rm lex.yy.c y.tab.c y.tab.h *.o primer

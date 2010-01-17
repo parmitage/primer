@@ -23,12 +23,18 @@ int main(int argc, char** argv)
 
 node* load_std_lib()
 {
-	char * libpath;
-  	libpath = getenv("MYFPL_LIBRARY_PATH");
+	char* libpath;
+  	libpath = getenv("PRIMER_LIBRARY_PATH");
   	
   	if (libpath == NULL)
   	{
-    	printf ("Environment variable MYFPL_LIBRARY_PATH has not been set\n");
+    	printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
+    	exit(-1);
+    }
+    
+    if (!file_exists(libpath))
+    {
+    	printf("Unable to find %s\n", libpath);
     	exit(-1);
     }
 	

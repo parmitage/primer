@@ -130,3 +130,18 @@ void dbg(char* msg)
 {
 	printf("%s\n", msg);
 }
+
+bool file_exists(const char * path)
+{
+	FILE *istream;
+	
+	if((istream = fopen(path, "r")) == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		fclose(istream);
+		return true;
+	}
+}

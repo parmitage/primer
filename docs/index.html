@@ -31,16 +31,16 @@
 <p>
 Primer is a functional programming language designed by
 <a href="mailto:philip.armitage@gmail.com">Phil Armitage</a>. It's still in the
-early stages of development but the ultimate goal is to produce a simple
-language for learning the basics of functional programming.
+early stages of development but the aim is to create a simple
+language for those learning the basics of functional programming.
 </p>
 <h2>Getting Started</h2>
 <p>Download the latest version (<a href="downloads/">Linux</a>,
 <a href="downloads/">Mac</a>, <a href="downloads/">Windows</a> or
 <a href="downloads/">Source</a>) and unpack the binary to a location
-on your PATH. Create the environment variable PRIMER_LIBRARY_PATH and
-set it to the location you unpacked StandardLibrary.pri to.
-Enter the following program and save it as Factorial.pri
+on your PATH. Create the environment variable PRIMER_LIBRARY_PATH
+which should point to StandardLibrary.pri.
+Enter the following program and save it as Factorial.pri:
 <pre>
 def x = 5
 
@@ -56,7 +56,7 @@ Show(Factorial(x))
 </pre>
 To run your program at the shell enter
 <pre>
-$ myfpl Factorial.pri
+$ primer Factorial.pri
 120
 </pre>
 <h2>Example</h2>
@@ -127,12 +127,49 @@ def Outer = lambda (x)
 end
 </pre>
 <p>
-Finally, Primer also has:
-<ul>
-	<li>infix operators: +, -, *, /, &lt;, &gt;, &lt;=, &gt;=, ==, !=, &&, || and %</li>
-	<li>a few special forms: Show, Size, Cons, Head and Tail</li>
-	<li>a modest standard library: Append, Map, Filter, Sum, Reverse, Nth, Find and Empty</li>
-</ul>
+Primer has the standard set of infix operators:
++, -, *, /, &lt;, &gt;, &lt;=, &gt;=, ==, !=, &&, || and %.
 </p>
+<p>
+The standard library comes with a number of functions for working with lists.
+</p>
+<pre>
+Head([true, false, true, true])
+=> true
+
+Tail([true, false, true, true])
+=> [false, true, true]
+
+Cons([1,2,3], 0)
+=> [0,1,2,3]
+
+Append([1,2,3], [4,5,6])
+=> [1,2,3,4,5,6]
+
+Size([1,2,3,4,5])
+=> 5
+
+Map(Double, [1,2,3,4,5])
+=> [2,4,6,8,10]
+
+Filter(GreaterThanTwo, [1,2,3,2,4,5,6,0,1])
+=> [3,4,5,6]
+
+Empty([])
+=> true
+
+Reverse([1.3, 4.87, 3.45])
+=> [3.45, 4.87, 1.3]
+
+Find(12, [4,6,10,2,4,11])
+=> nil
+
+Nth([true, true, false, true], 2)
+=> false
+
+Sum([1.1, 2.2, 3.3])
+=> 6.6
+</pre>
+
 </body>
 </html>
