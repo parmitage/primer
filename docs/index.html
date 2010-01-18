@@ -32,41 +32,38 @@
 <h1>Primer</h1>
 <p>
 Primer is a programming language designed by
-<a href="mailto:philip.armitage@gmail.com">Phil Armitage</a>. It's still in the
-early stages of development but the aim is to create a
-language suitable for learning to program.
+<a href="mailto:philip.armitage@gmail.com">Phil Armitage</a> that's in the
+early stages of development.
 </p>
 <p>
 To get started, download the latest version (<a href="downloads/">Linux</a>,
 <a href="downloads/">Mac</a>, <a href="downloads/">Windows</a> or
 <a href="downloads/">Source</a>) and unpack it to a location on your computer
 which is on your PATH. Create the environment variable PRIMER_LIBRARY_PATH
-which should point to StandardLibrary.pri. For example, if you use BASH, enter
-the following into your .profile:
+which should point to StandardLibrary.pri. For example, if you use BASH on
+Linux or Mac, enter the following into your .profile:
 </p>
 <pre>
-export PRIMER_LIBRARY_PATH=/path/to/primer/lib/StandardLibrary.pri
+export PRIMER_LIBRARY_PATH=/path/to/primer/StandardLibrary.pri
 </pre>
 <p>
-This should work on both Linux and Mac. For Windows users, look in the
-properties of My Computer for where to create a new environment variable.
-</p>
-<p>
-For our first program we'll write a function which takes one parameter and
-returns the double of that number. Enter the following into a text editor and
-save it as Double.pri:
+On Windows, you can set the environment variable for your current session by
+entering the following (to set this permenantly have a look in My Computer ->
+Advanced -> Environment Variables):
 </p>
 <pre>
-def Double = lambda (x)
-    return 2 * x;
-end
+set PRIMER_LIBRARY_PATH=C:\path\to\primer\StandardLibrary.pri
 </pre>
 <p>
-The keyword def creates a new symbol and binds it to an expression. In this case the
+
+</p>
+<p>
+For our first program we'll write a function which takes one numeric parameter and
+doubles it. The keyword def creates a new symbol and
+binds it to an expression. In this case the
 expression is a function which we introduce with the lambda keyword. The function takes one
-parameter, x. Primer is <strong>dynamically typed</strong> which means that the type of
-variable x will not be determined until runtime. However, this doesn't mean that variables
-are untyped. Primer supports four data types: integers, floating point numbers, booleans
+parameter named 'x'. Primer is <strong>dynamically typed</strong> which means that the type of
+variable x will not be determined until runtime. Primer supports four data types: integers, floating point numbers, booleans
 and the special value nil which means nothing. Because the * operator assumes that it's
 arguments are numeric, it will throw an error if it's passed something other than an
 integer or a float.
@@ -74,28 +71,24 @@ integer or a float.
 <p>
 The return keyword computes the value of an expression and passes it back to the caller,
 terminating execution of that function. You can also return no value from a function.
-</p>
-<p>
 Note that statements within a function are separated by semi-colons, even if there is only
 one statement as in our Double function.
 </p>
 <p>
-To test our function, we'll call it with a value.
+To test our function, we'll call it with the value 2. You'll notice that we've wrapped the
+call to Double in a call to a mysterious Show function. This isn't defined in our file but is
+provided by Primer itself. It's job is to display values on screen. It knows
+how to display values of any type.
 </p>
 <pre>
 def Double = lambda (x)
     return 2 * x;
 end
 
-<span class="highlight">Show(Double(2))</span>
+Show(Double(2))
 </pre>
 <p>
-The value 2 is substituted for the parameter x in the function definition when it executes.
-You'll notice that we've wrapped the
-call to Double in a call to a mysterious Show function. This isn't defined in our file and is
-in fact provided by Primer itself. It's job is to display values to the screen and it knows
-how to handle values of any type. In this case, it will receive the return value from Double
-which is an integer.
+
 </p>
 <p>
 To run this program, save the file with the latest changes and enter the following at the shell:
@@ -105,73 +98,44 @@ $ primer Double.pri
 4
 </pre>
 <p>
-You should see the value 4 printed to the screen meaning that everything has worked. If you
-see a message saying that the environment variable PRIMER_LIBRARY_PATH is missing or that
-StandardLibrary.pri could not be found then check that you set everything up correctly earlier
-and also try restarting your shell in case the changes did not take effect.
-</p>
-<p>
-We'll now repeat this test with a second call to Double.
-</p>
-<pre>
-def Double = lambda (x)
-    return 2 * x;
-end
-
-Show(Double(2))
-<span class="highlight">Show(Double(12.45))</span>
-</pre>
-<p>
-If you run this you should see that the Double function can handle values of both numeric types.
-</p>
-<pre>
-$ primer Double.pri
-4
-24.9
-</pre>
-<p>
 Earlier we learnt that definitions can be bound to any expression. At the top of the file, we'll define
-a new symbol to hold the value 10 and at the end of the file, we'll enter a third call to Double
-this time passing in our newly created variable. Your complete file should now look like this:
+a new symbol to which we bind the value 10.44. At the end of the file, we'll enter a second call
+to Double, this time passing in our newly created variable.
 </p>
 <pre>
-<span class="highlight">def a = 10</span>
+<span class="highlight">def a = 10.44</span>
 
 def Double = lambda (x)
     return 2 * x;
 end
 
 Show(Double(2))
-Show(Double(12.45))
 <span class="highlight">Show(Double(a))</span>
 </pre>
 <p>
-Running this now should yield the following:
+Running your updated program should print the following results:
 </p>
 <pre>
 $ primer Double.pri
 4
-24.9
-20
+20.88
 </pre>
 <p>
 Variables in Primer behave like variables in mathematical equations. That is, once a value has
-been assigned to one it cannot be changed. This property is called <strong>immutability</strong>
-and is an important aspect of functional programming which makes it rather different to traditional
-imperative programming. Those who have programmed in an imperative language before may find this
-a difficult concept to adjust to but in practice it can lead to very elegant programs with fewer
+been assigned it cannot be changed. This property is called <strong>immutability</strong>
+and is an important aspect of functional programming which makes it rather different to
+imperative programming but in practice can lead to very elegant programs with fewer
 opportunities to introduce bugs.
 </p>
 <p>
 The next thing we're going to do is play around with lists. Lists are so fundamental to functional
-programming and are the only data structure available in Primer. We'll define a new variable to
-store five integer values. Primer comes with a number of functions for working with lists.
-The first one we're going to use is <strong>Map</strong>. The Map function is one of the most important
-in functional programming. It's job is to apply a function to a list of values and return a new list
-containing the result.
+programming that they're the only data structure available in Primer. We'll define a new variable to
+store five integer values. Primer comes with a number of functions for working with lists and
+the first one we're going to use is <strong>Map</strong>. The job of Map is to apply
+a function to a list of values and return a new list containing the result.
 </p>
 <pre>
-def a = 10
+def a = 10.44
 <span class="highlight">def l = [1,2,3,4,5]</span>
 
 def Double = lambda (x)
@@ -179,15 +143,14 @@ def Double = lambda (x)
 end
 
 Show(Double(2))
-Show(Double(12.45))
 Show(Double(a))
 <span class="highlight">Show(Map(Double, l))</span>
 </pre>
 <p>
 Map is an example of a <strong>higher order function</strong> which means that it takes a
-function as an argument. In this case we pass it our Double function. The second parameter
-is our list. We're asking Map to run our Double function against each of the numbers in the list
-and return a fresh list containing the results. The list in l will be untouched because it is
+function as an argument. In this case we pass it our Double function along with the list.
+We're asking Map to apply our Double function to each member of the list in turn
+and return a fresh list containing the results. The list in l will be untouched because it's
 immutable. If we run our program again we should see:
 </p>
 <pre>
@@ -198,10 +161,12 @@ $ primer Double.pri
 [2,4,6,8,10]
 </pre>
 <p>
-Typically we define functions when we expect to use them in many places in our program but
+Typically we define functions when we expect to use them in more than one place but
 sometimes, when working with higher order function like Map, it can be helpful to not have to
 define the function ahead of time. Primer allows you to use <strong>anonymous functions</strong>,
-that is to write a lambda expression directly at the point at which we want to use it:
+that is to write a lambda expression directly at the point at which we want to use it. The
+lambda expression supplied below returns a boolean value indicating whether the value supplied
+is greater-than-or-equal to 3.
 </p>
 <pre>
 def a = 10
@@ -212,7 +177,6 @@ def Double = lambda (x)
 end
 
 Show(Double(2))
-Show(Double(12.45))
 Show(Double(a))
 Show(Map(Double, l))
 <span class="highlight">Show(Map(lambda (x)
@@ -221,22 +185,10 @@ Show(Map(Double, l))
          l))</span>
 </pre>
 <p>
-Our new lambda expression returns a boolean value indicating whether the value supplied is
-greater-than-or-equal to 3. This is what it should be output when we run it:
-</p>
-<pre>
-$ primer Double.pri
-4
-24.9
-20
-[2,4,6,8,10]
-[false,false,true,true,true]
-</pre>
-<p>
 Although it's useful to know what functions
 are provided by the standard library, such as Map, it's important to note that we could write
 any of those supplied function ourselves. In fact, here is the definition of Map
-from the standard library to show that it's nothing special:
+from the standard library to show that it's really nothing special.
 </p>
 <pre>
 def Map = lambda (fn, list)
@@ -248,7 +200,7 @@ def Map = lambda (fn, list)
 end
 </pre>
 <p>
-You will notice however that Map makes use of some new things. The functions Cons, Head and Tail,
+You'll notice however that Map makes use of some new things. The functions Cons, Head and Tail,
 along with Show which we've already met, are examples of <strong>special forms</strong>. A
 special form is different to a regular function as it requires low level access to the
 Primer Virtual Machine and couldn't have been written by us. However, aside from being
@@ -259,14 +211,19 @@ The second thing to note about Map is that it's <strong>recursive</strong>. A re
 function calls itself, either directly as Map does, or indirectly via an intermediate function. We'll
 write our own recursive functions later but for now all you need to know is that a function can call
 itself provided there is some situation under which it will naturally terminate such as reaching the
-end of a list as Map does or passing some test such as exceeding a threshold.
+end of a list or exceeding a threshold.
 </p>
 <p>
 The final thing to note is that we use the value nil to determine when we're at the end of a list. Nil,
 which represents nothing, is being used here to signify the empty list.
 </p>
 <p>
-We'll now define our own higher order function, SumWithFun.
+We'll now define our own higher order function, SumWithFun. It takes three arguments:
+a function and two numbers. It applies the function to each numeric argument
+in turn and adds the results together, returning the sum to the caller. You can see
+that we refer to the passed in function via the name bound to it in the argument
+list. Run the program and maybe try calling SumWithFun with different function
+of your own.
 </p>
 <pre>
 def a = 10
@@ -281,7 +238,6 @@ end
 end
 </span>
 Show(Double(2))
-Show(Double(12.45))
 Show(Double(a))
 Show(Map(Double, l))
 Show(Map(lambda (x)
@@ -289,61 +245,6 @@ Show(Map(lambda (x)
          end,
          l))
 <span class="highlight">Show(SumWithFun(Double, 4, a))</span>
-</pre>
-<p>
-If you run your program now you should see this.
-</p>
-<pre>
-$ primer Double.pri
-4
-24.9
-20
-[2,4,6,8,10]
-[false,false,true,true,true]
-28
-</pre>
-<p>
-Our new function appplies the supplied function to the two arguments and adds the result together before
-returning it to the caller. You can see that we refer to the passed in function via the name it receives
-from the argument list, in this case fn. Other than it having a different name within the function, it
-behaves in exactly the same way. To prove that this is generic, we can try passing in a different function.
-</p>
-<pre>
-def a = 10
-def l = [1,2,3,4,5]
-
-def Double = lambda (x)
-    return 2 * x;
-end
-
-def SumWithFun = lambda (fn, x, y)
-    return fn(x) + fn(y);
-end
-
-Show(Double(2))
-Show(Double(12.45))
-Show(Double(a))
-Show(Map(Double, l))
-Show(Map(lambda (x)
-             return x >= 3;
-         end,
-         l))
-Show(SumWithFun(Double, 4, a))
-<span class="highlight">Show(SumWithFun(lambda (x) return 12 % x; end, 4, a))</span>
-</pre>
-<p>
-The modulus function, %, returns the remainder after dividing the first argument
-by the second. Running this should give:
-</p>
-<pre>
-$ primer Double.pri
-4
-24.9
-20
-[2,4,6,8,10]
-[false,false,true,true,true]
-28
-2
 </pre>
 </body>
 </html>

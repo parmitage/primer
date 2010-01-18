@@ -4,15 +4,16 @@
 - should [] == nil ?
 - Reverse doesn't work
 - list_eq / list_neq
+- is there any way to programatically construct a nested list?
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()())
 - returning a function not working correctly
 - unit tests
 - strings
 - unary minus
-- Type function, i.e. if (Type(a) == Bool), Integer?(x), Bool?(x), etc
-- paranthesis in operators
+- Type function, i.e. if (Type(a) == Bool), Integer(x), Bool(x), etc
+- paranthesis in operators to change precedence
 - gc!
 - tail call elimination!
-- closures!
+- closures! - do they make sense? environments live with functions?
 - reflection support
