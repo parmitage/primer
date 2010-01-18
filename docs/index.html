@@ -3,18 +3,20 @@
 <title>Primer</title>
 <style>
 	body {
-		margin: 30px;
+		margin: 40px;
 		font-family: Geneva, Verdana;
-		min-width: 720px;
-		width: 800px;
 	}
 	pre {
 		background: #f1f1ef;
 		border: 1px solid black;
 		font-weight: bold;
+		font-size: large;
+		font-name: courier new;
 		line-height: 140%;
 		padding: 10px;
-		margin: 25px 25px 25px 0px;
+	}
+	span.highlight {
+		color: #12a1f1;
 	}
 	a {
 		text-decoration: none;
@@ -29,147 +31,319 @@
 <body>
 <h1>Primer</h1>
 <p>
-Primer is a functional programming language designed by
+Primer is a programming language designed by
 <a href="mailto:philip.armitage@gmail.com">Phil Armitage</a>. It's still in the
-early stages of development but the aim is to create a simple
-language for those learning the basics of functional programming.
+early stages of development but the aim is to create a
+language suitable for learning to program.
 </p>
-<h2>Getting Started</h2>
-<p>Download the latest version (<a href="downloads/">Linux</a>,
+<p>
+To get started, download the latest version (<a href="downloads/">Linux</a>,
 <a href="downloads/">Mac</a>, <a href="downloads/">Windows</a> or
-<a href="downloads/">Source</a>) and unpack the binary to a location
-on your PATH. Create the environment variable PRIMER_LIBRARY_PATH
-which should point to StandardLibrary.pri.
-Enter the following program and save it as Factorial.pri:
+<a href="downloads/">Source</a>) and unpack it to a location on your computer
+which is on your PATH. Create the environment variable PRIMER_LIBRARY_PATH
+which should point to StandardLibrary.pri. For example, if you use BASH, enter
+the following into your .profile:
+</p>
 <pre>
-def x = 5
+export PRIMER_LIBRARY_PATH=/path/to/primer/lib/StandardLibrary.pri
+</pre>
+<p>
+This should work on both Linux and Mac. For Windows users, look in the
+properties of My Computer for where to create a new environment variable.
+</p>
+<p>
+For our first program we'll write a function which takes one parameter and
+returns the double of that number. Enter the following into a text editor and
+save it as Double.pri:
+</p>
+<pre>
+def Double = lambda (x)
+    return 2 * x;
+end
+</pre>
+<p>
+The keyword def creates a new symbol and binds it to an expression. In this case the
+expression is a function which we introduce with the lambda keyword. The function takes one
+parameter, x. Primer is <strong>dynamically typed</strong> which means that the type of
+variable x will not be determined until runtime. However, this doesn't mean that variables
+are untyped. Primer supports four data types: integers, floating point numbers, booleans
+and the special value nil which means nothing. Because the * operator assumes that it's
+arguments are numeric, it will throw an error if it's passed something other than an
+integer or a float.
+</p>
+<p>
+The return keyword computes the value of an expression and passes it back to the caller,
+terminating execution of that function. You can also return no value from a function.
+</p>
+<p>
+Note that statements within a function are separated by semi-colons, even if there is only
+one statement as in our Double function.
+</p>
+<p>
+To test our function, we'll call it with a value.
+</p>
+<pre>
+def Double = lambda (x)
+    return 2 * x;
+end
 
-def Factorial = lambda (x)
-    if (x == 0)
-        return 1;
+<span class="highlight">Show(Double(2))</span>
+</pre>
+<p>
+The value 2 is substituted for the parameter x in the function definition when it executes.
+You'll notice that we've wrapped the
+call to Double in a call to a mysterious Show function. This isn't defined in our file and is
+in fact provided by Primer itself. It's job is to display values to the screen and it knows
+how to handle values of any type. In this case, it will receive the return value from Double
+which is an integer.
+</p>
+<p>
+To run this program, save the file with the latest changes and enter the following at the shell:
+</p>
+<pre>
+$ primer Double.pri
+4
+</pre>
+<p>
+You should see the value 4 printed to the screen meaning that everything has worked. If you
+see a message saying that the environment variable PRIMER_LIBRARY_PATH is missing or that
+StandardLibrary.pri could not be found then check that you set everything up correctly earlier
+and also try restarting your shell in case the changes did not take effect.
+</p>
+<p>
+We'll now repeat this test with a second call to Double.
+</p>
+<pre>
+def Double = lambda (x)
+    return 2 * x;
+end
+
+Show(Double(2))
+<span class="highlight">Show(Double(12.45))</span>
+</pre>
+<p>
+If you run this you should see that the Double function can handle values of both numeric types.
+</p>
+<pre>
+$ primer Double.pri
+4
+24.9
+</pre>
+<p>
+Earlier we learnt that definitions can be bound to any expression. At the top of the file, we'll define
+a new symbol to hold the value 10 and at the end of the file, we'll enter a third call to Double
+this time passing in our newly created variable. Your complete file should now look like this:
+</p>
+<pre>
+<span class="highlight">def a = 10</span>
+
+def Double = lambda (x)
+    return 2 * x;
+end
+
+Show(Double(2))
+Show(Double(12.45))
+<span class="highlight">Show(Double(a))</span>
+</pre>
+<p>
+Running this now should yield the following:
+</p>
+<pre>
+$ primer Double.pri
+4
+24.9
+20
+</pre>
+<p>
+Variables in Primer behave like variables in mathematical equations. That is, once a value has
+been assigned to one it cannot be changed. This property is called <strong>immutability</strong>
+and is an important aspect of functional programming which makes it rather different to traditional
+imperative programming. Those who have programmed in an imperative language before may find this
+a difficult concept to adjust to but in practice it can lead to very elegant programs with fewer
+opportunities to introduce bugs.
+</p>
+<p>
+The next thing we're going to do is play around with lists. Lists are so fundamental to functional
+programming and are the only data structure available in Primer. We'll define a new variable to
+store five integer values. Primer comes with a number of functions for working with lists.
+The first one we're going to use is <strong>Map</strong>. The Map function is one of the most important
+in functional programming. It's job is to apply a function to a list of values and return a new list
+containing the result.
+</p>
+<pre>
+def a = 10
+<span class="highlight">def l = [1,2,3,4,5]</span>
+
+def Double = lambda (x)
+    return 2 * x;
+end
+
+Show(Double(2))
+Show(Double(12.45))
+Show(Double(a))
+<span class="highlight">Show(Map(Double, l))</span>
+</pre>
+<p>
+Map is an example of a <strong>higher order function</strong> which means that it takes a
+function as an argument. In this case we pass it our Double function. The second parameter
+is our list. We're asking Map to run our Double function against each of the numbers in the list
+and return a fresh list containing the results. The list in l will be untouched because it is
+immutable. If we run our program again we should see:
+</p>
+<pre>
+$ primer Double.pri
+4
+24.9
+20
+[2,4,6,8,10]
+</pre>
+<p>
+Typically we define functions when we expect to use them in many places in our program but
+sometimes, when working with higher order function like Map, it can be helpful to not have to
+define the function ahead of time. Primer allows you to use <strong>anonymous functions</strong>,
+that is to write a lambda expression directly at the point at which we want to use it:
+</p>
+<pre>
+def a = 10
+def l = [1,2,3,4,5]
+
+def Double = lambda (x)
+    return 2 * x;
+end
+
+Show(Double(2))
+Show(Double(12.45))
+Show(Double(a))
+Show(Map(Double, l))
+<span class="highlight">Show(Map(lambda (x)
+             return x >= 3;
+         end,
+         l))</span>
+</pre>
+<p>
+Our new lambda expression returns a boolean value indicating whether the value supplied is
+greater-than-or-equal to 3. This is what it should be output when we run it:
+</p>
+<pre>
+$ primer Double.pri
+4
+24.9
+20
+[2,4,6,8,10]
+[false,false,true,true,true]
+</pre>
+<p>
+Although it's useful to know what functions
+are provided by the standard library, such as Map, it's important to note that we could write
+any of those supplied function ourselves. In fact, here is the definition of Map
+from the standard library to show that it's nothing special:
+</p>
+<pre>
+def Map = lambda (fn, list)
+    if (list != nil)
+        return Cons(Map(fn, Tail(list)), fn(Head(list)));
     else
-        return x * Factorial(x - 1);
+        return nil;
     end
 end
-
-Show(Factorial(x))
 </pre>
-To run your program at the shell enter
-<pre>
-$ primer Factorial.pri
-120
-</pre>
-<h2>Example</h2>
 <p>
-The following is a needlessly complex example to show a few features of the language.
+You will notice however that Map makes use of some new things. The functions Cons, Head and Tail,
+along with Show which we've already met, are examples of <strong>special forms</strong>. A
+special form is different to a regular function as it requires low level access to the
+Primer Virtual Machine and couldn't have been written by us. However, aside from being
+implemented differently, a special form can be called just like a regular function.
+</p>
+<p>
+The second thing to note about Map is that it's <strong>recursive</strong>. A recursive
+function calls itself, either directly as Map does, or indirectly via an intermediate function. We'll
+write our own recursive functions later but for now all you need to know is that a function can call
+itself provided there is some situation under which it will naturally terminate such as reaching the
+end of a list as Map does or passing some test such as exceeding a threshold.
+</p>
+<p>
+The final thing to note is that we use the value nil to determine when we're at the end of a list. Nil,
+which represents nothing, is being used here to signify the empty list.
+</p>
+<p>
+We'll now define our own higher order function, SumWithFun.
 </p>
 <pre>
-def Double = lambda(x)
-    return x * 2;
+def a = 10
+def l = [1,2,3,4,5]
+
+def Double = lambda (x)
+    return 2 * x;
 end
 
-Show(Sum(Map(Double, Filter(lambda (x)
-                               return 10 % x == 0;
-                            end,
-                     Cons(Cons([1, 2], 3), 4)))))
-</pre>
-<p>
-Starting with the innermost expression, we use the special form Cons to construct
-a list containing the values [1, 2, 3, 4]. We pass the resultant list, along with an anonymous
-function, to the standard library function Filter.
-</p>
-<p>
-Filter applies the function to each member
-of the list in turn and returns a list containing the values for which the function returns
-true. The lambda expression returns true if its parameter is a factor of 10.
-</p>
-<p>
-The resultant list is then passed to the Map function along with the name of the previously
-defined Double function which simply multiplies its parameter by two. Map and Filter are both
-examples of higher order functions as they take a function as a parameter.
-</p>
-<p>
-The result of Map is
-then passed to the Sum function which returns the sum of the numbers in the list before passing
-that number to the special form Show which prints the result to the screen.
-</p>
-<h2>Reference</h2>
-<p>
-The primitive data types are integer, float, bool and the value nil which represents nothing.
-</p>
-<pre>
-def index = 10
-def pi = 3.14159
-def raining = true
-def pointless = nil
-</pre>
-<p>
-Lists can contain values of any type, including functions, and can be nested to any depth.
-</p>
-<pre>
-def values = [1,2,3,4,5]
-def mixed = [44, true, pi, index * index]
-def functions = [TimesTwo, TimesThree, TimesFour]
-def nested = [0,[1,2,3],[4,[5,6]],7,8,[9]]
-</pre>
-<p>
-Primer is lexically scoped and functions can be nested.
-</p>
-<pre>
-def Outer = lambda (x)
-    def var = 12;
-    def Inner = lambda (y)
-        def var = 14;
-        Show(var + y);
-    end
-    Show(var + x);
-    Inner(x);
+<span class="highlight">def SumWithFun = lambda (fn, x, y)
+    return fn(x) + fn(y);
 end
+</span>
+Show(Double(2))
+Show(Double(12.45))
+Show(Double(a))
+Show(Map(Double, l))
+Show(Map(lambda (x)
+             return x >= 3;
+         end,
+         l))
+<span class="highlight">Show(SumWithFun(Double, 4, a))</span>
 </pre>
 <p>
-Primer has the standard set of infix operators:
-+, -, *, /, &lt;, &gt;, &lt;=, &gt;=, ==, !=, &&, || and %.
-</p>
-<p>
-The standard library comes with a number of functions for working with lists.
+If you run your program now you should see this.
 </p>
 <pre>
-Head([true, false, true, true])
-=> true
-
-Tail([true, false, true, true])
-=> [false, true, true]
-
-Cons([1,2,3], 0)
-=> [0,1,2,3]
-
-Append([1,2,3], [4,5,6])
-=> [1,2,3,4,5,6]
-
-Size([1,2,3,4,5])
-=> 5
-
-Map(Double, [1,2,3,4,5])
-=> [2,4,6,8,10]
-
-Filter(GreaterThanTwo, [1,2,3,2,4,5,6,0,1])
-=> [3,4,5,6]
-
-Empty([])
-=> true
-
-Reverse([1.3, 4.87, 3.45])
-=> [3.45, 4.87, 1.3]
-
-Find(12, [4,6,10,2,4,11])
-=> nil
-
-Nth([true, true, false, true], 2)
-=> false
-
-Sum([1.1, 2.2, 3.3])
-=> 6.6
+$ primer Double.pri
+4
+24.9
+20
+[2,4,6,8,10]
+[false,false,true,true,true]
+28
 </pre>
+<p>
+Our new function appplies the supplied function to the two arguments and adds the result together before
+returning it to the caller. You can see that we refer to the passed in function via the name it receives
+from the argument list, in this case fn. Other than it having a different name within the function, it
+behaves in exactly the same way. To prove that this is generic, we can try passing in a different function.
+</p>
+<pre>
+def a = 10
+def l = [1,2,3,4,5]
 
+def Double = lambda (x)
+    return 2 * x;
+end
+
+def SumWithFun = lambda (fn, x, y)
+    return fn(x) + fn(y);
+end
+
+Show(Double(2))
+Show(Double(12.45))
+Show(Double(a))
+Show(Map(Double, l))
+Show(Map(lambda (x)
+             return x >= 3;
+         end,
+         l))
+Show(SumWithFun(Double, 4, a))
+<span class="highlight">Show(SumWithFun(lambda (x) return 12 % x; end, 4, a))</span>
+</pre>
+<p>
+The modulus function, %, returns the remainder after dividing the first argument
+by the second. Running this should give:
+</p>
+<pre>
+$ primer Double.pri
+4
+24.9
+20
+[2,4,6,8,10]
+[false,false,true,true,true]
+28
+2
+</pre>
 </body>
 </html>

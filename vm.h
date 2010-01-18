@@ -11,10 +11,11 @@ int stack_ptr;
 void push(node* node);
 node* pop();
 
-/* display an object on stdout */
+/* display objects to stdout */
 void display(node* node);
+void display_primitive(node* node, int depth);
 
-/* classic Lisp list operations */
+/* classic Lisp style list operations */
 node* car(node* node);
 node* cdr(node* node);
 node* cons(node* list, node* n);
@@ -28,7 +29,6 @@ node* lt(node* x, node* y);
 node* gt(node* x, node* y);
 node* lte(node* x, node* y);
 node* gte(node* x, node* y);
-int length(node* node);
 node* eq(node* x, node* y);
 node* neq(node* x, node* y);
 node* list_eq(node* l1, node* l2);

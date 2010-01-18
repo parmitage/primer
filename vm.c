@@ -54,53 +54,53 @@ node* cons(node* list, node* n)
 		return opr(LIST, 2, n, list);
 }
 
-void display(node* node)
+void display_primitive(node* node, int depth)
 {
-	if (node == NULL)
-			return;
-	
 	switch (node->type)
 	{
 		case t_int:
-			printf("%i\n", node->ival);
+			printf("%i", node->ival);
 			break;
 		case t_float:
-			printf("%g\n", node->fval);
+			printf("%g", node->fval);
 			break;
 		case t_nil:
-			printf("nil\n");
+			printf("nil");
 			break;
 		case t_bool:
-			printf("%s\n", node->ival > 0 ? "true" : "false");
+			printf("%s", node->ival > 0 ? "true" : "false");
 			break;
 		case t_cons:
-			display(node->opr.op[0]);
+			if (depth == 0)
+				printf("[");
+			display_primitive(node->opr.op[0], depth++);
 			if (node->opr.nops > 1 && node->opr.op[1] != NULL)
 			{
 				printf(",");
-				display(node->opr.op[1]);
+				if (node->opr.op[1]->opr.op[0] != NULL &&
+					node->opr.op[1]->opr.op[0]->type == t_cons)
+					printf("[");
+				display_primitive(node->opr.op[1], depth);
+								
 			}
+			if (node->opr.op[1] == NULL)
+					printf("]");
+			--depth;
 			break;
 		case t_symbol:
-			printf("%s\n", node->sval);
+			printf("%s", node->sval);
 			break;				
-	}
+	}		
 }
 
-int length(node* node)
+void display(node* node)
 {
 	if (node == NULL)
-		return -1;
+		return;
 		
-	if (node->type == t_cons)
-	{
-		if (node->opr.nops > 1 && node->opr.op[1] != NULL)
-			return 1 + length(node->opr.op[1]);
-		else
-			return node->opr.nops;
-	}
-	else
-		return 1;
+	display_primitive(node, 0);
+		
+	printf("\n");
 }
 
 node* add(node* x, node* y)

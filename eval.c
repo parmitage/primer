@@ -34,7 +34,7 @@ node* load_std_lib()
     
     if (!file_exists(libpath))
     {
-    	printf("Unable to find %s\n", libpath);
+    	printf("Unable to find standard library at %s\n", libpath);
     	exit(-1);
     }
 	
@@ -179,14 +179,6 @@ void eval(node *p, environment* env)
 					eval(p->opr.op[0], env);
 					node* val = pop();
 					display(val);
-					break;
-				}
-				
-				case SIZE:
-				{
-					eval(p->opr.op[0], env);
-					node* val = pop();
-					push(con(length(val)));
 					break;
 				}
 				

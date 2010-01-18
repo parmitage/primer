@@ -31,7 +31,6 @@ void yyerror(char *);
 "Tail"							return TAIL;
 "Cons"							return CONS;
 "Show"							return SHOW;
-"Size"							return SIZE;
 [a-zA-Z][a-zA-Z0-9]*			{ yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+							{ yylval.ival = atoi(yytext); return INTEGER; }
 [0-9]+"."[0-9]+         		{ yylval.fval = atof(yytext); return FLOAT; }

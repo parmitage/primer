@@ -4,6 +4,14 @@ def Assert = lambda (actual, expected)
 	end
 end
 
+def Length = lambda (list)
+	if (list != nil)
+		return 1 + Length(Tail(list));
+	else
+		return 0;
+	end
+end
+
 def Append = lambda (l1, l2)
 	if (l1 == nil)
 		return l2;

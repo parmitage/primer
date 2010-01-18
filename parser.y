@@ -27,7 +27,7 @@ int lineno = 1;
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF ELSE RETURN FUNCALL
 %token GE LE NE EQ AND OR MOD TRUE FALSE NIL END LIST
-%token HEAD TAIL CONS SHOW SIZE
+%token HEAD TAIL CONS SHOW
 
 %nonassoc IFX
 %nonassoc ELSE
@@ -77,7 +77,6 @@ expr:
 	| TAIL '(' expr ')'								{ $$ = opr(TAIL, 1, $3); }
 	| CONS '(' expr ',' expr ')'					{ $$ = opr(CONS, 2, $3, $5); }
 	| SHOW '(' expr ')'								{ $$ = opr(SHOW, 1, $3); }
-	| SIZE '(' expr ')'								{ $$ = opr(SIZE, 1, $3); }
 	| expr '+' expr									{ $$ = opr('+', 2, $1, $3); }
 	| expr '-' expr									{ $$ = opr('-', 2, $1, $3); }
 	| expr '*' expr									{ $$ = opr('*', 2, $1, $3); }

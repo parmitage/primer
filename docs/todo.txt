@@ -1,11 +1,12 @@
 - Map(fn, []) should return [] but currently crashes
+- Length([]) != 0
 - can't Cons onto []
+- should [] == nil ?
 - Reverse doesn't work
 - list_eq / list_neq
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()())
-- printing of lists doesn't have [ and ]
-- returning a function not working correctly (closures!)
+- returning a function not working correctly
 - unit tests
 - strings
 - unary minus
@@ -13,4 +14,5 @@
 - paranthesis in operators
 - gc!
 - tail call elimination!
+- closures!
 - reflection support
