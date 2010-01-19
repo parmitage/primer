@@ -81,6 +81,9 @@ node *sym(char* s)
 
 node *opr(int oper, int nops, ...)
 {
+	if (nops == 0)
+		return nil();
+
 	va_list ap;
 	node *p;
 	int i;

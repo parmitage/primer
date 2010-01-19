@@ -48,7 +48,7 @@ def Reverse = lambda (list)
 	if (list != nil)
 		return Cons(Reverse(Tail(list)), Head(list));
 	else
-		return nil;
+		return [];
 	end
 end
 

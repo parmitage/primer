@@ -14,6 +14,7 @@ int main(int argc, char** argv)
 	}
 	
 	node* stdlib = load_std_lib();
+	lineno = 1;
 	parse(argv[1]);
 	node* program = create_program(stdlib, ast);
 	eval(program, NULL);
