@@ -28,6 +28,22 @@ def Map = lambda (fn, list)
 	end
 end
 
+def FoldL = lambda (fn, init, list)
+	if (list != nil)
+		return FoldL(fn, fn(init, Head(list)), Tail(list));
+	else
+		return init;
+	end
+end
+
+def FoldR = lambda (fn, init, list)
+	if (list != nil)
+		return fn(Head(list), FoldR(fn, init, Tail(list)));
+	else
+		return init;
+	end
+end
+
 def Filter = lambda (fn, list)
 	if (list != nil)
 		if (fn(Head(list)) == true)
@@ -86,4 +102,3 @@ def Nth = lambda (list, n)
 	end
 	return Inner(list, 0);
 end
-		

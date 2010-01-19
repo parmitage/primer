@@ -70,26 +70,49 @@ void display_primitive(node* node, int depth)
 		case t_bool:
 			printf("%s", node->ival > 0 ? "true" : "false");
 			break;
+		
 		case t_cons:
-			if (depth == 0)
-				printf("[");
-			display_primitive(node->opr.op[0], depth++);
-			if (node->opr.nops > 1 && node->opr.op[1] != NULL)
+		{
+			switch (node->opr.oper)
 			{
-				printf(",");
-				if (node->opr.op[1]->opr.op[0] != NULL &&
-					node->opr.op[1]->opr.op[0]->type == t_cons)
-					printf("[");
-				display_primitive(node->opr.op[1], depth);
-								
+				case LIST:
+				{
+					if (depth == 0)
+						printf("[");
+						
+					display_primitive(node->opr.op[0], depth++);
+					
+					if (node->opr.nops > 1 && node->opr.op[1] != NULL)
+					{
+						printf(",");
+						if (node->opr.op[1]->opr.op[0] != NULL &&
+							node->opr.op[1]->opr.op[0]->type == t_cons)
+							printf("[");
+							
+						display_primitive(node->opr.op[1], depth);
+					}
+					
+					if (node->opr.op[1] == NULL)
+						printf("]");
+							
+					--depth;
+					
+					break;
+				}
+				
+				case LAMBDA:
+				{
+					printf("LAMBDA");
+					break;
+				}
 			}
-			if (node->opr.op[1] == NULL)
-					printf("]");
-			--depth;
+			
 			break;
+		}
+		
 		case t_symbol:
 			printf("%s", node->sval);
-			break;				
+			break;
 	}		
 }
 

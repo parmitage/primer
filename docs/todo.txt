@@ -1,7 +1,8 @@
+- first function in file can't be called on Windows?
 - Reverse doesn't work
 - list_eq / list_neq
 - parameter checking (arity and type) of all cases in eval()
-- re-introduce full funcall support (e.g. fn()())
+- re-introduce full funcall support (e.g. fn()()) - parser
 - unit tests for list functions
 - strings
 - unary minus
@@ -10,4 +11,5 @@
 - gc!
 - tail call elimination!
 - closures! - do they make sense? environments live with functions?
-- reflection support
+- Split, SplitAt, Take, Drop, TakeWhile, DropWhile, Any, All, Minimum, Maximum, Product, Zip, Sort
+- printer for lambdas (e.g. full pretty printer)

@@ -69,7 +69,7 @@ def ListCountdown = lambda (x)
 	if (x > 0)
 		return Cons(ListCountdown(x - 1), x);
 	else
-		return x;
+		return nil;
 	end
 end
 
@@ -111,9 +111,13 @@ Assert(Sum(Map(Double, Filter(lambda (x)
                                return 10 % x == 0;
                             end,
                      Cons(Cons([1, 2], 3), 4)))), 6)
-                     
+Assert(FoldL(lambda (x, y) return x + y; end, 0, [1,2,3,4,5]), 15)
+Assert(FoldR(lambda (x, y) return x + y; end, 0, [1,2,3,4,5]), 15)
+
 Show([1,2,[3,4,5,6,7],8,9,10])
 Show(Nth([1,2,[3,4,5,6,7],8,9,10], 2))
 Show([1,2,[3,[4],5,6,7],8,[9,10],11])
 Show([2])
 Show(Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]]))
+Show(Cons([1,2,3], 4))
+Show(Double)
