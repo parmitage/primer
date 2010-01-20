@@ -54,6 +54,22 @@ node* cons(node* list, node* n)
 		return opr(LIST, 2, n, list);
 }
 
+node* append(node* list1, node* list2)
+{
+	node* r = list1;
+	node* n = list1;
+	
+	while (n != NULL && n->type != t_nil && n->opr.op[1] != NULL)
+	{
+		n = n->opr.op[1];
+	}
+	
+	n->opr.nops = 2;
+	n->opr.op[1] = list2;
+	
+	return r;
+}
+
 void display_primitive(node* node, int depth)
 {
 	switch (node->type)

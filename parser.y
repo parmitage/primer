@@ -25,15 +25,15 @@ int lineno = 1;
 %token <sval> SYMBOL
 %token <ival> INTEGER
 %token <fval> FLOAT
-%token PROG DEF LAMBDA IF ELSE RETURN FUNCALL
-%token GE LE NE EQ AND OR MOD TRUE FALSE NIL END LIST
+%token PROG DEF LAMBDA IF ELSE FUNCALL
+%token GE LE NE EQ AND OR MOD APPEND TRUE FALSE NIL END LIST
 %token HEAD TAIL CONS SHOW
 
 %nonassoc IFX
 %nonassoc ELSE
 
 %left AND OR
-%left GE LE EQ NE MOD '>' '<'
+%left GE LE EQ NE MOD APPEND '>' '<'
 %left '+' '-'
 %left '*' '/'
 
@@ -53,8 +53,6 @@ stmts:
 stmt:
 	';'												{ $$ = opr(';', 2, NULL, NULL); }
 	| DEF identifier '=' expr						{ $$ = opr(DEF, 2, $2, $4); }
-	| RETURN ';'									{ $$ = opr(RETURN, 0); }
-	| RETURN expr ';'								{ $$ = opr(RETURN, 1, $2); }
 	| IF '(' expr ')' stmts %prec IFX end			{ $$ = opr(IF, 3, $3, $5, $6); }
 	| IF '(' expr ')' stmts ELSE stmts end			{ $$ = opr(IF, 4, $3, $5, $7, $8); }
 	| expr											{ $$ = $1; }
@@ -90,6 +88,7 @@ expr:
 	| expr AND expr									{ $$ = opr(AND, 2, $1, $3); }
 	| expr OR expr									{ $$ = opr(OR, 2, $1, $3); }
 	| expr MOD expr									{ $$ = opr(MOD, 2, $1, $3); }
+	| expr APPEND expr								{ $$ = opr(APPEND, 2, $1, $3); }
 	| '[' list ']'									{ $$ = $2; }
 	;
 

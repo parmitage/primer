@@ -19,6 +19,7 @@ void display_primitive(node* node, int depth);
 node* car(node* node);
 node* cdr(node* node);
 node* cons(node* list, node* n);
+node* append(node* list1, node* list2);
 
 /* built in operators */
 node* add(node* x, node* y);
