@@ -57,7 +57,7 @@ def Filter = lambda (fn, list)
 end
 
 def Empty = lambda (list)
-	Size(list) == 0;
+	Length(list) == 0;
 end
 
 def Reverse = lambda (list)

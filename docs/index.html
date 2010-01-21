@@ -5,6 +5,8 @@
 	body {
 		margin: 40px;
 		font-family: Geneva, Verdana;
+		width: 800px;
+		line-height: 140%;
 	}
 	pre {
 		background: #f1f1ef;
@@ -28,152 +30,98 @@
 <body>
 <h1>Primer</h1>
 <p>
-Primer is a programming language designed by
-<a href="mailto:philip.armitage@gmail.com">Phil Armitage</a> that's in the
-early stages of development.
+Primer is a little programming language in the early stages of development.
+It's available for <a href="downloads/">Linux</a>,
+<a href="downloads/">Mac</a> and
+<a href="downloads/">Windows</a>. You can also download the
+<a href="downloads/">source</a> code. If you have any comments, please
+<a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
+<h3>Quick Start</h3>
 <p>
-To get started, download the latest version (<a href="downloads/">Linux</a>,
-<a href="downloads/">Mac</a>, <a href="downloads/">Windows</a> or
-<a href="downloads/">Source</a>) and unpack it to a location on your computer
-which is on your PATH. Create the environment variable PRIMER_LIBRARY_PATH
-which should point to StandardLibrary.pri. For example, if you use BASH on
-Linux or Mac, enter the following into your .profile:
-</p>
-<pre>
-export PRIMER_LIBRARY_PATH=/path/to/primer/StandardLibrary.pri
-</pre>
+To get started, unpack the archive somewhere on your PATH and
+create the environment variable PRIMER_LIBRARY_PATH which should point to
+StandardLibrary.pri.
 <p>
-On Windows, you can set the environment variable for your current session by
-entering the following (to set this permenantly have a look in My Computer ->
-Advanced -> Environment Variables):
-</p>
-<pre>
-set PRIMER_LIBRARY_PATH=C:\path\to\primer\StandardLibrary.pri
-</pre>
-<p>
-
-</p>
-<p>
-For our first program we'll write a simple function to double a number.
-The keyword def creates a new symbol and binds it to an expression. In this case the
-expression is a function which we introduce with the lambda keyword. The function takes one
-parameter. Primer is <strong>dynamically typed</strong> which means that the type of a
-variable is not determined until runtime. Primer supports four data types:
-integers, floating point numbers, booleans and the special value nil which
-means nothing. A function returns the value of its last expression.
+The keyword <strong>def</strong> interns a new symbol and binds it to an
+expression. In the example below we define a function with the
+<strong>lambda</strong> keyword and bind it to the symbol Double.
+A function implicitly returns the value of its last expression.
+<strong>Show</strong> is one of the special forms provided by the runtime.
 </p>
 <pre>
 def Double = lambda (x)
     2 * x;
 end
-</pre>
-<p>
-To test our function, we simply call it but you'll notice that we've wrapped the
-call in a call to a mysterious Show function. This isn't defined in our file but is
-provided by Primer itself. It simply displays the result on the screen.
-</p>
-<pre>Show(Double(2))
-</pre>
-<p>
 
-</p>
+Show(Double(2))
+</pre>
 <p>
-To run this program, save the file as Double.pri and enter the following at the shell:
+Save your program in a file called Double.pri and at the shell enter:
 </p>
 <pre>
 $ primer Double.pri
-4
 </pre>
 <p>
-Earlier we learnt that definitions can be bound to any expression so we'll define
-a variable and use that when we call Double.
+Primer is dynamically typed and supports integers, floats, booleans and
+the value <strong>nil</strong> which represents nothing. Bindings in
+Primer are immutable although the language is lexically scoped so they
+may be shadowed.
 </p>
 <pre>
 def pi = 3.14
 Show(Double(pi))
 </pre>
 <p>
-Variables in Primer behave like variables in mathematical equations. That is, once a value has
-been assigned it cannot be changed. This property is called <strong>immutability</strong>
-and is an important aspect of functional programming that can lead to very elegant programs with fewer
-opportunities to introduce bugs.
-</p>
-<p>
-The next thing we're going to see are lists which are the fundamental
-data structure of functional programming. We'll define a new variable to
-store five integer values. Primer comes with a number of functions for working with lists and
-the first one we're going to use is <strong>Map</strong>. The job of Map is to apply
-a function to a list of values and return a new list containing the result.
+Lists are the only supported data structure. They can contain
+values of any type, in any combination and can be nested. You can
+construct lists literally or using the <strong>List</strong> and
+<strong>Cons</strong> functions. Lists can be concatenated using
+the <strong>++</strong> operator.
 </p>
 <pre>
-def l = [1,2,3,4,5]
-Show(Map(Double, l))
+def nums = [1,2,3,4,5]
+
+Show(List(true))
+Show([0,1] ++ [2,3,4] ++ [5,[6,7,8]])
+Show(Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]]))
 </pre>
 <p>
-Map is an example of a <strong>higher order function</strong> which means that it takes a
-function as an argument. We ask Map to apply our Double function to each member of the list in turn
-and return a fresh list containing the results. The list in l will be untouched because it's
-immutable. If we run this we should see:
-</p>
-<pre>
-$ primer Double.pri
-[2,4,6,8,10]
-</pre>
-<p>
-Typically we define functions when we expect to use them in more than one place but
-sometimes, when working with higher order function like Map, it can be helpful to not have to
-define the function ahead of time. Primer allows you to use <strong>anonymous functions</strong>,
-that is to write a lambda expression directly at the point at which we want to use it. The
-lambda expression supplied below returns a boolean value indicating whether the value supplied
-is greater-than-or-equal to 3.
-</p>
-<pre>
-Show(Map(lambda (x)
-            x >= 3;
-         end,
-         l))
-</pre>
-<p>
-Although it's useful to know which functions
-are provided by the standard library, such as Map, it's important to note that we could write
-any of them ourselves. Here's the definition of Map to show that it's really nothing special.
-</p>
-<pre>
-def Map = lambda (fn, list)
-    if (list != nil)
-        Cons(Map(fn, Tail(list)), fn(Head(list)));
-    else
-        nil;
-    end
-end
-</pre>
-<p>
-You'll notice however that Map makes use of some new things. The functions Cons, Head and Tail,
-along with Show which we've already met, are examples of <strong>special forms</strong>. A
-special form differs from a regular function as it couldn't be implemented in Primer.
-However, aside from being implemented differently, a special form can be called
-just like a regular function.
-</p>
-<p>
-You'll also notice that Map is <strong>recursive</strong>. A recursive
-function calls itself, either directly as Map does, or indirectly via an intermediate function.
-A function can call itself provided there is some situation under which it will naturally
-terminate. In this case, the terminating condition is reaching the end of the
-list which is signified by the nil value.
-<p>
-We'll now define our own higher order function, SumWithFun. It takes three arguments:
-a function and two numbers. It applies the function to each numeric argument
-in turn and adds the results together, returning the sum to the caller. You can see
-that we refer to the passed in function via the name bound to it in the argument
-list. Run the program and try calling SumWithFun with different functions.
+You can define higher order functions.
 </p>
 <pre>
 def SumWithFun = lambda (fn, x, y)
     fn(x) + fn(y);
 end
 
-Show(SumWithFun(Double, 4, a))
+Show(SumWithFun(Double, 4, 5))
+</pre>
+<p>
+Anonymous functions can also be used.
+</p>
+<pre>
+Show(SumWithFun(lambda (x) x * 2; end, nums))
+</pre>
+<p>
+Here are some of the list processing functions provided by the standard library.
+</p>
+<pre>
+def nums = [4,1,2,7,3,0]
+
+def BigEnough = lambda (x)
+    x > 3;
+end
+
+Show(Nth(nums, 2))
+Show(Sum(nums))
+Show(Map(BigEnough, nums))
+Show(Filter(BigEnough, nums))
+Show(Any(BigEnough, nums))
+Show(All(BigEnough, nums))
+Show(FoldL(lambda (x, y) x + y; end, 0, nums))
+Show(FoldR(lambda (x, y) x + y; end, 0, nums))
+Show(Find(3, nums))
+Show(Empty(nums))
 </pre>
 </body>
 </html>
