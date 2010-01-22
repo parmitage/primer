@@ -1,15 +1,15 @@
 - first function in file can't be called on Windows? - except sometimes it can - something serious wrong!
+- problem in Assert call when using a != b on lists (Windows only)
 - Reverse doesn't work
-- list_eq / list_neq
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
-- unit tests for list functions
+- ! operator
 - strings
 - unary minus
 - Type function, i.e. if (Type(a) == Bool), Integer(x), Bool(x), etc
 - paranthesis in operators to change precedence
 - gc!
 - tail call elimination!
-- closures! - do they make sense? environments live with functions?
+- closures! - do they even make sense? environments live with functions?
 - Split, SplitAt, Take, Drop, TakeWhile, DropWhile, Minimum, Maximum, Product, Zip, Sort, Last
 - printer for lambdas (e.g. full pretty printer)

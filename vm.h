@@ -35,6 +35,7 @@ node* neq(node* x, node* y);
 node* list_eq(node* l1, node* l2);
 node* and(node* x, node* y);
 node* or(node* x, node* y);
+node* not(node* node);
 node* mod(node* x, node* y);
 
 #endif

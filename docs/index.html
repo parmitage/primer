@@ -73,11 +73,10 @@ def pi = 3.14
 Show(Double(pi))
 </pre>
 <p>
-Lists are the only supported data structure. They can contain
-values of any type, in any combination and can be nested. You can
-construct lists literally or using the <strong>List</strong> and
-<strong>Cons</strong> functions. Lists can be concatenated using
-the <strong>++</strong> operator.
+Lists can contain values of any type, in any combination and can be
+nested. You can construct lists literally or using the
+<strong>List</strong> and <strong>Cons</strong> functions.
+Lists can be concatenated using the <strong>++</strong> operator.
 </p>
 <pre>
 def nums = [1,2,3,4,5]
@@ -87,7 +86,7 @@ Show([0,1] ++ [2,3,4] ++ [5,[6,7,8]])
 Show(Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]]))
 </pre>
 <p>
-You can define higher order functions.
+You can define higher order functions....
 </p>
 <pre>
 def SumWithFun = lambda (fn, x, y)
@@ -97,7 +96,7 @@ end
 Show(SumWithFun(Double, 4, 5))
 </pre>
 <p>
-Anonymous functions can also be used.
+...as well as anonymous functions.
 </p>
 <pre>
 Show(SumWithFun(lambda (x) x * 2; end, nums))

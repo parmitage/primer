@@ -47,9 +47,9 @@ node* cdr(node* node)
 node* cons(node* list, node* n)
 {
 	if (list->type == t_nil)
-		return opr(LIST, 2, n, NULL);
+		return opr(LIST, 1, n, NULL);
 	else if (n->type == t_nil)
-		return opr(LIST, 2, list, NULL);
+		return opr(LIST, 1, list, NULL);
 	else
 		return opr(LIST, 2, n, list);
 }
@@ -290,13 +290,19 @@ node* list_eq(node* l1, node* l2)
 {
 	if (l1 == NULL && l2 == NULL)
 		return boolval(true);
+	
+	if (l1->type == t_nil && l2->type == t_nil)
+		return boolval(true);
 
-	if (eq(l1->opr.op[0], l2->opr.op[0])->ival = 1)
+	if (l1->opr.nops != l2->opr.nops)
+		return boolval(false);
+	
+	if (eq(l1->opr.op[0], l2->opr.op[0])->ival == true)
 	{
 		if (l1->opr.nops == 2 && l2->opr.nops == 2)
-			return eq(l1->opr.op[1], l2->opr.op[1]);
+			return list_eq(l1->opr.op[1], l2->opr.op[1]);
 		else
-			return boolval(false);
+			return boolval(true);
 	}
 	else
 		return boolval(false);
@@ -324,19 +330,7 @@ node* eq(node* x, node* y)
 
 node* neq(node* x, node* y)
 {
-	if (x->type != y->type)
-		return boolval(true);
-		
-	if (x->type == t_int || x->type == t_bool)
-		return boolval(x->ival != y->ival);
-		
-	if (x->type == t_float)
-		return boolval(x->fval != y->fval);
-		
-	if (x->type == t_nil || y->type == t_nil)
-		return boolval(false);
-	
-	return boolval(false);
+	return(not(eq(x, y)));
 }
 
 node* and(node* x, node* y)
@@ -363,6 +357,14 @@ node* or(node* x, node* y)
 		// TODO probable should throw error
 		return boolval(false);
 	}
+}
+
+node* not(node* node)
+{
+	if (node->ival == true)
+		return boolval(false);
+	else
+		return boolval(true);
 }
 
 node* mod(node* x, node* y)

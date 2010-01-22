@@ -62,7 +62,7 @@ end
 
 def Reverse = lambda (list)
 	if (list != nil)
-		Reverse(Tail(list)) ++ Cons([], Head(list));
+		Cons([], Head(list)) ++ Reverse(Tail(list));
 	else
 		[];
 	end

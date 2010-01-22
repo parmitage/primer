@@ -1,16 +1,20 @@
-def nums = [4,1,2,7,3,0]
+def Double = lambda(x)
+	x * 2;
+end
 
-def BigEnough = lambda (x)
+def GreaterThan3 = lambda (x)
 	x > 3;
 end
 
-Show(Nth(nums, 2))
-Show(Sum(nums))
-Show(Map(BigEnough, nums))
-Show(Filter(BigEnough, nums))
-Show(Any(BigEnough, nums))
-Show(All(BigEnough, nums))
-Show(FoldL(lambda (x, y) x + y; end, 0, nums))
-Show(FoldR(lambda (x, y) x + y; end, 0, nums))
-Show(Find(3, nums))
-Show(Empty(nums))
+def ListCountdown = lambda (x)
+	if (x > 0)
+		Cons(ListCountdown(x - 1), x);
+	else
+		nil;
+	end
+end
+
+Assert(Map(Double, [1,2,3]), [2,4,6])
+Assert(Filter(GreaterThan3, [1,2,3,2,4,5,6]), [4,5,6])
+Assert(ListCountdown(5), [5,4,3,2,1])
+Assert(Cons(Map(Double, [1,2,3]), 0), [0,2,4,6])
