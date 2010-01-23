@@ -88,6 +88,14 @@ def Sum = lambda (list)
 	end
 end
 
+def Product = lambda (list)
+	if (list != nil)
+		Head(list) * Product(Tail(list));
+	else
+		1;
+	end
+end
+
 def Nth = lambda (list, n)
 	def Inner = lambda (list, x)
 		if (list != nil)
@@ -138,6 +146,14 @@ def Take = lambda (n, list)
 	Inner(0, list);
 end
 
+def TakeWhile = lambda (fn, list)
+	if (list != nil && fn(Head(list)) == true)
+		List(Head(list)) ++ TakeWhile(fn, Tail(list));
+	else
+		[];
+	end
+end
+
 def Drop = lambda (n, list)
 	def Inner = lambda (x, list)
 		if (list != nil)
@@ -151,4 +167,16 @@ def Drop = lambda (n, list)
 		end
 	end
 	Inner(0, list);
+end
+
+def DropWhile = lambda (fn, list)
+	if (list != nil)
+		if (fn(Head(list)) == true)
+			DropWhile(fn, Tail(list));
+		else
+			list;
+		end
+	else
+		list;
+	end
 end

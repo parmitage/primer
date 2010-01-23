@@ -1,3 +1,4 @@
+- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
 - ! operator
@@ -8,5 +9,11 @@
 - gc!
 - tail call elimination!
 - closures! - do they even make sense? environments live with functions?
-- Split, SplitAt, TakeWhile, DropWhile, Minimum, Maximum, Product, Zip, Sort, Last
+- Split
+- SplitAt
+- Minimum
+- Maximum
+- Zip
+- Sort
+- Last
 - printer for lambdas (e.g. full pretty printer)
