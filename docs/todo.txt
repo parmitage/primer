@@ -1,14 +1,12 @@
-- Reverse doesn't work
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
 - ! operator
 - strings
 - unary minus
-- Type function, i.e. if (Type(a) == Bool), Integer(x), Bool(x), etc
-- paranthesis in operators to change precedence
+- Type functions: Integer(x), Bool(x), etc
 - what happens when you try to redefine a binding (in the same scope)
 - gc!
 - tail call elimination!
 - closures! - do they even make sense? environments live with functions?
-- Split, SplitAt, Take, Drop, TakeWhile, DropWhile, Minimum, Maximum, Product, Zip, Sort, Last
+- Split, SplitAt, TakeWhile, DropWhile, Minimum, Maximum, Product, Zip, Sort, Last
 - printer for lambdas (e.g. full pretty printer)

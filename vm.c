@@ -56,6 +56,9 @@ node* cons(node* list, node* n)
 
 node* append(node* list1, node* list2)
 {
+	if (list2 == NULL || list2->type == t_nil)
+		return list1;
+
 	node* r = list1;
 	node* n = list1;
 	

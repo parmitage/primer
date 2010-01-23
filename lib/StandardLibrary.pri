@@ -61,10 +61,10 @@ def Empty = lambda (list)
 end
 
 def Reverse = lambda (list)
-	if (list != nil)
-		Cons([], Head(list)) ++ Reverse(Tail(list));
+	if (Tail(list) != nil)
+		Reverse(Tail(list)) ++ List(Head(list));
 	else
-		[];
+		list;
 	end
 end
 
@@ -125,4 +125,30 @@ def All = lambda (pred, list)
 	else
 		true;
 	end
+end
+
+def Take = lambda (n, list)
+	def Inner = lambda (x, list)
+		if (list != nil && x < n)
+			List(Head(list)) ++ Inner(x + 1, Tail(list));
+		else
+			[];
+		end
+	end
+	Inner(0, list);
+end
+
+def Drop = lambda (n, list)
+	def Inner = lambda (x, list)
+		if (list != nil)
+			if (x < n)
+				Inner(x + 1, Tail(list));
+			else
+				list;
+			end
+		else
+			list;
+		end
+	end
+	Inner(0, list);
 end
