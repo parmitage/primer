@@ -6,9 +6,9 @@ def List = lambda (x)
 	Cons([], x);
 end
 
-def Assert = lambda (actual, expected)
+def Assert = lambda (id, actual, expected)
 	if (actual != expected)
-		Show(false);
+		Show(id);
 	end
 end
 

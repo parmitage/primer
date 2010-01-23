@@ -12,7 +12,6 @@
 		background: #f1f1ef;
 		border: 1px solid black;
 		font-weight: bold;
-		font-size: large;
 		font-name: courier new;
 		line-height: 140%;
 		padding: 10px;
@@ -37,7 +36,6 @@ It's available for <a href="downloads/">Linux</a>,
 <a href="downloads/">source</a> code. If you have any comments, please
 <a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
-<h3>Quick Start</h3>
 <p>
 To get started, unpack the archive somewhere on your PATH and
 create the environment variable PRIMER_LIBRARY_PATH which should point to
@@ -75,15 +73,15 @@ Show(Double(pi))
 <p>
 Lists can contain values of any type, in any combination and can be
 nested. You can construct lists literally or using the
-<strong>List</strong> and <strong>Cons</strong> functions.
+<strong>List</strong> and <strong>Cons</strong> special forms.
 Lists can be concatenated using the <strong>++</strong> operator.
 </p>
 <pre>
 def nums = [1,2,3,4,5]
 
-Show(List(true))
-Show([0,1] ++ [2,3,4] ++ [5,[6,7,8]])
-Show(Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]]))
+List(true)
+[0,1] ++ [2,3,4] ++ [5,[6,7,8]]
+Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]])
 </pre>
 <p>
 You can define higher order functions....
@@ -93,34 +91,28 @@ def SumWithFun = lambda (fn, x, y)
     fn(x) + fn(y);
 end
 
-Show(SumWithFun(Double, 4, 5))
+SumWithFun(Double, 4, 5)
 </pre>
 <p>
 ...as well as anonymous functions.
 </p>
 <pre>
-Show(SumWithFun(lambda (x) x * 2; end, nums))
+SumWithFun(lambda (x) x * 2; end, nums)
 </pre>
 <p>
-Here are some of the list processing functions provided by the standard library.
+The standard library comes with a growing collection of functions:
+<ul>
+	<li><strong>Map</strong> uses a function to transform a lists values</li>
+	<li><strong>Filter</strong> uses a predicate function to filter values from a list</li>
+	<li><strong>Any</strong> returns true if any items from a list pass a test</li>
+	<li><strong>All</strong> returns true if all items from a list pass a test</li>
+	<li><strong>FoldL</strong> use a function to combine list elements</li>
+	<li><strong>FoldR</strong> use a function to combine list elements</li>
+	<li><strong>Sum</strong> returns the sum of all elements in the list</li>
+	<li><strong>Empty</strong> returns true if the list is empty</li>
+	<li><strong>Nth</strong> returns the nth element of a list</li>
+	<li><strong>Find</strong> searches a list for a value</li>
+</ul>
 </p>
-<pre>
-def nums = [4,1,2,7,3,0]
-
-def BigEnough = lambda (x)
-    x > 3;
-end
-
-Show(Nth(nums, 2))
-Show(Sum(nums))
-Show(Map(BigEnough, nums))
-Show(Filter(BigEnough, nums))
-Show(Any(BigEnough, nums))
-Show(All(BigEnough, nums))
-Show(FoldL(lambda (x, y) x + y; end, 0, nums))
-Show(FoldR(lambda (x, y) x + y; end, 0, nums))
-Show(Find(3, nums))
-Show(Empty(nums))
-</pre>
 </body>
 </html>

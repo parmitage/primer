@@ -1,5 +1,3 @@
-- first function in file can't be called on Windows? - except sometimes it can - something serious wrong!
-- problem in Assert call when using a != b on lists (Windows only)
 - Reverse doesn't work
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
@@ -8,6 +6,7 @@
 - unary minus
 - Type function, i.e. if (Type(a) == Bool), Integer(x), Bool(x), etc
 - paranthesis in operators to change precedence
+- what happens when you try to redefine a binding (in the same scope)
 - gc!
 - tail call elimination!
 - closures! - do they even make sense? environments live with functions?

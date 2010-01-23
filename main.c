@@ -87,7 +87,7 @@ node *opr(int oper, int nops, ...)
 	va_list ap;
 	node *p;
 	int i;
-	size_t nodeSize = sizeof(node) + sizeof(oprNodeType) + (nops - 1) * sizeof(node*);
+	size_t nodeSize = sizeof(node) + sizeof(oprNodeType) + nops * sizeof(node*);
 	
 	if ((p = malloc(nodeSize)) == NULL)
 		abort();
