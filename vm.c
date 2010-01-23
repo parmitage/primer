@@ -59,6 +59,9 @@ node* append(node* list1, node* list2)
 	if (list2 == NULL || list2->type == t_nil)
 		return list1;
 
+	if (list1 == NULL || list1->type == t_nil)
+		return list2;
+
 	node* r = list1;
 	node* n = list1;
 	

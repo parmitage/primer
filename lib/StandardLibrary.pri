@@ -180,3 +180,19 @@ def DropWhile = lambda (fn, list)
 		list;
 	end
 end
+
+def Sort = lambda (l)
+	if (l != [])
+		def x = Head(l)
+		def xs = Tail(l)
+		Sort(Filter(lambda (a) a < x end, xs))
+			++ List(x)
+			++ Sort(Filter(lambda (a) a >= x end, xs))
+	else
+		[]
+	end
+end
+
+def Min = lambda (l)
+	Head(Sort(l))
+end

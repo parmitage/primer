@@ -114,7 +114,8 @@ void eval(node *p, environment* env)
 				case DEF:
 				{
 					char* name = p->opr.op[0]->sval;
-					binding* binding = binding_new(name, p->opr.op[1]);
+					eval(p->opr.op[1], env);
+					binding* binding = binding_new(name, pop());
 					environment_extend(env, binding);
 					break;
 				}

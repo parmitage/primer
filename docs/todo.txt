@@ -1,4 +1,3 @@
-- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
 - ! operator
@@ -16,4 +15,6 @@
 - Zip
 - Sort
 - Last
+- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
+- Product([]) == 1
 - printer for lambdas (e.g. full pretty printer)
