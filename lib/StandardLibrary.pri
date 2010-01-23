@@ -196,3 +196,7 @@ end
 def Min = lambda (l)
 	Head(Sort(l))
 end
+
+def Max = lambda (l)
+	Head(Reverse(Sort(l)))
+end

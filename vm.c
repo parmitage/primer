@@ -3,14 +3,6 @@
 #include "vm.h"
 #include "y.tab.h"
 
-void stack_print()
-{
-	printf("[");
-	for (int i = 0; i < 10; ++i)
-		printf("%i,", stack[i] != NULL ? stack[i]->ival : -1);
-	printf("] : %i\n", stack_ptr);
-}
-
 void push(node* node)
 {
 	stack[stack_ptr++] = node;
@@ -28,6 +20,8 @@ node* car(node* node)
 {
 	if (node == NULL)
 		return nil();
+	else if (node->type == t_nil)
+		return node;
 	else
 		return node->opr.op[0];
 }

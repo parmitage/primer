@@ -1,3 +1,10 @@
+- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
+- Product([]) == 1 (should be 0?)
+- Reverse([]) -> crashes on Windows
+- Split
+- SplitAt
+- Zip
+- Last
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
 - ! operator
@@ -5,16 +12,7 @@
 - unary minus
 - Type functions: Integer(x), Bool(x), etc
 - what happens when you try to redefine a binding (in the same scope)
+- printer for lambdas (e.g. full pretty printer)
 - gc!
 - tail call elimination!
 - closures! - do they even make sense? environments live with functions?
-- Split
-- SplitAt
-- Minimum
-- Maximum
-- Zip
-- Sort
-- Last
-- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
-- Product([]) == 1
-- printer for lambdas (e.g. full pretty printer)
