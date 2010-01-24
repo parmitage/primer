@@ -51,8 +51,7 @@ stmts:
 	;
 
 stmt:
-	';'												{ $$ = opr(';', 2, NULL, NULL); }
-	| DEF identifier '=' expr						{ $$ = opr(DEF, 2, $2, $4); }
+	DEF identifier '=' expr							{ $$ = opr(DEF, 2, $2, $4); }
 	| IF '(' expr ')' stmts %prec IFX end			{ $$ = opr(IF, 3, $3, $5, $6); }
 	| IF '(' expr ')' stmts ELSE stmts end			{ $$ = opr(IF, 4, $3, $5, $7, $8); }
 	| expr											{ $$ = $1; }

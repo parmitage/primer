@@ -4,72 +4,72 @@ def l = [1,2,3,4]
 def z = nil
 
 def test = lambda (x)
-	x + b + 2;
+	x + b + 2
 end
 
 def test2 = lambda (x)
 	if (x < 5)
-		def z = 4;
-		z + x + test(3);
+		def z = 4
+		z + x + test(3)
 	else
-		1;
+		1
 	end
 end
 
 def test3 = lambda (x, y)
-	y;
+	y
 end
 
 def test4 = lambda (x, y, z)
-	x * y - z;
+	x * y - z
 end
 
 def test5 = lambda ()
-	b;
+	b
 end
 
 def test6 = lambda ()
-	def c = 12;
+	def c = 12
 	def test6a = lambda ()
-		c;
+		c
 	end	
-	test6a();
+	test6a()
 end
 
 def test7 = lambda (fn)
-	fn(2);
+	fn(2)
 end
 
 def test8 = lambda ()
-	def fx = lambda (x) x; end;
-	fx;
+	def fx = lambda (x) x end
+	fx
 end
 
 def Double = lambda(x)
-	x * 2;
+	x * 2
 end
 
 def SumWithFun = lambda(x, y, fn)
-	fn(x) + fn(y);
+	fn(x) + fn(y)
 end
 
 def Factorial = lambda(x)
 	if (x == 0)
-		1;
+		1
 	else
-		x * Factorial(x - 1);
+		x * Factorial(x - 1)
 	end
 end
 
 def GreaterThan3 = lambda (x)
-	x > 3;
+	x > 3
 end
 
 def ListCountdown = lambda (x)
 	if (x > 0)
-		Cons(ListCountdown(x - 1), x);
+		Cons(ListCountdown(x - 1), x)
 	else
-		nil;
+		nil
 	end
 end
 
@@ -114,7 +114,7 @@ Assert(36, Head(Tail([1,2,3])), 2)
 Assert(37, Head(Tail(Tail([1,2,3]))), 3)
 Assert(38, Find(11, [4,6,10,2,4,11]), 11)
 Assert(39, Find(12, [4,6,10,2,4,11]), nil)
-Assert(40, SumWithFun(2, 3, lambda (x) 3 * x; end), 15)
+Assert(40, SumWithFun(2, 3, lambda (x) 3 * x end), 15)
 Assert(41, Length([9,10] ++ [11,12] ++ [13,14,15] ++ [16] ++ [17]), 9)
 Assert(42, true || true, true)
 Assert(43, true || false, true)
@@ -130,14 +130,14 @@ Assert(52, Nth([44,12,66,87], 2), 66)
 Assert(53, Length([1,2,[3,4,5,6,7],6]), 4)
 Assert(54, Length(Nth([1,2,[3,4,5,6,7],6], 2)), 5)
 Assert(55, Length([]), 0)
-Assert(56, Sum(Map(Double, Filter(lambda (x) 10 % x == 0; end, Cons(Cons([1, 2], 3), 4)))), 6)
-Assert(57, FoldL(lambda (x, y) x + y; end, 0, [1,2,3,4,5]), 15)
-Assert(58, FoldR(lambda (x, y) x + y; end, 0, [1,2,3,4,5]), 15)
-Assert(59, Any(lambda (x) x == 2; end, [1,2,3,4]), true)
-Assert(60, Any(lambda (x) x == 2; end, [2,1,3,4]), true)
-Assert(61, Any(lambda (x) x == 2; end, [1,3,4,2]), true)
-Assert(62, All(lambda (x) x * x > 4; end, [3,4,5,6]), true)
-Assert(63, All(lambda (x) x * x > 4; end, [2,3,4,5,6]), false)
+Assert(56, Sum(Map(Double, Filter(lambda (x) 10 % x == 0 end, Cons(Cons([1, 2], 3), 4)))), 6)
+Assert(57, FoldL(lambda (x, y) x + y end, 0, [1,2,3,4,5]), 15)
+Assert(58, FoldR(lambda (x, y) x + y end, 0, [1,2,3,4,5]), 15)
+Assert(59, Any(lambda (x) x == 2 end, [1,2,3,4]), true)
+Assert(60, Any(lambda (x) x == 2 end, [2,1,3,4]), true)
+Assert(61, Any(lambda (x) x == 2 end, [1,3,4,2]), true)
+Assert(62, All(lambda (x) x * x > 4 end, [3,4,5,6]), true)
+Assert(63, All(lambda (x) x * x > 4 end, [2,3,4,5,6]), false)
 Assert(64, Take(0, [1,2,3]), [])
 Assert(65, Take(1, [1,2,3]), [1])
 Assert(66, Take(2, [1,2,3]), [1,2])
@@ -153,13 +153,13 @@ Assert(75, Reverse([1,2]), [2,1])
 Assert(76, Reverse([1]), [1])
 Assert(77, Reverse(Reverse([1,2,3])), [1,2,3])
 Assert(78, Reverse(Reverse(Reverse([1,2,3]))), [3,2,1])
-Assert(79, TakeWhile(lambda (x) x < 3; end, [1,2,3,4,5]), [1,2])
-Assert(80, TakeWhile(lambda (x) x < 0; end, [1,2,3,4,5]), nil)
-
-Assert(82, DropWhile(lambda (x) x < 0; end, [1,2,3,4,5]), [1,2,3,4,5])
-Assert(83, DropWhile(lambda (x) x < 3; end, [1,2,3,4,5]), [3,4,5])
-Assert(84, DropWhile(lambda (x) x < 5; end, [1,2,3,4,5]), [5])
-Assert(85, DropWhile(lambda (x) x < 6; end, [1,2,3,4,5]), [])
+Assert(79, TakeWhile(lambda (x) x < 3 end, [1,2,3,4,5]), [1,2])
+Assert(80, TakeWhile(lambda (x) x < 0 end, [1,2,3,4,5]), nil)
+Assert(81, TakeWhile(lambda (x) x < 6 end, [1,2,3,4,5]), [1,2,3,4,5])
+Assert(82, DropWhile(lambda (x) x < 0 end, [1,2,3,4,5]), [1,2,3,4,5])
+Assert(83, DropWhile(lambda (x) x < 3 end, [1,2,3,4,5]), [3,4,5])
+Assert(84, DropWhile(lambda (x) x < 5 end, [1,2,3,4,5]), [5])
+Assert(85, DropWhile(lambda (x) x < 6 end, [1,2,3,4,5]), [])
 Assert(86, Sum([1,2,3,4,5]), 15)
 Assert(87, Sum([1]), 1)
 Assert(88, Sum([]), 0)

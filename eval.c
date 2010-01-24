@@ -350,25 +350,17 @@ void eval(node *p, environment* env)
 
 void bind(node* params, environment* env)
 {
-//printf("1\n");
-//printf("nops=%i\n", params->opr.nops);
 	if (params != NULL)
 	{		
-//printf("2\n");
 		if (params->opr.nops > 1)
 		{
-//printf("3\n");
 			bind(params->opr.op[1], env);
-//printf("4\n");
 		}
 		
 		if (params->opr.nops > 0)
 		{
-//printf("5\n");
 			binding* binding = binding_new(params->opr.op[0]->sval, pop());
-//printf("6\n");
 			environment_extend(env, binding);
-//printf("7\n");
 		}
 	}
 }

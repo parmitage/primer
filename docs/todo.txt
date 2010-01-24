@@ -1,7 +1,5 @@
-- TakeWhile(lambda (x) x < 6; end, [1,2,3,4,5]) -> segfault
 - Product([]) == 1 (should be 0?)
 - Reverse([]) -> crashes on Windows
-- couldn't seem to use 'list' as a parameter name??
 - don't seem to need semi-colons anymore...confused!
 - Split
 - SplitAt

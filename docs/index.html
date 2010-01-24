@@ -49,7 +49,7 @@ A function implicitly returns the value of its last expression.
 </p>
 <pre>
 def Double = lambda (x)
-    2 * x;
+    2 * x
 end
 
 Show(Double(2))
@@ -88,7 +88,7 @@ You can define higher order functions....
 </p>
 <pre>
 def SumWithFun = lambda (fn, x, y)
-    fn(x) + fn(y);
+    fn(x) + fn(y)
 end
 
 SumWithFun(Double, 4, 5)
@@ -97,7 +97,7 @@ SumWithFun(Double, 4, 5)
 ...as well as anonymous functions.
 </p>
 <pre>
-SumWithFun(lambda (x) x * 2; end, nums)
+SumWithFun(lambda (x) x * 2 end, nums)
 </pre>
 <p>
 The standard library comes with a growing collection of functions:
