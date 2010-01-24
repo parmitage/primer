@@ -200,3 +200,7 @@ end
 def Max = lambda (l)
 	Head(Reverse(Sort(l)))
 end
+
+def Last = lambda (l)
+	Head(Reverse(l))
+end
