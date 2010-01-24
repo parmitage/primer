@@ -1,9 +1,9 @@
 - Product([]) == 1 (should be 0?)
 - Reverse([]) -> crashes on Windows
-- don't seem to need semi-colons anymore...confused!
 - Split
 - SplitAt
 - Zip
+- consistent parameter naming and order of standard library functions
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
 - ! operator

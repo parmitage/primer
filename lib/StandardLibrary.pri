@@ -204,3 +204,11 @@ end
 def Last = lambda (l)
 	Head(Reverse(l))
 end
+
+def Odd = lambda (z)
+	z % 2 != 0
+end
+
+def Even = lambda (z)
+	z % 2 == 0
+end

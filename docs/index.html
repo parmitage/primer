@@ -24,6 +24,19 @@
 		background: blue;
 		color: white;
 	}
+	h3 {
+		margin-top: 40px;
+	}
+	div.def {
+		margin-top: 30px;
+		border: 1px dashed black;
+		padding: 10px;
+	}
+	span.sig {
+		font-family: monospace;
+		font-weight: bold;
+		font-size: large;
+	}
 </style>
 </head>
 <body>
@@ -36,16 +49,18 @@ It's available for <a href="downloads/">Linux</a>,
 <a href="downloads/">source</a> code. If you have any comments, please
 <a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
+<h3>Quick Start</h3>
 <p>
 To get started, unpack the archive somewhere on your PATH and
 create the environment variable PRIMER_LIBRARY_PATH which should point to
 StandardLibrary.pri.
+</p>
 <p>
 The keyword <strong>def</strong> interns a new symbol and binds it to an
 expression. In the example below we define a function with the
 <strong>lambda</strong> keyword and bind it to the symbol Double.
 A function implicitly returns the value of its last expression.
-<strong>Show</strong> is one of the special forms provided by the runtime.
+The <strong>Show</strong> function is provided by the runtime.
 </p>
 <pre>
 def Double = lambda (x)
@@ -55,36 +70,45 @@ end
 Show(Double(2))
 </pre>
 <p>
-Save your program in a file called Double.pri and at the shell enter:
+To run this, save it as Double.pri and at the shell enter:
 </p>
 <pre>
 $ primer Double.pri
 </pre>
 <p>
 Primer is dynamically typed and supports integers, floats, booleans and
-the value <strong>nil</strong> which represents nothing. Bindings in
-Primer are immutable although the language is lexically scoped so they
-may be shadowed.
+the value <strong>nil</strong> which represents nothing. Bindings are
+immutable and lexically scoped.
 </p>
 <pre>
 def pi = 3.14
 Show(Double(pi))
 </pre>
 <p>
-Lists can contain values of any type, in any combination and can be
-nested. You can construct lists literally or using the
-<strong>List</strong> and <strong>Cons</strong> special forms.
-Lists can be concatenated using the <strong>++</strong> operator.
+Conditional logic is handled by the if statement which has an optional else clause
+and can be nested.
 </p>
 <pre>
-def nums = [1,2,3,4,5]
-
-List(true)
-[0,1] ++ [2,3,4] ++ [5,[6,7,8]]
-Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]])
+def Test = lambda (x)
+    if (x % 4 == 2)
+        5 * x + 2
+    else
+        4 + x * x
+    end
+end
 </pre>
 <p>
-You can define higher order functions....
+Lists can contain values of any type, in any combination and can be
+nested. They can be constructed either literally or by using
+<strong>List</strong> and <strong>Cons</strong> and concatenated
+using the <strong>++</strong> operator.
+</p>
+<pre>
+def nums = [1, 2.2, 3, false, Double]
+nums ++ List(true) ++ [5,[6,7,8]] ++ Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]])
+</pre>
+<p>
+You can use higher order and anonymous functions.
 </p>
 <pre>
 def SumWithFun = lambda (fn, x, y)
@@ -92,27 +116,297 @@ def SumWithFun = lambda (fn, x, y)
 end
 
 SumWithFun(Double, 4, 5)
-</pre>
-<p>
-...as well as anonymous functions.
-</p>
-<pre>
 SumWithFun(lambda (x) x * 2 end, nums)
 </pre>
-<p>
-The standard library comes with a growing collection of functions:
-<ul>
-	<li><strong>Map</strong> uses a function to transform a lists values</li>
-	<li><strong>Filter</strong> uses a predicate function to filter values from a list</li>
-	<li><strong>Any</strong> returns true if any items from a list pass a test</li>
-	<li><strong>All</strong> returns true if all items from a list pass a test</li>
-	<li><strong>FoldL</strong> use a function to combine list elements</li>
-	<li><strong>FoldR</strong> use a function to combine list elements</li>
-	<li><strong>Sum</strong> returns the sum of all elements in the list</li>
-	<li><strong>Empty</strong> returns true if the list is empty</li>
-	<li><strong>Nth</strong> returns the nth element of a list</li>
-	<li><strong>Find</strong> searches a list for a value</li>
-</ul>
-</p>
+
+<h3>Function Reference</h3>
+
+<div class="def">
+	<span class="sig">All(fn, l)</span>
+	<p>
+		Returns true if all elemets of list l pass the predicate function fn.
+	</p>
+<pre>
+All(lambda (x) x * x > 4 end, [3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Any(fn, l)</span>
+	<p>
+		Returns true if any elemets of list l pass the predicate function fn.
+	</p>
+<pre>
+Any(lambda (x) x == 7 end, [3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Cons(l, e)</span> [special form]
+	<p>
+		Construct a new list with element e prepended onto list l.
+	</p>
+<pre>
+Cons([3,4,5,6], 2)
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Drop(z, l)</span>
+	<p>
+		Drop z items from the front of list l.
+	</p>
+<pre>
+Drop(3, [1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">DropWhile(fn, l)</span>
+	<p>
+		Drop items which pass the predicate function fn from the front of list l until
+		the predicate fails.
+	</p>
+<pre>
+DropWhile(Even, [2,4,6,7,8,9,10])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Empty(l)</span>
+	<p>
+		Returns true if the list l contains no elements.
+	</p>
+<pre>
+Empty([])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Even(z)</span>
+	<p>
+		Returns true if z is an even number.
+	</p>
+<pre>
+Even(3)
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Find(x, l)</span>
+	<p>
+		Returns x if the list l contains x, otherwise return nil.
+	</p>
+<pre>
+Find(4, [3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Filter(fn, l)</span>
+	<p>
+		Returns a new list containing the elements of l for which the predicate function fn
+		returns true.
+	</p>
+<pre>
+Filter(Odd, [1,2,3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">FoldL(fn, z, l)</span>
+	<p>
+		Recursively combines the results of combining all but the last element of list l with
+		the last element using the combining function fn. The initial value z is combined with
+		the first element of the list. 
+	</p>
+<pre>
+FoldL(lambda (x, y) x + y end, 0, [1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">FoldR(fn, z, l)</span>
+	<p>
+		Recursively combines the first element of list l with the results of combining the rest
+		using the combining function fn. The initial value z is combined with the last
+		element of the list.
+	</p>
+<pre>
+FoldR(lambda (x, y) x + y end, 0, [1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Head(l)</span> [special form]
+	<p>
+		Return the first element of a list.
+	</p>
+<pre>
+Head([3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Last(l)</span>
+	<p>
+		Return the last element of list l.
+	</p>
+<pre>
+Last([1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Length(l)</span>
+	<p>
+		Return the length of list l.
+	</p>
+<pre>
+Length([1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">List(x)</span>
+	<p>
+		Return a new list containing x as its only member.
+	</p>
+<pre>
+List(4.55)
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Map(fn, l)</span>
+	<p>
+		Applies function fn to each element of list l returning the result as a list.
+	</p>
+<pre>
+Map(lambda (x) x * 2 end, [1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Max(l)</span>
+	<p>
+		Returns the largest numeric value from list l.
+	</p>
+<pre>
+Max([4,1,3,8,1,3,7])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Min(l)</span>
+	<p>
+		Returns the smallest numeric value from list l.
+	</p>
+<pre>
+Min([4,1,3,8,1,3,7])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Nth(l, n)</span>
+	<p>
+		Return the element in position n from list l. The index is 0 based.
+	</p>
+<pre>
+Nth([1,2,3,4,5], 3)
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Odd(z)</span>
+	<p>
+		Returns true if z is an odd number.
+	</p>
+<pre>
+Odd(3)
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Product(l)</span>
+	<p>
+		Return the product of the values in list l.
+	</p>
+<pre>
+Product([1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Reverse(l)</span>
+	<p>
+		Return a new list containing the items of list l but in reverse order.
+	</p>
+<pre>
+Reverse([1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Show(z)</span> [special form]
+	<p>
+		Display z to standard output.
+	</p>
+<pre>
+Show([3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Sort(l)</span>
+	<p>
+		Sort the elements of list l into ascending order.
+	</p>
+<pre>
+Sort([99,96,91,92,94,98,93])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Sum(l)</span>
+	<p>
+		Return the sum of the values in list l.
+	</p>
+<pre>
+Sum([1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Tail(l)</span> [special form]
+	<p>
+		Return the tail of a list.
+	</p>
+<pre>
+Tail([3,4,5,6])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">Take(z, l)</span>
+	<p>
+		Take z items from the front of list l.
+	</p>
+<pre>
+Take(3, [1,2,3,4,5])
+</pre>
+</div>
+
+<div class="def">
+	<span class="sig">TakeWhile(fn, l)</span>
+	<p>
+		Take items which pass the predicate function fn from the front of list l until
+		the predicate fails.
+	</p>
+<pre>
+TakeWhile(Even, [2,4,6,7,8,9,10])
+</pre>
+</div>
+
 </body>
 </html>
