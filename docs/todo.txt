@@ -1,17 +1,19 @@
 - Product([]) == 1 (should be 0?)
-- Reverse([]) -> crashes on Windows
+- string reverse
+- string allocation is currently fixed array 1000!
+- character literals
 - Split
 - SplitAt
 - Zip
-- consistent parameter naming and order of standard library functions
+- replace all unit test IDs with strings
+- update documentation with string type
+- consistent parameter naming and ordering for standard library functions
+- consistent naming of node constructor functions
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support (e.g. fn()()) - parser
-- ! operator
-- strings
-- unary minus
-- Type functions: Integer(x), Bool(x), etc
 - what happens when you try to redefine a binding (in the same scope)
 - printer for lambdas (e.g. full pretty printer)
+- 2 shift/reduce errors introduced by unary minus
 - gc!
 - tail call elimination!
 - closures! - do they even make sense? environments live with functions?

@@ -22,20 +22,23 @@ int lineno = 1;
   node *nPtr;
 }
 
-%token <sval> SYMBOL
+%token <sval> SYMBOL STRING
 %token <ival> INTEGER
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF ELSE FUNCALL
-%token GE LE NE EQ AND OR MOD APPEND TRUE FALSE NIL END LIST
-%token HEAD TAIL CONS SHOW
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
+%token HEAD TAIL CONS SHOW TYPE
 
 %nonassoc IFX
 %nonassoc ELSE
 
+%left NOT
 %left AND OR
 %left GE LE EQ NE MOD APPEND '>' '<'
 %left '+' '-'
 %left '*' '/'
+
+%nonassoc UMINUS
 
 %type <nPtr> program stmts stmt expr params list identifier end
 
@@ -66,6 +69,7 @@ expr:
 	| FLOAT                                         { $$ = fpval($1); }
 	| TRUE                                          { $$ = boolval(1); }
 	| FALSE                                         { $$ = boolval(0); }
+	| STRING										{ $$ = node_make_string($1); }
 	| NIL											{ $$ = nil(); }
 	| identifier									{ $$ = $1; }
 	| LAMBDA '(' params ')' stmts END				{ $$ = opr(LAMBDA, 2, $3, $5); }
@@ -74,6 +78,7 @@ expr:
 	| TAIL '(' expr ')'								{ $$ = opr(TAIL, 1, $3); }
 	| CONS '(' expr ',' expr ')'					{ $$ = opr(CONS, 2, $3, $5); }
 	| SHOW '(' expr ')'								{ $$ = opr(SHOW, 1, $3); }
+	| TYPE '(' expr ')'								{ $$ = opr(TYPE, 1, $3); }
 	| expr '+' expr									{ $$ = opr('+', 2, $1, $3); }
 	| expr '-' expr									{ $$ = opr('-', 2, $1, $3); }
 	| expr '*' expr									{ $$ = opr('*', 2, $1, $3); }
@@ -88,6 +93,8 @@ expr:
 	| expr OR expr									{ $$ = opr(OR, 2, $1, $3); }
 	| expr MOD expr									{ $$ = opr(MOD, 2, $1, $3); }
 	| expr APPEND expr								{ $$ = opr(APPEND, 2, $1, $3); }
+	| NOT expr										{ $$ = opr(NOT, 1, $2); }
+	| '-' expr %prec UMINUS							{ $$ = opr('-', 1, $2); }
 	| '[' list ']'									{ $$ = $2; }
 	;
 

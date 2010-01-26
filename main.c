@@ -50,6 +50,45 @@ node *boolval(int value)
 	return p;
 }
 
+node* mkchar(char c)
+{
+	node* p;
+		
+	if ((p = malloc(sizeof(node) + sizeof(char))) == NULL)
+		abort();
+
+	p->type = t_char;
+	p->lineno = lineno;
+	p->ival = c;
+	
+	return p;
+}
+
+node* node_make_string(char* value)
+{
+	int srclen = strlen(value);
+	int destlen = srclen - 1;
+	int copylen = srclen - 2;
+	//char* temp = (char*)malloc(destlen * sizeof(char));
+	char temp[1000];
+	strncpy(temp, value + 1, copylen);
+	temp[copylen] = '\0';
+	free(value);
+	return node_from_string(temp);
+}
+
+node* node_from_string(char* value)
+{
+	int len = strlen(value);
+
+	if (len > 1)
+		return opr(STRING, 2, mkchar(value[0]), node_from_string(value + 1));
+	else
+		return opr(STRING, 1, mkchar(value[0]));
+	
+	return nil();
+}
+
 node* nil()
 {
 	node *p;

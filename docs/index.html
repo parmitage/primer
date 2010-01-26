@@ -5,16 +5,15 @@
 	body {
 		margin: 40px;
 		font-family: Geneva, Verdana;
-		width: 800px;
 		line-height: 140%;
 	}
 	pre {
-		background: #f1f1ef;
-		border: 1px solid black;
 		font-weight: bold;
-		font-name: courier new;
+		font-name: monospace;
 		line-height: 140%;
-		padding: 10px;
+		color: brown;
+		font-size: 12pt;
+		margin-left: 30px;
 	}
 	a {
 		text-decoration: none;
@@ -24,18 +23,27 @@
 		background: blue;
 		color: white;
 	}
-	h3 {
+	h2 {
 		margin-top: 40px;
 	}
-	div.def {
-		margin-top: 30px;
-		border: 1px dashed black;
-		padding: 10px;
-	}
 	span.sig {
-		font-family: monospace;
+		font-family: courier new;
 		font-weight: bold;
-		font-size: large;
+	}
+	li {
+		margin: 10px;
+	}
+	li span.example {
+		color: brown;
+		font-weight: bold;
+		font-family: monospace;
+		font-size: 12pt;
+	}
+	li span.output {
+		color: blue;
+		font-weight: bold;
+		font-family: monospace;
+		font-size: 12pt;
 	}
 </style>
 </head>
@@ -43,13 +51,11 @@
 <h1>Primer</h1>
 <p>
 Primer is a little programming language in the early stages of development.
-It's available for <a href="downloads/">Linux</a>,
-<a href="downloads/">Mac</a> and
-<a href="downloads/">Windows</a>. You can also download the
-<a href="downloads/">source</a> code. If you have any comments, please
+Downloads will be available soon. If you have any comments, please
 <a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
-<h3>Quick Start</h3>
+
+<h2>Quick Start</h2>
 <p>
 To get started, unpack the archive somewhere on your PATH and
 create the environment variable PRIMER_LIBRARY_PATH which should point to
@@ -76,9 +82,9 @@ To run this, save it as Double.pri and at the shell enter:
 $ primer Double.pri
 </pre>
 <p>
-Primer is dynamically typed and supports integers, floats, booleans and
-the value <strong>nil</strong> which represents nothing. Bindings are
-immutable and lexically scoped.
+Primer is dynamically typed and supports integers, floats, strings,
+booleans and the value <strong>nil</strong> which represents nothing.
+Bindings are immutable and lexically scoped.
 </p>
 <pre>
 def pi = 3.14
@@ -89,11 +95,11 @@ Conditional logic is handled by the if statement which has an optional else clau
 and can be nested.
 </p>
 <pre>
-def Test = lambda (x)
-    if (x % 4 == 2)
-        5 * x + 2
+def Rating = lambda (score)
+    if (score > 90)
+        "Well done!
     else
-        4 + x * x
+        "Try harder!"
     end
 end
 </pre>
@@ -119,294 +125,228 @@ SumWithFun(Double, 4, 5)
 SumWithFun(lambda (x) x * 2 end, nums)
 </pre>
 
-<h3>Function Reference</h3>
+<h2>Function Reference</h2>
 
-<div class="def">
+<ul>
+<li>
 	<span class="sig">All(fn, l)</span>
-	<p>
-		Returns true if all elemets of list l pass the predicate function fn.
-	</p>
-<pre>
-All(lambda (x) x * x > 4 end, [3,4,5,6])
-</pre>
-</div>
+	- return true if all elements in list l pass the predicate function fn.
+	<pre>All(Even, [3,4,5,6]) <span class="output">=> false</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Any(fn, l)</span>
-	<p>
-		Returns true if any elemets of list l pass the predicate function fn.
-	</p>
-<pre>
-Any(lambda (x) x == 7 end, [3,4,5,6])
-</pre>
-</div>
+	- return true if any elements in list l pass the predicate function fn.
+	<pre>Any(Even, [3,4,5,6]) <span class="output">=> true</span></pre>
+</li>
 
-<div class="def">
-	<span class="sig">Cons(l, e)</span> [special form]
-	<p>
-		Construct a new list with element e prepended onto list l.
-	</p>
-<pre>
-Cons([3,4,5,6], 2)
-</pre>
-</div>
+<li>
+	<span class="sig">Bool(z)</span>
+	- returns true if z is of type boolean, otherwise returns false.
+	<pre>Bool(false) <span class="output">=> true</span></pre>
+</li>
 
-<div class="def">
-	<span class="sig">Drop(z, l)</span>
-	<p>
-		Drop z items from the front of list l.
-	</p>
-<pre>
-Drop(3, [1,2,3,4,5])
-</pre>
-</div>
+<li>
+	<span class="sig">Cons(l, e)</span>
+	- construct a new list with element e prepended onto list l.
+	<pre>Cons([3,4,5,6], 2) <span class="output">=> [2,3,4,5,6]</span></pre>
+</li>
 
-<div class="def">
+<li>
+	<span class="sig">Drop(n, l)</span>
+	- drop n items from the front of list l.
+	<pre>Drop(3, [1,2,3,4,5]) <span class="output">=> [4,5]</span></pre>
+</li>
+
+<li>
 	<span class="sig">DropWhile(fn, l)</span>
-	<p>
-		Drop items which pass the predicate function fn from the front of list l until
-		the predicate fails.
-	</p>
-<pre>
-DropWhile(Even, [2,4,6,7,8,9,10])
-</pre>
-</div>
+	- drop items from the head of list l until predicate function fn fails.
+	<pre>DropWhile(Even, [2,4,6,7,8,9,10]) <span class="output">=> [7,8,9,10]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Empty(l)</span>
-	<p>
-		Returns true if the list l contains no elements.
-	</p>
-<pre>
-Empty([])
-</pre>
-</div>
+	- returns true if list l contains no elements.
+	<pre>Empty([]) <span class="output">=> true</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Even(z)</span>
-	<p>
-		Returns true if z is an even number.
-	</p>
-<pre>
-Even(3)
-</pre>
-</div>
+	- returns true if z is an even number.
+	<pre>Even(3) <span class="output">=> false</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Find(x, l)</span>
-	<p>
-		Returns x if the list l contains x, otherwise return nil.
-	</p>
-<pre>
-Find(4, [3,4,5,6])
-</pre>
-</div>
+	- returns x if the list l contains x, otherwise return nil.
+	<pre>Find(2, [3,4,5,6]) <span class="output">=> nil</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Filter(fn, l)</span>
-	<p>
-		Returns a new list containing the elements of l for which the predicate function fn
-		returns true.
-	</p>
-<pre>
-Filter(Odd, [1,2,3,4,5,6])
-</pre>
-</div>
+	- returns a list containing the elements of l which satisfy predicate function fn.
+	<pre>Filter(Odd, [1,2,3,4,5,6]) <span class="output">=> [1,3,5]</span></pre>
+</li>
 
-<div class="def">
+<li>
+	<span class="sig">Float(z)</span>
+	- returns true if z is of type float, otherwise returns false.
+	<pre>Float(93.755) <span class="output">=> true</span></pre>
+</li>
+
+<li>
 	<span class="sig">FoldL(fn, z, l)</span>
-	<p>
-		Recursively combines the results of combining all but the last element of list l with
-		the last element using the combining function fn. The initial value z is combined with
-		the first element of the list. 
-	</p>
-<pre>
-FoldL(lambda (x, y) x + y end, 0, [1,2,3,4,5])
-</pre>
-</div>
+	- recursively combine list l using the binary function fn; combining z with the first element.
+	<ul>
+		<li>
+			<span class="example">
+				FoldL(AddAndDouble, 0, [1,2,3,4,5])
+			</span>
+			<span class="output">=> 30</span>
+		</li>
+	</ul>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">FoldR(fn, z, l)</span>
-	<p>
-		Recursively combines the first element of list l with the results of combining the rest
-		using the combining function fn. The initial value z is combined with the last
-		element of the list.
-	</p>
-<pre>
-FoldR(lambda (x, y) x + y end, 0, [1,2,3,4,5])
-</pre>
-</div>
+	- recursively combine list l using the binary function fn; combining z with the last element.
+	<ul>
+		<li>
+			<span class="example">
+				FoldR(AddAndDouble, 0, [1,2,3,4,5])
+			</span>	
+			<span class="output">=> 15</span>
+		</li>
+	</ul>
+</li>
 
-<div class="def">
-	<span class="sig">Head(l)</span> [special form]
-	<p>
-		Return the first element of a list.
-	</p>
-<pre>
-Head([3,4,5,6])
-</pre>
-</div>
+<li>
+	<span class="sig">Head(l)</span>
+	- return the first element of a list.
+	<pre>Head([3,4,5,6]) <span class="output">=> 3</span></pre>
+</li>
 
-<div class="def">
+<li>
+	<span class="sig">Integer(z)</span>
+	- returns true if z is of type integer, otherwise returns false.
+	<pre>Integer(55) <span class="output">=> true</span></pre>
+</li>
+
+<li>
 	<span class="sig">Last(l)</span>
-	<p>
-		Return the last element of list l.
-	</p>
-<pre>
-Last([1,2,3,4,5])
-</pre>
-</div>
+	- return the last element of list l.
+	<pre>Last([1,2,3,4,5]) <span class="output">=> 5</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Length(l)</span>
-	<p>
-		Return the length of list l.
-	</p>
-<pre>
-Length([1,2,3,4,5])
-</pre>
-</div>
+	- return the length of list l.
+	<pre>Length([1,2,3,4,5]) <span class="output">=> 5</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">List(x)</span>
-	<p>
-		Return a new list containing x as its only member.
-	</p>
-<pre>
-List(4.55)
-</pre>
-</div>
+	- return a new list containing x as its only member.
+	<pre>List(4.55) <span class="output">=> [4.55]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Map(fn, l)</span>
-	<p>
-		Applies function fn to each element of list l returning the result as a list.
+	- applies function fn to each element of list l returning the result as a list.
 	</p>
-<pre>
-Map(lambda (x) x * 2 end, [1,2,3,4,5])
-</pre>
-</div>
+	<pre>Map(lambda (x) x * 2 end, [1,2,3,4,5]) <span class="output">=> [2,4,6,8,10]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Max(l)</span>
-	<p>
-		Returns the largest numeric value from list l.
-	</p>
-<pre>
-Max([4,1,3,8,1,3,7])
-</pre>
-</div>
+	- returns the largest numeric value from list l.
+	<pre>Max([4,1,3,8,1,3,7]) <span class="output">=> 8</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Min(l)</span>
-	<p>
-		Returns the smallest numeric value from list l.
-	</p>
-<pre>
-Min([4,1,3,8,1,3,7])
-</pre>
-</div>
+	- returns the smallest numeric value from list l.
+	<pre>Min([4,1,3,8,1,3,7]) <span class="output">=> 1</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Nth(l, n)</span>
-	<p>
-		Return the element in position n from list l. The index is 0 based.
-	</p>
-<pre>
-Nth([1,2,3,4,5], 3)
-</pre>
-</div>
+	- return the element in position n from list l. The index is 0 based.
+	<pre>Nth([1,2,3,4,5], 3) <span class="output">=> 4</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Odd(z)</span>
-	<p>
-		Returns true if z is an odd number.
-	</p>
-<pre>
-Odd(3)
-</pre>
-</div>
+	- returns true if z is an odd number.
+	<pre>Odd(3) <span class="output">=> true</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Product(l)</span>
-	<p>
-		Return the product of the values in list l.
-	</p>
-<pre>
-Product([1,2,3,4,5])
-</pre>
-</div>
+	- return the product of the values in list l.
+	<pre>Product([1,2,3,4,5]) <span class="output">=> 120</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Reverse(l)</span>
-	<p>
-		Return a new list containing the items of list l but in reverse order.
-	</p>
-<pre>
-Reverse([1,2,3,4,5])
-</pre>
-</div>
+	- return a new list containing the items of list l but in reverse order.
+	<pre>Reverse([1,2,3,4,5]) <span class="output">=> [5,4,3,2,1]</span></pre>
+</li>
 
-<div class="def">
-	<span class="sig">Show(z)</span> [special form]
-	<p>
-		Display z to standard output.
-	</p>
-<pre>
-Show([3,4,5,6])
-</pre>
-</div>
+<li>
+	<span class="sig">Show(z)</span>
+	- display z to standard output.
+	<pre>Show([3,4,5,6]) <span class="output">=> [3,4,5,6]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Sort(l)</span>
-	<p>
-		Sort the elements of list l into ascending order.
-	</p>
-<pre>
-Sort([99,96,91,92,94,98,93])
-</pre>
-</div>
+	- sort the elements of list l into ascending order.
+	<ul>
+		<li>
+			<span class="example">
+				Sort([99,96,91,92,94,98,93])
+			</span>
+			<span class="output">=> [91,92,93,94,96,98,99]</span>
+		</li>
+		<li>
+			<span class="example">
+				Sort("qwertyuiopasdfghjklzxcvbnm")
+			</span>
+			<span class="output">=> [a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z]</span>
+		</li>
+	</ul>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Sum(l)</span>
-	<p>
-		Return the sum of the values in list l.
-	</p>
-<pre>
-Sum([1,2,3,4,5])
-</pre>
-</div>
+	- return the sum of the values in list l.
+	<pre>Sum([1,2,3,4,5]) <span class="output">=> 15</span></pre>
+</li>
 
-<div class="def">
-	<span class="sig">Tail(l)</span> [special form]
-	<p>
-		Return the tail of a list.
-	</p>
-<pre>
-Tail([3,4,5,6])
-</pre>
-</div>
+<li>
+	<span class="sig">Tail(l)</span>
+	- return the tail of a list.
+	<pre>Tail([3,4,5,6]) <span class="output">=> [4,5,6]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">Take(z, l)</span>
-	<p>
-		Take z items from the front of list l.
-	</p>
-<pre>
-Take(3, [1,2,3,4,5])
-</pre>
-</div>
+	- take z items from the front of list l.
+	<pre>Take(3, [1,2,3,4,5]) <span class="output">=> [1,2,3]</span></pre>
+</li>
 
-<div class="def">
+<li>
 	<span class="sig">TakeWhile(fn, l)</span>
-	<p>
-		Take items which pass the predicate function fn from the front of list l until
-		the predicate fails.
-	</p>
-<pre>
-TakeWhile(Even, [2,4,6,7,8,9,10])
-</pre>
-</div>
+	- take items from the head of list l until predicate function fn fails.
+	<pre>TakeWhile(Even, [2,4,6,7,8,9,10]) <span class="output">=> [2,4,6]</span></pre>
+</li>
 
+<li>
+	<span class="sig">Type(z)</span>
+	- returns the integral type code of object z.
+	<pre>Type(3) <span class="output">=> 1</span></pre>
+</li>
+</ul>
 </body>
 </html>

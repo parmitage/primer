@@ -70,6 +70,11 @@ node* append(node* list1, node* list2)
 	return r;
 }
 
+int node_type(node* node)
+{
+	return node->type;
+}
+
 void display_primitive(node* node, int depth)
 {
 	switch (node->type)
@@ -86,11 +91,22 @@ void display_primitive(node* node, int depth)
 		case t_bool:
 			printf("%s", node->ival > 0 ? "true" : "false");
 			break;
+		case t_char:
+			printf("%c", node->ival);
+			break;
 		
 		case t_cons:
 		{
 			switch (node->opr.oper)
 			{
+				case STRING:
+				{
+					display_primitive(node->opr.op[0], depth);
+					if (node->opr.nops == 2)
+						display_primitive(node->opr.op[1], depth);
+					break;
+				}
+				
 				case LIST:
 				{
 					if (depth == 0)
@@ -318,13 +334,16 @@ node* eq(node* x, node* y)
 		
 	if (x->type == t_float)
 		return boolval(x->fval == y->fval);
+
+	if (x->type == t_char)
+		return boolval(x->ival == y->ival);
 	
 	if (x->type == t_nil)
 		return boolval(true);
 	
 	if (x->type == t_cons)
 		return list_eq(x, y);
-	
+		
 	return boolval(false);
 }
 

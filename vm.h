@@ -11,17 +11,15 @@ int stack_ptr;
 void push(node* node);
 node* pop();
 
-/* display objects to stdout */
-void display(node* node);
-void display_primitive(node* node, int depth);
-
-/* classic Lisp style list operations */
+/* special forms */
 node* car(node* node);
 node* cdr(node* node);
 node* cons(node* list, node* n);
-node* append(node* list1, node* list2);
+int node_type(node* node);
+void display(node* node);
+void display_primitive(node* node, int depth);
 
-/* built in operators */
+/* operators */
 node* add(node* x, node* y);
 node* sub(node* x, node* y);
 node* mul(node* x, node* y);
@@ -37,5 +35,6 @@ node* and(node* x, node* y);
 node* or(node* x, node* y);
 node* not(node* node);
 node* mod(node* x, node* y);
+node* append(node* list1, node* list2);
 
 #endif

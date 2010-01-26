@@ -166,7 +166,11 @@ def Drop = lambda (n, list)
 			list
 		end
 	end
-	Inner(0, list)
+	if (n >= Length(list))
+		[]
+	else
+		Inner(0, list)
+	end
 end
 
 def DropWhile = lambda (fn, list)
@@ -211,4 +215,20 @@ end
 
 def Even = lambda (z)
 	z % 2 == 0
+end
+
+def Integer = lambda (z)
+	Type(z) == 1
+end
+
+def Float = lambda (z)
+	Type(z) == 2
+end
+
+def Bool = lambda (z)
+	Type(z) == 3
+end
+
+def Function = lambda (z)
+	Type(z) == 6
 end

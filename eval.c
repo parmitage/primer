@@ -59,6 +59,7 @@ void eval(node *p, environment* env)
 		case t_int:
 		case t_float:
 		case t_bool:
+		case t_char:
 		case t_nil:
 			push(p);
 			break;
@@ -96,6 +97,12 @@ void eval(node *p, environment* env)
 		{
 			switch(p->opr.oper)
 			{
+				case STRING:
+				{
+					push(p);
+					break;
+				}
+			
 				case LIST:
 				{
 					push(p);
@@ -242,9 +249,18 @@ void eval(node *p, environment* env)
 				
 				case '-':
 				{
-					eval(p->opr.op[0], env);
-					eval(p->opr.op[1], env);
-					push(sub(pop(), pop()));
+					if (p->opr.nops == 1)
+					{
+						eval(p->opr.op[0], env);
+						push(sub(con(0), pop()));
+					}
+					else if (p->opr.nops == 2)
+					{
+						eval(p->opr.op[0], env);
+						eval(p->opr.op[1], env);
+						push(sub(pop(), pop()));
+					}
+
 					break;
 				}
 				
@@ -341,6 +357,31 @@ void eval(node *p, environment* env)
 					eval(p->opr.op[0], env);
 					eval(p->opr.op[1], env);
 					push(append(pop(), pop()));
+					break;
+				}
+				
+				case NOT:
+				{
+					eval(p->opr.op[0], env);
+					push(not(pop()));
+					break;
+				}
+				
+				case TYPE:
+				{
+					int t = node_type(p->opr.op[0]);
+					
+					if (t == t_symbol)
+					{
+						binding *b = environment_lookup(env, p->opr.op[0]->sval);
+						
+						if (b != NULL)
+							t = b->node->type;
+						else
+							t = -1;
+					}
+
+					push(con(t));
 					break;
 				}
 			}

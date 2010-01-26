@@ -13,6 +13,7 @@ typedef enum {
 	t_float,
 	t_bool,
 	t_symbol,
+	t_char,
 	t_cons
 } t_type;
 
@@ -28,7 +29,7 @@ typedef struct nodeTag {
   t_type type;
   int lineno;
   union {
-    int ival;
+    int ival;				/* int, bool and char */
     float fval;
     char* sval;
     oprNodeType opr;        /* composite */
@@ -47,26 +48,19 @@ int lineno;
 /* driver for yacc */
 void parse(char* filename);
 
-/* constructor for non-primitive AST nodes (LAMBDA, FUNCALL, IF, ...) */
+/* constructors for AST nodes */
 node *opr(int oper, int nops, ...);
-
-/* constructor for literal symbolic AST nodes */
 node *sym(char* s);
-
-/* constructor for literal integer AST nodes */
 node *con(int value);
-
-/* constructor for literal floating point AST nodes */
 node *fpval(float value);
-
-/* constructor for literal boolean AST nodes */
 node *boolval(int value);
-
-/* constructor for NIL valued AST nodes */
+node* node_make_string(char* value);
+node* mkchar(char c);
 node* nil();
 
-/* recursively frees a node and its children */
+/* node functions */
 void nodefree(node *p);
+node* node_from_string(char* value);
 
 /* print an error with its line number */
 void logerr(char* msg, int line);
