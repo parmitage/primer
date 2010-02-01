@@ -85,8 +85,6 @@ node* node_from_string(char* value)
 		return mkcons(STRING, 2, mkchar(value[0]), node_from_string(value + 1));
 	else
 		return mkcons(STRING, 1, mkchar(value[0]));
-	
-	return mknil();
 }
 
 node* mknil()
@@ -179,7 +177,7 @@ void nodefree(node *p)
 
 void logerr(char* msg, int line)
 {
-	printf("ERROR (line %i): %s\n", line, msg);
+	printf("error at line %i: %s\n", line, msg);
 	exit(1);
 }
 

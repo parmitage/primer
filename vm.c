@@ -101,9 +101,17 @@ void display_primitive(node* node, int depth)
 			{
 				case STRING:
 				{
-					display_primitive(node->opr.op[0], depth);
-					if (node->opr.nops == 2)
-						display_primitive(node->opr.op[1], depth);
+					while (node != NULL)
+					{
+						if (node->opr.nops > 0)
+						{
+							printf("%c", node->opr.op[0]->ival);
+							node = node->opr.op[1];
+						}
+						else
+							node = NULL;
+					}
+					
 					break;
 				}
 				

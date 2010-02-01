@@ -243,3 +243,11 @@ end
 def Function = fn (z)
 	Type(z) == 6
 end
+
+def Zip = fn (l1, l2)
+	if (l1 != [] && l2 != [])
+		[[Head(l1), Head(l2)]] ++ Zip(Tail(l1), Tail(l2))
+	else
+		[]
+	end
+end

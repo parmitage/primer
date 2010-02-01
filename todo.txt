@@ -1,17 +1,12 @@
-- string reverse
+- concatenating string *variables* and printing them goes into an infinite loop!
 - string allocation is currently a fixed array!
-- printing strings - don't use list formatting
-- document operators
-- Split
-- SplitAt
-- Zip
 - add filename to nodes (for error handling?)
 - consistent parameter naming and ordering for standard library functions
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
-- re-introduce full funcall support (e.g. fn()()) - parser
-- what happens when you try to redefine a binding (in the same scope)
+- re-introduce full funcall support (e.g. fn()()) in parser
 - printer for lambdas (e.g. full pretty printer)
 - 2 shift/reduce errors introduced by unary minus
 - gc!
 - tail call elimination!
-- closures?
+- optimise list eval (currently evaluates each item and reconstructs to avoid non-evaluating symbols)
+- should attempted redefinition of a binding in the same scope throw an error?
