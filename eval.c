@@ -45,8 +45,8 @@ node* load_std_lib()
 
 node* create_program(node* stdlib, node* user)
 {
-	node* level1 = opr(';', 2, stdlib, ast->opr.op[0]);
-	return opr(PROG, 1, level1);
+	node* level1 = mkcons(';', 2, stdlib, ast->opr.op[0]);
+	return mkcons(PROG, 1, level1);
 }
 
 void eval(node *p, environment* env)
@@ -64,31 +64,18 @@ void eval(node *p, environment* env)
 			push(p);
 			break;
 
+		case t_error:
+		{
+			logerr(p->sval, p->lineno);
+			break;
+		}
+
 		case t_symbol:
 		{
-			/*	Evaluating a symbol means looking up what that symbol is
-				bound to in the environment and then:				
-				1. raising an error if the symbol is unbound
-				2. pushing the value onto the stack for a primitive
-				3. evaluating the expression if it's a funcall */			
 			binding *b = environment_lookup(env, p->sval);
 			
 			if (b != NULL)
-			{
-				if (b->node->type == t_cons)
-				{
-					if (b->node->opr.oper == FUNCALL)
-					{
-						eval(b->node, env);
-					}
-					else
-					{
-						push(b->node);
-					}
-				}
-				else
-					push(b->node);
-			}
+				eval(b->node, env);
 			else
 				logerr("unbound symbol", p->lineno);
 		}
@@ -97,18 +84,6 @@ void eval(node *p, environment* env)
 		{
 			switch(p->opr.oper)
 			{
-				case STRING:
-				{
-					push(p);
-					break;
-				}
-			
-				case LIST:
-				{
-					push(p);
-					break;
-				}
-				
 				case PROG:
 				{
 					/* create the global lexical environment */
@@ -183,6 +158,35 @@ void eval(node *p, environment* env)
 					break;
 				}
 				
+				case LIST:
+				{
+					// Because we can store symbols in lists we evaluate the
+					// list contents. Probably could make this significantly
+					// more efficient!
+					switch (p->opr.nops)
+					{
+						case 0:
+							push(mkcons(LIST, 0));
+							break;
+						case 1:
+							eval(p->opr.op[0], env);
+							push(mkcons(LIST, 1, pop()));
+							break;
+						case 2:
+							eval(p->opr.op[0], env);
+							eval(p->opr.op[1], env);
+							push(mkcons(LIST, 2, pop(), pop()));
+							break;
+					}
+					break;
+				}
+				
+				case STRING:
+				{
+					push(p);
+					break;
+				}
+				
 				case SHOW:
 				{
 					eval(p->opr.op[0], env);
@@ -252,7 +256,7 @@ void eval(node *p, environment* env)
 					if (p->opr.nops == 1)
 					{
 						eval(p->opr.op[0], env);
-						push(sub(con(0), pop()));
+						push(sub(mkint(0), pop()));
 					}
 					else if (p->opr.nops == 2)
 					{
@@ -360,6 +364,14 @@ void eval(node *p, environment* env)
 					break;
 				}
 				
+				case RANGE:
+				{
+					eval(p->opr.op[0], env);
+					eval(p->opr.op[1], env);
+					push(range(pop(), pop()));
+					break;
+				}
+				
 				case NOT:
 				{
 					eval(p->opr.op[0], env);
@@ -381,7 +393,7 @@ void eval(node *p, environment* env)
 							t = -1;
 					}
 
-					push(con(t));
+					push(mkint(t));
 					break;
 				}
 			}

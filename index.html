@@ -1,0 +1,266 @@
+<html>
+<head>
+<title>Primer</title>
+<style>
+	#content {
+		font-family: sans-serif;
+		line-height: 140%;
+		width: 800px;
+		margin-left: 30px;
+		padding: 10px;
+	}
+	pre {
+		font-family: monospace;
+		font-size: 14px;
+		background: #f1f1f1;
+		border-left: 2px solid black;
+		margin-right: 10px;
+		margin-left: 13px;
+		padding: 3px 0 3px 12px;
+	}
+	a {
+		text-decoration: none;
+		color: blue;
+	}
+	a:hover {
+		background: blue;
+		color: white;
+	}
+	h3 {
+		margin-top: 40px;
+	}
+</style>
+</head>
+<body>
+<div id="content">
+<h1>Primer</h1>
+<hr/>
+<p>
+	Primer is a simple, dynamically typed, interpreted and somewhat functional
+	programming language. I wrote it for fun so please bear that in mind before
+	trying to use it for anything serious! If you
+	have any comments or questions, please feel free to send me an
+	<a href="mailto:philip.armitage@gmail.com">email</a>.
+</p>
+<p>
+	Downloads will be available soon for Linux, Mac and Windows. The source
+	code will be released under the GNU GPL.
+</p>
+
+<h3>Hello, world!</h3>
+<p>
+	The customary first program...ensure you have Primer installed somewhere
+	on your PATH and that you've created the environment variable
+	PRIMER_LIBRARY_PATH which should point to StandardLibrary.pri.
+</p>
+<pre>
+Show("Hello, world!")
+</pre>
+<p>
+	Save it as Hello.pri and at the shell enter:
+</p>
+<pre>
+$ primer Hello.pri
+</pre>
+
+<h3>Variables and Types</h3>
+<p>
+	All bindings in Primer are immutable. This may seem restrictive if you've
+	never programmed in this style before but in reality can lead to elegant
+	code with less opportunity to introduce errors into your code.
+</p>
+<p>
+	Primer provides int, float, bool, char and string data types. Additionally,
+	the value nil represents nothing.
+</p>
+<pre>
+def i = 10
+def f = 3.14
+def b = true
+def c = 'z'
+def s = "Hello, world!"
+</pre>
+<p>
+	A number of functions are provided by the standard library for determining
+	the type of a variable. The Type function returns an integer type code while the
+	named type functions return a boolean value indicating if the
+	supplied object is of that type.
+</p>
+<pre>
+Type(i)
+Integer(i)
+Float(f)
+Bool(b)
+Char(c)
+Function(Square)
+</pre>
+
+<h3>Functions</h3>
+<p>
+	Functions are introduced with the fn keyword. They are first class
+	objects so can be bound to a symbol, passed to another function or stored
+	in a list. Functions are lexically scoped and automatically return the value
+	of the last executed expression.
+</p>
+<pre>
+def Square = fn(x)
+    x * x
+end
+
+def AddFun = fn(f1, f2, x)
+    f1(x) + f2(x)
+end
+
+AddFun(Square, fn (x) x + x end, 5)
+</pre>
+<p>
+	Functions can also be nested and called recursively, either directly or
+	via an intermediate function. The following example is the standard library
+	definition of the Take function which shows both nested functions and recursive calls.
+</p>
+<pre>
+def Take = fn (n, list)
+    def Inner = fn (x, list)
+        if (list != nil && x < n)
+            List(Head(list)) ++ Inner(x + 1, Tail(list))
+        else
+            []
+        end
+    end
+    Inner(0, list)
+end
+</pre>
+
+<h3>Operators</h3>
+<p>
+	The standard mathematical operators are available with precedence as in C.
+</p>
+<pre>
+def a = 12 + 3 * 2 / 5 % 2
+</pre>
+<p>
+	The standard logical operators are also available (not all are shown).
+</p>
+<pre>
+def m = a == 15
+def n = c != 12
+def p = a <= 6
+</pre>
+
+<h3>Conditionals</h3>
+<p>
+	Primer provides a simple if statement with an optional else clause
+	and can be nested.
+</p>
+<pre>
+if (x > 3000)
+    def y = x * a
+    HandleBigNumber(x) + y
+else
+    if (x < 0)
+        HandleNegativeNumber(x)
+    end
+end
+</pre>
+
+<h3>Lists</h3>
+<p>
+	Lists are heterogeneous and can be nested to an arbitrary depth.
+</p>
+<pre>
+def simple = [1,2,3]
+def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
+def mixedl = [1, true, 11128.775, Square, 'Y', nil, "foo"]
+</pre>
+<p>
+	Lists can be concatenated with the ++ operator.
+</p>
+<pre>
+def list3 = [1,2] ++ [4.5, true] ++ [x, y]
+</pre>
+<p>
+	String are implemented as a list of characters so many list processing
+	functions and operators will also work with them.
+</p>
+<pre>
+def name = "John" ++ " " ++ "Smith"
+</pre>
+<p>
+	An atomic item can be turned into a single item list by use of the List
+	function.
+</p>
+<pre>
+def new = List(4.6)
+</pre>
+<p>
+	An atomic item can be prepended to a list with the Cons special form.
+</p>
+<pre>
+def extended = Cons(0, [1,2,3])
+</pre>
+<p>
+	List equality is tested element by element and nested lists are tested
+	recursively. The empty list is equal to nil. The following expressions all
+	return true.
+</p>
+<pre>
+[] == []
+[] == nil
+[1,2,3] == [1,2,3]
+[1,2,[12,15,16,[44],67],3,3,4,2] == [1,2,[12,15,16,[44],67],3,3,4,2]
+</pre>
+<p>
+	The range operator creates a list of integers between lower and upper bounds (inclusive).
+</p>
+<pre>
+def list2 = 50..300
+</pre>
+<p>
+	A number of standard library functions are provided to allow access to parts of a list.
+</p>
+<pre>
+Head([1,2,3])
+Last([1,2,3])
+Nth([1,2,3], 0)
+Tail([1,2,3])
+</pre>
+<p>
+	Several higher order functions are provided by the standard library
+	for list processing. These will be familiar to anyone who has used
+	functional programming languages before.
+</p>
+<pre>
+Map(Square, [1,2,3])
+Filter(fn (x) x > 2, [1,2,3,4,5])
+FoldL(fn (x, y) x + y end, 0, [1,2,3,4,5])
+FoldR(fn (x, y) x + y end, 0, [1,2,3,4,5])
+
+All(fn (x) x > 2, [1,2,3,4])
+Any(fn (x) x > 2, [1,2,3,4])
+
+Drop(2, [1,2,3,4,5])
+DropWhile(fn (x) x < 3 end, [1,2,3,4,5])
+Take(2, [1,2,3])
+TakeWhile(fn (x) x < 3 end, [1,2,3,4,5])
+</pre>
+<p>
+	The following miscellaneous list functions should be fairly self explanatory.
+</p>
+<pre>
+Length([1,2,[3,4,5,6,7],6])
+Empty([])
+
+Max([7,2,4,5,1,3,8,6])
+Min([7,2,4,5,1,3,8,6,9])
+
+Find(12, [4,6,10,2,4,11])
+Reverse([1,2,3])
+Sort("feedback")
+
+Sum([1,2,3])
+Product([1,2,3,4,5])
+</pre>
+
+</div>
+</body>
+</html>

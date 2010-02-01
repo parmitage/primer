@@ -36,5 +36,6 @@ node* or(node* x, node* y);
 node* not(node* node);
 node* mod(node* x, node* y);
 node* append(node* list1, node* list2);
+node* range(node* s, node* e);
 
 #endif

@@ -19,11 +19,12 @@ void yyerror(char *);
 "&&"										return AND;
 "||"										return OR;
 "++"										return APPEND;
+".."										return RANGE;
 "%"											return MOD;
 "if"										return IF;
 "else"										return ELSE;
 "def"										return DEF;
-"lambda"									return LAMBDA;
+"fn"										return LAMBDA;
 "true"										return TRUE;
 "false"										return FALSE;
 "nil"										return NIL;
@@ -33,6 +34,7 @@ void yyerror(char *);
 "Cons"										return CONS;
 "Show"										return SHOW;
 "Type"										return TYPE;
+\'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'	{ yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"	{ yylval.sval = strdup(yytext); return STRING; }
 [a-zA-Z][a-zA-Z0-9]*						{ yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+										{ yylval.ival = atoi(yytext); return INTEGER; }

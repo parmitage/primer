@@ -5,7 +5,7 @@
 #include "main.h"
 #include "y.tab.h"
 
-node *con(int value)
+node *mkint(int value)
 {
 	node *p;
 	size_t nodeSize = sizeof(node) + sizeof(int);
@@ -20,7 +20,7 @@ node *con(int value)
 	return p;
 }
 
-node *fpval(float value)
+node *mkfloat(float value)
 {
 	node *p;
 	size_t nodeSize = sizeof(node) + sizeof(float);
@@ -35,7 +35,7 @@ node *fpval(float value)
 	return p;
 }
 
-node *boolval(int value)
+node *mkbool(int value)
 {
 	node *p;
 	size_t nodeSize = sizeof(node) + sizeof(int);
@@ -64,7 +64,7 @@ node* mkchar(char c)
 	return p;
 }
 
-node* node_make_string(char* value)
+node* mkstr(char* value)
 {
 	int srclen = strlen(value);
 	int destlen = srclen - 1;
@@ -82,14 +82,14 @@ node* node_from_string(char* value)
 	int len = strlen(value);
 
 	if (len > 1)
-		return opr(STRING, 2, mkchar(value[0]), node_from_string(value + 1));
+		return mkcons(STRING, 2, mkchar(value[0]), node_from_string(value + 1));
 	else
-		return opr(STRING, 1, mkchar(value[0]));
+		return mkcons(STRING, 1, mkchar(value[0]));
 	
-	return nil();
+	return mknil();
 }
 
-node* nil()
+node* mknil()
 {
 	node *p;
 	size_t nodeSize = sizeof(node) + sizeof(int);
@@ -103,7 +103,7 @@ node* nil()
 	return p;
 }
 
-node *sym(char* s)
+node *mksym(char* s)
 {
 	node *p;
 	size_t nodeSize = sizeof(node) + (strlen(s) * sizeof(char*));
@@ -118,10 +118,10 @@ node *sym(char* s)
 	return p;
 }
 
-node *opr(int oper, int nops, ...)
+node *mkcons(int oper, int nops, ...)
 {
 	if (nops == 0)
-		return nil();
+		return mknil();
 
 	va_list ap;
 	node *p;
@@ -142,6 +142,21 @@ node *opr(int oper, int nops, ...)
 		p->opr.op[i] = va_arg(ap, node*);
 	
 	va_end(ap);
+	
+	return p;
+}
+
+node* mkerr(char* msg, int lineno)
+{
+	node *p;
+	size_t nodeSize = sizeof(node) + (strlen(msg) * sizeof(char*));
+	
+	if ((p = malloc(nodeSize)) == NULL)
+		abort();
+	
+	p->type = t_error;
+	p->sval = strdup(msg);
+	p->lineno = lineno;
 	
 	return p;
 }

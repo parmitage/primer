@@ -26,3 +26,6 @@ parser:
 
 clean:
 	rm lex.yy.c y.tab.c y.tab.h *.o primer
+	
+cleanwin:
+	del lex.yy.c y.tab.c y.tab.h *.o primer.exe

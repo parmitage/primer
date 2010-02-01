@@ -1,18 +1,18 @@
-def Null = lambda (x)
+def Null = fn (x)
 	x
 end
 
-def List = lambda (x)
+def List = fn (x)
 	Cons([], x)
 end
 
-def Assert = lambda (id, actual, expected)
+def Assert = fn (id, actual, expected)
 	if (actual != expected)
 		Show(id)
 	end
 end
 
-def Length = lambda (list)
+def Length = fn (list)
 	if (list != nil)
 		1 + Length(Tail(list))
 	else
@@ -20,47 +20,47 @@ def Length = lambda (list)
 	end
 end
 
-def Map = lambda (fn, list)
+def Map = fn (f, list)
 	if (list != nil)
-		Cons(Map(fn, Tail(list)), fn(Head(list)))
+		Cons(Map(f, Tail(list)), f(Head(list)))
 	else
 		nil
 	end
 end
 
-def FoldL = lambda (fn, init, list)
+def FoldL = fn (f, init, list)
 	if (list != nil)
-		FoldL(fn, fn(init, Head(list)), Tail(list))
+		FoldL(f, f(init, Head(list)), Tail(list))
 	else
 		init
 	end
 end
 
-def FoldR = lambda (fn, init, list)
+def FoldR = fn (f, init, list)
 	if (list != nil)
-		fn(Head(list), FoldR(fn, init, Tail(list)))
+		f(Head(list), FoldR(f, init, Tail(list)))
 	else
 		init
 	end
 end
 
-def Filter = lambda (fn, list)
+def Filter = fn (f, list)
 	if (list != nil)
-		if (fn(Head(list)) == true)
-			Cons(Filter(fn, Tail(list)), Head(list))
+		if (f(Head(list)) == true)
+			Cons(Filter(f, Tail(list)), Head(list))
 		else
-			Filter(fn, Tail(list))
+			Filter(f, Tail(list))
 		end
 	else
 		nil
 	end
 end
 
-def Empty = lambda (list)
+def Empty = fn (list)
 	Length(list) == 0
 end
 
-def Reverse = lambda (list)
+def Reverse = fn (list)
 	if (Tail(list) != nil)
 		Reverse(Tail(list)) ++ List(Head(list))
 	else
@@ -68,7 +68,7 @@ def Reverse = lambda (list)
 	end
 end
 
-def Find = lambda (x, list)
+def Find = fn (x, list)
 	if (Head(list) == x)
 		Head(list)
 	else
@@ -80,7 +80,7 @@ def Find = lambda (x, list)
 	end
 end
 
-def Sum = lambda (list)
+def Sum = fn (list)
 	if (list != nil)
 		Head(list) + Sum(Tail(list))
 	else
@@ -88,16 +88,23 @@ def Sum = lambda (list)
 	end
 end
 
-def Product = lambda (list)
-	if (list != nil)
-		Head(list) * Product(Tail(list))
+def Product = fn (l)
+	def Inner = fn (l)
+		if (l != nil)
+			Head(l) * Inner(Tail(l))
+		else
+			1
+		end
+	end
+	if (Empty(l))
+		0
 	else
-		1
+		Inner(l)
 	end
 end
 
-def Nth = lambda (list, n)
-	def Inner = lambda (list, x)
+def Nth = fn (list, n)
+	def Inner = fn (list, x)
 		if (list != nil)
 			if (x == n)
 				Head(list)
@@ -111,7 +118,7 @@ def Nth = lambda (list, n)
 	Inner(list, 0)
 end
 
-def Any = lambda (pred, list)
+def Any = fn (pred, list)
 	if (list != nil)
 		if (pred(Head(list)) == true)
 			true
@@ -123,7 +130,7 @@ def Any = lambda (pred, list)
 	end
 end
 
-def All = lambda (pred, list)
+def All = fn (pred, list)
 	if (list != nil)
 		if (pred(Head(list)) == true)
 			All(pred, Tail(list))
@@ -135,8 +142,8 @@ def All = lambda (pred, list)
 	end
 end
 
-def Take = lambda (n, list)
-	def Inner = lambda (x, list)
+def Take = fn (n, list)
+	def Inner = fn (x, list)
 		if (list != nil && x < n)
 			List(Head(list)) ++ Inner(x + 1, Tail(list))
 		else
@@ -146,16 +153,16 @@ def Take = lambda (n, list)
 	Inner(0, list)
 end
 
-def TakeWhile = lambda (fn, list)
-	if (list != nil && fn(Head(list)) == true)
-		List(Head(list)) ++ TakeWhile(fn, Tail(list))
+def TakeWhile = fn (f, list)
+	if (list != nil && f(Head(list)) == true)
+		List(Head(list)) ++ TakeWhile(f, Tail(list))
 	else
 		[]
 	end
 end
 
-def Drop = lambda (n, list)
-	def Inner = lambda (x, list)
+def Drop = fn (n, list)
+	def Inner = fn (x, list)
 		if (list != nil)
 			if (x < n)
 				Inner(x + 1, Tail(list))
@@ -173,10 +180,10 @@ def Drop = lambda (n, list)
 	end
 end
 
-def DropWhile = lambda (fn, list)
+def DropWhile = fn (f, list)
 	if (list != nil)
-		if (fn(Head(list)) == true)
-			DropWhile(fn, Tail(list))
+		if (f(Head(list)) == true)
+			DropWhile(f, Tail(list))
 		else
 			list
 		end
@@ -185,50 +192,54 @@ def DropWhile = lambda (fn, list)
 	end
 end
 
-def Sort = lambda (l)
+def Sort = fn (l)
 	if (l != [])
 		def x = Head(l)
 		def xs = Tail(l)
-		Sort(Filter(lambda (a) a < x end, xs))
+		Sort(Filter(fn (a) a < x end, xs))
 			++ List(x)
-			++ Sort(Filter(lambda (a) a >= x end, xs))
+			++ Sort(Filter(fn (a) a >= x end, xs))
 	else
 		[]
 	end
 end
 
-def Min = lambda (l)
+def Min = fn (l)
 	Head(Sort(l))
 end
 
-def Max = lambda (l)
+def Max = fn (l)
 	Head(Reverse(Sort(l)))
 end
 
-def Last = lambda (l)
+def Last = fn (l)
 	Head(Reverse(l))
 end
 
-def Odd = lambda (z)
+def Odd = fn (z)
 	z % 2 != 0
 end
 
-def Even = lambda (z)
+def Even = fn (z)
 	z % 2 == 0
 end
 
-def Integer = lambda (z)
+def Integer = fn (z)
 	Type(z) == 1
 end
 
-def Float = lambda (z)
+def Float = fn (z)
 	Type(z) == 2
 end
 
-def Bool = lambda (z)
+def Char = fn (z)
+	Type(z) == 5
+end
+
+def Bool = fn (z)
 	Type(z) == 3
 end
 
-def Function = lambda (z)
+def Function = fn (z)
 	Type(z) == 6
 end

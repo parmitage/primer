@@ -1,1 +1,0 @@
-Show("Hello, world!" == "Hello, world!")
