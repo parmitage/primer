@@ -179,18 +179,11 @@ def mixedl = [1, true, 11128.775, Square, 'Y', nil, "foo"]
 def list3 = [1,2] ++ [4.5, true] ++ [x, y]
 </pre>
 <p>
-	String are implemented as a list of characters so many list processing
-	functions and operators will also work with them.
+	String are just lists of characters.
 </p>
 <pre>
 def name = "John" ++ " " ++ "Smith"
-</pre>
-<p>
-	An atomic item can be turned into a single item list by use of the List
-	function.
-</p>
-<pre>
-def new = List(4.6)
+Reverse(name)
 </pre>
 <p>
 	An atomic item can be prepended to a list with the Cons special form.
@@ -200,14 +193,17 @@ def extended = Cons(0, [1,2,3])
 </pre>
 <p>
 	List equality is tested element by element and nested lists are tested
-	recursively. The empty list is equal to nil. The following expressions all
-	return true.
+	recursively.
 </p>
 <pre>
-[] == []
-[] == nil
 [1,2,3] == [1,2,3]
 [1,2,[12,15,16,[44],67],3,3,4,2] == [1,2,[12,15,16,[44],67],3,3,4,2]
+</pre>
+<p>
+	The empty list is equal to nil.
+</p>
+<pre>
+[] == nil
 </pre>
 <p>
 	The range operator creates a list of integers between lower and upper bounds (inclusive).
@@ -225,15 +221,14 @@ Nth([1,2,3], 0)
 Tail([1,2,3])
 </pre>
 <p>
-	Several higher order functions are provided by the standard library
-	for list processing. These will be familiar to anyone who has used
-	functional programming languages before.
+	Several higher order functions are provided by the standard library.
 </p>
 <pre>
 Map(Square, [1,2,3])
 Filter(fn (x) x > 2, [1,2,3,4,5])
 FoldL(fn (x, y) x + y end, 0, [1,2,3,4,5])
 FoldR(fn (x, y) x + y end, 0, [1,2,3,4,5])
+Zip([1,2,3], [4,5,6])
 
 All(fn (x) x > 2, [1,2,3,4])
 Any(fn (x) x > 2, [1,2,3,4])

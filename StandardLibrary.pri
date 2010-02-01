@@ -2,10 +2,6 @@ def Null = fn (x)
 	x
 end
 
-def List = fn (x)
-	Cons([], x)
-end
-
 def Assert = fn (id, actual, expected)
 	if (actual != expected)
 		Show(id)
@@ -62,7 +58,7 @@ end
 
 def Reverse = fn (list)
 	if (Tail(list) != nil)
-		Reverse(Tail(list)) ++ List(Head(list))
+		Reverse(Tail(list)) ++ [Head(list)]
 	else
 		list
 	end
@@ -145,7 +141,7 @@ end
 def Take = fn (n, list)
 	def Inner = fn (x, list)
 		if (list != nil && x < n)
-			List(Head(list)) ++ Inner(x + 1, Tail(list))
+			[Head(list)] ++ Inner(x + 1, Tail(list))
 		else
 			[]
 		end
@@ -155,7 +151,7 @@ end
 
 def TakeWhile = fn (f, list)
 	if (list != nil && f(Head(list)) == true)
-		List(Head(list)) ++ TakeWhile(f, Tail(list))
+		[Head(list)] ++ TakeWhile(f, Tail(list))
 	else
 		[]
 	end
@@ -196,9 +192,7 @@ def Sort = fn (l)
 	if (l != [])
 		def x = Head(l)
 		def xs = Tail(l)
-		Sort(Filter(fn (a) a < x end, xs))
-			++ List(x)
-			++ Sort(Filter(fn (a) a >= x end, xs))
+		Sort(Filter(fn (a) a < x end, xs)) ++ [x] ++ Sort(Filter(fn (a) a >= x end, xs))
 	else
 		[]
 	end
