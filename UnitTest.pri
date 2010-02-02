@@ -2,6 +2,7 @@ def a = 10
 def b = 15
 def l = [1,2,3,4]
 def s = "Hello, world!"
+def t = "abcd"
 def z = nil
 
 def SingleStatement = fn (x)
