@@ -172,56 +172,56 @@ void display(node* node)
 
 node* add(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkfloat(x->fval + y->fval);
-				else
-						return mkfloat(x->fval + y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkfloat(x->fval + y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkfloat(x->ival + y->fval);
-				else
-						return mkint(x->ival + y->ival);
-		}		
+				return mkfloat(x->fval + y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkfloat(x->ival + y->fval);
+		else
+				return mkint(x->ival + y->ival);
+	}		
 }
 
 node* sub(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkfloat(x->fval - y->fval);
-				else
-						return mkfloat(x->fval - y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkfloat(x->fval - y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkfloat(x->ival - y->fval);
-				else
-						return mkint(x->ival - y->ival);
-		}		
+				return mkfloat(x->fval - y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkfloat(x->ival - y->fval);
+		else
+				return mkint(x->ival - y->ival);
+	}
 }
 
 node* mul(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkfloat(x->fval * y->fval);
-				else
-						return mkfloat(x->fval * y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkfloat(x->fval * y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkfloat(x->ival * y->fval);
-				else
-						return mkint(x->ival * y->ival);
-		}		
+				return mkfloat(x->fval * y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkfloat(x->ival * y->fval);
+		else
+				return mkint(x->ival * y->ival);
+	}		
 }
 
 node* dvd(node* x, node* y)
@@ -244,74 +244,74 @@ node* dvd(node* x, node* y)
 
 node* lt(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-					return mkbool(x->fval < y->fval);
-				else
-					return mkbool(x->fval < y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+			return mkbool(x->fval < y->fval);
 		else
-		{
-				if (y->type == t_float)
-					return mkbool(x->ival < y->fval);
-				else
-					return mkbool(x->ival < y->ival);
-		}		
+			return mkbool(x->fval < y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+			return mkbool(x->ival < y->fval);
+		else
+			return mkbool(x->ival < y->ival);
+	}		
 }
 
 node* gt(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkbool(x->fval > y->fval);
-				else
-						return mkbool(x->fval > y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkbool(x->fval > y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkbool(x->ival > y->fval);
-				else
-						return mkbool(x->ival > y->ival);
-		}		
+				return mkbool(x->fval > y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkbool(x->ival > y->fval);
+		else
+				return mkbool(x->ival > y->ival);
+	}		
 }
 
 node* lte(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkbool(x->fval <= y->fval);
-				else
-						return mkbool(x->fval <= y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkbool(x->fval <= y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkbool(x->ival <= y->fval);
-				else
-						return mkbool(x->ival <= y->ival);
-		}		
+				return mkbool(x->fval <= y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkbool(x->ival <= y->fval);
+		else
+				return mkbool(x->ival <= y->ival);
+	}		
 }
 
 node* gte(node* x, node* y)
 {
-		if (x->type == t_float)
-		{
-				if (y->type == t_float)
-						return mkbool(x->fval >= y->fval);
-				else
-						return mkbool(x->fval >= y->ival);
-		}
+	if (x->type == t_float)
+	{
+		if (y->type == t_float)
+				return mkbool(x->fval >= y->fval);
 		else
-		{
-				if (y->type == t_float)
-						return mkbool(x->ival >= y->fval);
-				else
-						return mkbool(x->ival >= y->ival);
-		}		
+				return mkbool(x->fval >= y->ival);
+	}
+	else
+	{
+		if (y->type == t_float)
+				return mkbool(x->ival >= y->fval);
+		else
+				return mkbool(x->ival >= y->ival);
+	}		
 }
 
 node* list_eq(node* l1, node* l2)
@@ -385,7 +385,7 @@ node* or(node* x, node* y)
 	}
 	else
 	{
-		// TODO probable should throw error
+		// TODO probably should throw error
 		return mkbool(false);
 	}
 }
@@ -419,7 +419,7 @@ node* range(node* s, node* e)
 	}
 	else
 	{
-		l = mkerr("[..] operator only supports integer ranges", s->lineno);
+		l = mkerr(".. operator only supports integer ranges", s->lineno);
 	}
 	
 	return l;

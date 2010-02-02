@@ -73,7 +73,6 @@ node* mkstr(char* value)
 	char temp[1000];
 	strncpy(temp, value + 1, copylen);
 	temp[copylen] = '\0';
-	free(value);
 	return node_from_string(temp);
 }
 
