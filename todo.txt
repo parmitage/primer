@@ -1,10 +1,11 @@
-- recombine source files
+- multi-variable with block
+- update documentation (imperative constructs, co-recursive claim, split out important library functions)
 - concatenating the same string variable onto itself creates an infinite value...
 - add filename to nodes (for error handling?)
 - consistent parameter naming and ordering for standard library functions
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
-- re-introduce full funcall support (e.g. fn()()) in parser
-- 2 shift/reduce errors introduced by unary minus
+- re-introduce full funcall support in parser -> e.g. [x]()
+- 3 shift/reduce errors introduced by unary minus
 -------------------------------------------------------------------------------
 - gc!
 - tail call elimination!

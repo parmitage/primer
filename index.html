@@ -36,15 +36,16 @@
 <h1>Primer</h1>
 <hr/>
 <p>
-	Primer is a simple, dynamically typed, interpreted and somewhat functional
-	programming language. I wrote it for fun so please bear that in mind before
-	trying to use it for anything serious! If you
-	have any comments or questions, please feel free to send me an
+	Primer is a simple programming language with dynamic typing, lexical scope
+	and higher order functions. It's in a very pre-alpha state and not yet
+	suitable for any kind of serious use.
+	If you have any comments or questions, please feel free to send me an
 	<a href="mailto:philip.armitage@gmail.com">email</a>.
 </p>
+
+<h3>Download</h3>
 <p>
-	Downloads will be available soon for Linux, Mac and Windows. The source
-	code will be released under the GNU GPL.
+	Downloads will be available soon for Linux, Mac and Windows.
 </p>
 
 <h3>Hello, world!</h3>
@@ -65,13 +66,9 @@ $ primer Hello.pri
 
 <h3>Variables and Types</h3>
 <p>
-	All bindings in Primer are immutable. This may seem restrictive if you've
-	never programmed in this style before but in reality can lead to elegant
-	code with less opportunity to introduce errors into your code.
-</p>
-<p>
 	Primer provides int, float, bool, char and string data types. Additionally,
-	the value nil represents nothing.
+	the value nil represents nothing. All definitions, including both variables
+	and functions, are introduced with the def keyword.
 </p>
 <pre>
 def i = 10
@@ -79,6 +76,15 @@ def f = 3.14
 def b = true
 def c = 'z'
 def s = "Hello, world!"
+</pre>
+<p>
+	Once a variable has been declared, it can be reassigned to using let.
+	Because Primer is dynamically typed, it doesn't need to be assigned a
+	value of the same type.
+</p>
+<pre>
+def x = 12
+let x = true
 </pre>
 <p>
 	A number of functions are provided by the standard library for determining
@@ -131,6 +137,28 @@ def Take = fn (n, list)
 end
 </pre>
 
+<h3>Lexical Scope</h3>
+<p>
+	Primer is lexically scoped so bindings can shadow other bindings in
+	nested functions. It's also possible to introduce a local lexical
+	block using the with statement. It should also be noted that if,
+	while and for statements introduce their own lexical environments.
+</p>
+<pre>
+def Outer = fn(x)
+    Show(x)
+    def Inner = fn(x)
+        Show(x)
+        with (x = 12)
+            Show(x)
+        end
+        Show(x)
+    end
+    Show(x)
+end
+
+</pre>
+
 <h3>Operators</h3>
 <p>
 	The standard mathematical operators are available with precedence as in C.
@@ -145,6 +173,48 @@ def a = 12 + 3 * 2 / 5 % 2
 def m = a == 15
 def n = c != 12
 def p = a <= 6
+</pre>
+
+<h3>Lists</h3>
+<p>
+	Lists are heterogeneous and can be nested to an arbitrary depth.
+	They can be concatenated with the ++ operator. The empty list is equal
+	to nil. List equality is tested element by element and nested lists are
+	tested recursively.
+</p>
+<pre>
+def simple = [1,2,3]
+def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
+def mixed = [1, true, 11128.775, Square, 'Y', nil, "foo"]
+def new = simple ++ nested ++ mixed ++ [x, y]
+</pre>
+<p>
+	An atomic item can be prepended to a list with the Cons special form.
+</p>
+<pre>
+def extended = Cons(0, [1,2,3])
+</pre>
+<p>
+	A number of special forms and standard library functions provide ways of
+	accessing list elements and testing the properties of lists.
+</p>
+<pre>
+Head([1,2,3])
+Tail([1,2,3])
+Last([1,2,3])
+Nth([1,2,3], 0)
+Length([1,2,[3,4,5,6,7],6])
+Empty([])
+</pre>
+
+<h3>Strings</h3>
+<p>
+	String are just lists of characters which means that many list operations
+	can also be used with them.
+</p>
+<pre>
+def name = "John" ++ " " ++ "Smith"
+Reverse(name)
 </pre>
 
 <h3>Conditionals</h3>
@@ -163,71 +233,78 @@ else
 end
 </pre>
 
-<h3>Lists</h3>
+<h3>Loops</h3>
 <p>
-	Lists are heterogeneous and can be nested to an arbitrary depth.
+	Primer provides two looping constructs: while and for. While loops execute
+	their body for as long as a predicate holds true. Here's a simple example.
 </p>
 <pre>
-def simple = [1,2,3]
-def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
-def mixedl = [1, true, 11128.775, Square, 'Y', nil, "foo"]
+while (x < 10)
+    Show(x)
+    let x = x + 1
+end
 </pre>
 <p>
-	Lists can be concatenated with the ++ operator.
+	A for loop iterates over the elements of a list by assigning each element
+	of the list to a variable in turn.
 </p>
 <pre>
-def list3 = [1,2] ++ [4.5, true] ++ [x, y]
+for (e : [1,2,3])
+    Show(e)
+end
 </pre>
+
+<h3>Map</h3>
 <p>
-	String are just lists of characters.
+	Map is a higher order function provided by the Primer standard library. It
+	applies a function to each member of a list in turn, returning a new list
+	consisting of the results.
 </p>
 <pre>
-def name = "John" ++ " " ++ "Smith"
-Reverse(name)
+def Square = fn (x)
+    x * x
+end
+
+Map(Square, [1,2,3])
 </pre>
+
+<h3>Filter</h3>
 <p>
-	An atomic item can be prepended to a list with the Cons special form.
+	Filter is a higher order function provided by the Primer standard library.
+	It applies a predicate function to each member of a list in turn, returning
+	a new list consisting of those elements for which the predicate holds.
 </p>
 <pre>
-def extended = Cons(0, [1,2,3])
+Filter(fn (x) x > 2 end, [1,2,3,4,5])
 </pre>
+
+<h3>FoldL and FoldR</h3>
 <p>
-	List equality is tested element by element and nested lists are tested
-	recursively.
+	Fold, sometimes referred to as Reduce, is a higher order function provided
+	by the Primer standard library. It processes a list by combining elements
+	using a binary function and returns a result. FoldL (left fold) recursively
+	combines the results of combining all but the last element with the last
+	one. FoldR (right fold) recursively combines the first element of the list
+	with the results of combining the tail of the list. 
 </p>
-<pre>
-[1,2,3] == [1,2,3]
-[1,2,[12,15,16,[44],67],3,3,4,2] == [1,2,[12,15,16,[44],67],3,3,4,2]
-</pre>
 <p>
-	The empty list is equal to nil.
+	The initial value is used for combining the elements at the end of the list.
 </p>
 <pre>
-[] == nil
+FoldL(fn (x, y) x + y end, 0, [1,2,3,4,5])
+FoldR(fn (x, y) x + y end, 0, [1,2,3,4,5])
 </pre>
+
+<h3>Range operator</h3>
 <p>
 	The range operator creates a list of integers between lower and upper bounds (inclusive).
 </p>
 <pre>
 def list2 = 50..300
 </pre>
-<p>
-	A number of standard library functions are provided to allow access to parts of a list.
-</p>
+
+<h3>Other standard library functions</h3>
 <pre>
-Head([1,2,3])
-Last([1,2,3])
-Nth([1,2,3], 0)
-Tail([1,2,3])
-</pre>
-<p>
-	Several higher order functions are provided by the standard library.
-</p>
-<pre>
-Map(Square, [1,2,3])
-Filter(fn (x) x > 2, [1,2,3,4,5])
-FoldL(fn (x, y) x + y end, 0, [1,2,3,4,5])
-FoldR(fn (x, y) x + y end, 0, [1,2,3,4,5])
 Zip([1,2,3], [4,5,6])
 
 All(fn (x) x > 2, [1,2,3,4])
@@ -237,13 +314,6 @@ Drop(2, [1,2,3,4,5])
 DropWhile(fn (x) x < 3 end, [1,2,3,4,5])
 Take(2, [1,2,3])
 TakeWhile(fn (x) x < 3 end, [1,2,3,4,5])
-</pre>
-<p>
-	The following miscellaneous list functions should be fairly self explanatory.
-</p>
-<pre>
-Length([1,2,[3,4,5,6,7],6])
-Empty([])
 
 Max([7,2,4,5,1,3,8,6])
 Min([7,2,4,5,1,3,8,6,9])

@@ -25,7 +25,7 @@ int lineno = 1;
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF LAMBDA IF ELSE FUNCALL
+%token PROG DEF LAMBDA IF ELSE FUNCALL LET FOR WHILE WITH
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
 %token HEAD TAIL CONS SHOW TYPE
 
@@ -55,8 +55,12 @@ stmts:
 
 stmt:
 	DEF identifier '=' expr							{ $$ = mkcons(DEF, 2, $2, $4); }
+	| LET identifier '=' expr						{ $$ = mkcons(LET, 2, $2, $4); }
 	| IF '(' expr ')' stmts %prec IFX end			{ $$ = mkcons(IF, 3, $3, $5, $6); }
 	| IF '(' expr ')' stmts ELSE stmts end			{ $$ = mkcons(IF, 4, $3, $5, $7, $8); }
+	| FOR '(' identifier ':' expr ')' stmts end		{ $$ = mkcons(FOR, 4, $3, $5, $7, $8); }
+	| WHILE '(' expr ')' stmts end					{ $$ = mkcons(WHILE, 3, $3, $5, $6); }
+	| WITH '(' identifier '=' expr ')' stmts end	{ $$ = mkcons(WITH, 4, $3, $5, $7, $8); }
 	| expr											{ $$ = $1; }
 	;
 

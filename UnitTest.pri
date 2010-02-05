@@ -2,7 +2,6 @@ def a = 10
 def b = 15
 def l = [1,2,3,4]
 def s = "Hello, world!"
-def t = "abcd"
 def z = nil
 
 def SingleStatement = fn (x)
@@ -16,6 +15,19 @@ def IfStatement = fn (x)
 	else
 		1
 	end
+end
+
+def Imperative = fn(x)
+	def l = []
+	while (x < 10)
+		let l = l ++ [x]
+		let x = x + 1
+	end
+	def l2 = []
+	for (y : l)
+		let l2 = l2 ++ [y]
+	end	
+	l2
 end
 
 def ReturnsArgument = fn (x, y)
@@ -125,6 +137,16 @@ Assert("Operators: nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3
 Assert("Operators: string append", "this" ++ " is " ++ "a test", "this is a test")
 Assert("Operators: simple range", 1..5, [1,2,3,4,5])
 Assert("Operators: precedence of range vs append", 1..5 ++ 6..10 ++ 11..15, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
+Assert("Operators: greater than", 5 > 2, true)
+Assert("Operators: greater than fails", 5 > 9, false)
+Assert("Operators: less than", 2 < 5, true)
+Assert("Operators: less than fails", 2 < 1, false)
+Assert("Operators: less than or equal", 2 <= 5, true)
+Assert("Operators: less than or equal equal", 2 <= 2, true)
+Assert("Operators: less than or equal fails", 2 <= 1, false)
+Assert("Operators: greater than or equal", 9 >= 5, true)
+Assert("Operators: greater than or equal equal", 2 >= 2, true)
+Assert("Operators: greater than or equal fails", 2 >= 11, false)
 
 Assert("Funcall: simple", Factorial(5), 120)
 Assert("Funcall: nested", ThreeArguments(InnerFunction(), HigherOrderFunction(SingleStatement), 12), 216)
@@ -132,6 +154,7 @@ Assert("Funcall: function returns new list", ListCountdown(5), [5,4,3,2,1])
 Assert("Funcall: higher order with literals", SumWithFun(2, 3, Double), 10)
 Assert("Funcall: higher order with variables", SumWithFun(a, b, Double), 50)
 Assert("Funcall: higher order with fn", SumWithFun(a, b, fn (x) 2 * x end), 50)
+Assert("Funcall: imperative features", Imperative(0), [0,1,2,3,4,5,6,7,8,9])
 
 Assert("Library: Cons equals literal list", Cons([1,2,3], 4), [4,1,2,3])
 Assert("Library: nested Cons", Cons(Cons([0,1], [2,3,4]), [5,[6,7,8]]), [[5,[6,7,8]],[2,3,4],0,1])

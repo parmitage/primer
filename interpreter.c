@@ -22,33 +22,6 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-node* load_std_lib()
-{
-	char* libpath;
-  	libpath = getenv("PRIMER_LIBRARY_PATH");
-  	
-  	if (libpath == NULL)
-  	{
-    	printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
-    	exit(-1);
-    }
-    
-    if (!file_exists(libpath))
-    {
-    	printf("Unable to find standard library at %s\n", libpath);
-    	exit(-1);
-    }
-	
-	parse(libpath);
-	return ast->opr.op[0];
-}
-
-node* create_program(node* stdlib, node* user)
-{
-	node* level1 = mkcons(';', 2, stdlib, ast->opr.op[0]);
-	return mkcons(PROG, 1, level1);
-}
-
 void eval(node *p, environment* env)
 {
 	if (!p)
@@ -77,6 +50,7 @@ void eval(node *p, environment* env)
 			if (b != NULL)
 				eval(b->node, env);
 			else
+				//push(p);
 				logerr("unbound symbol", p->lineno);
 		}
 
@@ -99,6 +73,38 @@ void eval(node *p, environment* env)
 					eval(p->opr.op[1], env);
 					binding* binding = binding_new(name, pop());
 					environment_extend(env, binding);
+					break;
+				}
+				
+				case LET:
+				{
+					char* name = p->opr.op[0]->sval;
+					eval(p->opr.op[1], env);
+					binding *b = environment_lookup(env, name);
+			
+					if (b != NULL)
+						b->node = pop();
+					else
+						logerr("unbound symbol", p->lineno);
+					
+					break;
+				}
+				
+				case WITH:
+				{
+					environment *ext = environment_new(env);
+					
+					/* create the scoped variable */
+					char* name = p->opr.op[0]->sval;
+					eval(p->opr.op[1], ext);
+					binding* binding = binding_new(name, pop());
+					environment_extend(ext, binding);
+
+					/* evaluate the body of the with block */
+					eval(p->opr.op[2], ext);
+										
+					environment_delete(ext);
+					
 					break;
 				}
 				
@@ -160,9 +166,9 @@ void eval(node *p, environment* env)
 				
 				case LIST:
 				{
-					// Because we can store symbols in lists we evaluate the
-					// list contents. Probably could make this significantly
-					// more efficient!
+					/* Because we can store symbols in lists we evaluate the
+					   list contents. Probably could make this significantly
+					   more efficient! */
 					switch (p->opr.nops)
 					{
 						case 0:
@@ -233,12 +239,75 @@ void eval(node *p, environment* env)
 					
 					if (pred->ival > 0)
 					{
-						eval(p->opr.op[1], env);
+						environment *ext = environment_new(env);
+						eval(p->opr.op[1], ext);
+						environment_delete(ext);
 					}
 					else if (p->opr.nops > 3)
 					{
-						eval(p->opr.op[2], env);
+						environment *ext = environment_new(env);
+						eval(p->opr.op[2], ext);
+						environment_delete(ext);
 					}
+					
+					break;
+				}
+				
+				case FOR:
+				{
+					environment *ext = environment_new(env);
+					
+					/* create the iterator variable */
+					char* name = p->opr.op[0]->sval;
+					binding* binding = binding_new(name, mknil());
+					environment_extend(ext, binding);
+					
+					eval(p->opr.op[1], ext);
+					node *node = pop();
+					
+					/* iterate over the list */
+					while (node != NULL)
+					{
+						/* rebind the iterator to the list element */
+						eval(node, ext);
+						struct nodeTag *next = car(pop());
+						
+						if (next != NULL && next->type != t_nil)
+						{
+							binding->node = next;
+						
+							/* evaluate the body of the for loop */
+							eval(p->opr.op[2], ext);
+							
+							if (node->opr.nops > 0)
+								node = node->opr.op[1];
+							else
+								node = NULL;
+						}
+						else
+							node = NULL;
+					}
+					
+					environment_delete(ext);
+					
+					break;
+				}
+				
+				case WHILE:
+				{
+					environment *ext = environment_new(env);
+					
+					eval(p->opr.op[0], ext);
+					node *pred = pop();
+
+					while (pred->ival > 0)
+					{
+						eval(p->opr.op[1], ext);
+						eval(p->opr.op[0], ext);
+						pred = pop();
+					}
+					
+					environment_delete(ext);
 					
 					break;
 				}
@@ -651,32 +720,6 @@ void nodefree(node *p)
 	free (p);
 }
 
-void logerr(char* msg, int line)
-{
-	printf("error at line %i: %s\n", line, msg);
-	exit(1);
-}
-
-void dbg(char* msg)
-{
-	printf("%s\n", msg);
-}
-
-bool file_exists(const char * path)
-{
-	FILE *istream;
-	
-	if((istream = fopen(path, "r")) == NULL)
-	{
-		return false;
-	}
-	else
-	{
-		fclose(istream);
-		return true;
-	}
-}
-
 void push(node* node)
 {
 	stack[stack_ptr++] = node;
@@ -936,20 +979,7 @@ node* lt(node* x, node* y)
 
 node* gt(node* x, node* y)
 {
-	if (x->type == t_float)
-	{
-		if (y->type == t_float)
-				return mkbool(x->fval > y->fval);
-		else
-				return mkbool(x->fval > y->ival);
-	}
-	else
-	{
-		if (y->type == t_float)
-				return mkbool(x->ival > y->fval);
-		else
-				return mkbool(x->ival > y->ival);
-	}		
+  return not(lte(x, y));
 }
 
 node* lte(node* x, node* y)
@@ -972,20 +1002,7 @@ node* lte(node* x, node* y)
 
 node* gte(node* x, node* y)
 {
-	if (x->type == t_float)
-	{
-		if (y->type == t_float)
-				return mkbool(x->fval >= y->fval);
-		else
-				return mkbool(x->fval >= y->ival);
-	}
-	else
-	{
-		if (y->type == t_float)
-				return mkbool(x->ival >= y->fval);
-		else
-				return mkbool(x->ival >= y->ival);
-	}		
+  return not(lt(x, y));
 }
 
 node* list_eq(node* l1, node* l2)
@@ -1097,4 +1114,57 @@ node* range(node* s, node* e)
 	}
 	
 	return l;
+}
+
+node* load_std_lib()
+{
+	char* libpath;
+  	libpath = getenv("PRIMER_LIBRARY_PATH");
+  	
+  	if (libpath == NULL)
+  	{
+    	printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
+    	exit(-1);
+    }
+    
+    if (!file_exists(libpath))
+    {
+    	printf("Unable to find standard library at %s\n", libpath);
+    	exit(-1);
+    }
+	
+	parse(libpath);
+	return ast->opr.op[0];
+}
+
+node* create_program(node* stdlib, node* user)
+{
+	node* level1 = mkcons(';', 2, stdlib, ast->opr.op[0]);
+	return mkcons(PROG, 1, level1);
+}
+
+void logerr(char* msg, int line)
+{
+	printf("error at line %i: %s\n", line, msg);
+	exit(1);
+}
+
+void dbg(char* msg)
+{
+	printf("%s\n", msg);
+}
+
+bool file_exists(const char * path)
+{
+	FILE *istream;
+	
+	if((istream = fopen(path, "r")) == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		fclose(istream);
+		return true;
+	}
 }

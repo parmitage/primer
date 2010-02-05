@@ -43,7 +43,7 @@ typedef struct binding {
 	struct nodeTag *node;
 } binding;
 
-/*	a lexical environment as described in SICP 3.2 */
+/*	a lexical environment as described in SICP ch.3.2 */
 typedef struct environment {
 	struct environment *enclosing;
 	int count;
@@ -83,7 +83,7 @@ node* node_from_string(char* value);
 void push(node* node);
 node* pop();
 
-/* a Lisp like eval function */
+/* the evaluator */
 void eval(node *p, environment* env);
 
 /* environment related functions */
