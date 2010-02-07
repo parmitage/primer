@@ -25,7 +25,7 @@ int lineno = 1;
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF LAMBDA IF ELSE FUNCALL LET FOR WHILE WITH
+%token PROG DEF ASSIGN LAMBDA IF ELSE FUNCALL SET ITER WHILE LET
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
 %token HEAD TAIL CONS SHOW TYPE
 
@@ -40,7 +40,7 @@ int lineno = 1;
 
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt expr params list identifier end
+%type <nPtr> program stmts stmt expr assign params list identifier end
 
 %%
 
@@ -54,13 +54,13 @@ stmts:
 	;
 
 stmt:
-	DEF identifier '=' expr							{ $$ = mkcons(DEF, 2, $2, $4); }
-	| LET identifier '=' expr						{ $$ = mkcons(LET, 2, $2, $4); }
+	DEF assign										{ $$ = $2; }
+	| SET identifier '=' expr						{ $$ = mkcons(SET, 2, $2, $4); }
 	| IF '(' expr ')' stmts %prec IFX end			{ $$ = mkcons(IF, 3, $3, $5, $6); }
 	| IF '(' expr ')' stmts ELSE stmts end			{ $$ = mkcons(IF, 4, $3, $5, $7, $8); }
-	| FOR '(' identifier ':' expr ')' stmts end		{ $$ = mkcons(FOR, 4, $3, $5, $7, $8); }
+	| ITER '(' identifier ':' expr ')' stmts end	{ $$ = mkcons(ITER, 4, $3, $5, $7, $8); }
 	| WHILE '(' expr ')' stmts end					{ $$ = mkcons(WHILE, 3, $3, $5, $6); }
-	| WITH '(' identifier '=' expr ')' stmts end	{ $$ = mkcons(WITH, 4, $3, $5, $7, $8); }
+	| LET '(' assign ')' stmts end					{ $$ = mkcons(LET, 3, $3, $5, $6); }
 	| expr											{ $$ = $1; }
 	;
 
@@ -102,6 +102,11 @@ expr:
 	| NOT expr										{ $$ = mkcons(NOT, 1, $2); }
 	| '-' expr %prec UMINUS							{ $$ = mkcons('-', 1, $2); }
 	| '[' list ']'									{ $$ = $2; }
+	;
+
+assign:
+	identifier '=' expr								{ $$ = mkcons(ASSIGN, 2, $1, $3); }
+	| assign ',' assign								{ $$ = mkcons(';', 2, $1, $3); }
 	;
 
 identifier:

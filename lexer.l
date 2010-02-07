@@ -22,22 +22,22 @@ void yyerror(char *);
 ".."										return RANGE;
 "%"											return MOD;
 "if"										return IF;
-"for"										return FOR;
+"iter"										return ITER;
 "while"										return WHILE;
 "else"										return ELSE;
 "def"										return DEF;
+"set"										return SET;
 "let"										return LET;
-"with"										return WITH;
 "fn"										return LAMBDA;
 "true"										return TRUE;
 "false"										return FALSE;
 "nil"										return NIL;
 "end"										return END;
-"Head"										return HEAD;
-"Tail"										return TAIL;
-"Cons"										return CONS;
-"Show"										return SHOW;
-"Type"										return TYPE;
+"head"										return HEAD;
+"tail"										return TAIL;
+"cons"										return CONS;
+"show"										return SHOW;
+"type"										return TYPE;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'	{ yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"	{ yylval.sval = strdup(yytext); return STRING; }
 [a-zA-Z][a-zA-Z0-9]*						{ yylval.sval = strdup(yytext); return SYMBOL; }

@@ -2,11 +2,11 @@
 <head>
 <title>Primer</title>
 <style>
-	#content {
+	body {
 		font-family: sans-serif;
 		line-height: 140%;
 		width: 800px;
-		margin-left: 30px;
+		margin: 30px 0px 20px 30px;
 		padding: 10px;
 	}
 	pre {
@@ -26,49 +26,57 @@
 		background: blue;
 		color: white;
 	}
-	h3 {
-		margin-top: 40px;
+	h2 {
+		margin-top: 30px;
 	}
 </style>
 </head>
 <body>
-<div id="content">
 <h1>Primer</h1>
-<hr/>
 <p>
-	Primer is a simple programming language with dynamic typing, lexical scope
-	and higher order functions. It's in a very pre-alpha state and not yet
-	suitable for any kind of serious use.
-	If you have any comments or questions, please feel free to send me an
-	<a href="mailto:philip.armitage@gmail.com">email</a>.
+	Primer is a simple, dynamically typed, interpreted programming language
+	and comes with a small standard library. Please note that as it's my
+	hobby project, Primer is just for fun and not intended as a replacement
+	for your favourite programming language!
+</p>
+<p>
+	If you have any comments or questions, please
+	<a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
 
-<h3>Download</h3>
+<h2>Download and install</h2>
 <p>
-	Downloads will be available soon for Linux, Mac and Windows.
+	An alpha version will be released shortly for Linux, Mac and Windows.
+	The source code will be available under the MIT license.	
 </p>
-
-<h3>Hello, world!</h3>
 <p>
-	The customary first program...ensure you have Primer installed somewhere
-	on your PATH and that you've created the environment variable
-	PRIMER_LIBRARY_PATH which should point to StandardLibrary.pri.
+	Unpack the tarball and ensure that the Primer binary is somewhere on
+	your PATH. Create the environment variable PRIMER_LIBRARY_PATH and set
+	it to the path where stdlib.pri will live on your system. To test that
+	everything's working, enter the following code into a text file and save
+	it as hello.pri.
 </p>
 <pre>
-Show("Hello, world!")
+show("Hello, world!")
 </pre>
 <p>
-	Save it as Hello.pri and at the shell enter:
+	At the shell enter:
 </p>
 <pre>
-$ primer Hello.pri
+$ primer hello.pri
 </pre>
-
-<h3>Variables and Types</h3>
 <p>
-	Primer provides int, float, bool, char and string data types. Additionally,
-	the value nil represents nothing. All definitions, including both variables
-	and functions, are introduced with the def keyword.
+	If you receive the error message "Unable to find standard library..."
+	then you may need to restart your shell for the change to take effect.
+</p>
+
+<h2>Definitions</h2>
+<p>
+	Definitions, created with the <strong>def</strong> keyword, intern a new
+	symbol which can be bound to a value, an expression or a function
+	definition. Values can be integers, floating point numbers, booleans,
+	characters or strings as well as the value <strong>nil</strong> which
+	represents nothing.
 </p>
 <pre>
 def i = 10
@@ -78,254 +86,226 @@ def c = 'z'
 def s = "Hello, world!"
 </pre>
 <p>
-	Once a variable has been declared, it can be reassigned to using let.
-	Because Primer is dynamically typed, it doesn't need to be assigned a
-	value of the same type.
+	You can also create multiple definitions at a time.
+</p>
+<pre>
+def foo = 12, bar = true, baz = 1.112
+</pre>
+<p>
+	A binding can be reassigned using <strong>set</strong> and because
+	Primer is dynamically typed, the type need not be the same.
 </p>
 <pre>
 def x = 12
-let x = true
+set x = true
 </pre>
 <p>
-	A number of functions are provided by the standard library for determining
-	the type of a variable. The Type function returns an integer type code while the
-	named type functions return a boolean value indicating if the
-	supplied object is of that type.
+	A number of functions are provided by the standard library for
+	determining the type of a variable. The <strong>type</strong> function
+	returns an integer code while the named type predicate functions return
+	a boolean value indicating if the supplied object is of that type.
 </p>
 <pre>
-Type(i)
-Integer(i)
-Float(f)
-Bool(b)
-Char(c)
-Function(Square)
+type(i)
+integer(i)
+float(f)
+bool(b)
+char(c)
+function(square)
 </pre>
-
-<h3>Functions</h3>
 <p>
-	Functions are introduced with the fn keyword. They are first class
-	objects so can be bound to a symbol, passed to another function or stored
-	in a list. Functions are lexically scoped and automatically return the value
-	of the last executed expression.
+	Functions are introduced with the <strong>fn</strong> keyword. They are
+	first class objects so can be bound to a symbol, passed to another
+	function or stored in a list. Functions can be nested to an arbitrary
+	depth and are lexically scoped. They return the value of the last
+	executed expression and can be called recursively. The following example
+	shows a higher order function being passed both a named and an anonymous
+	function.
 </p>
 <pre>
-def Square = fn(x)
+def square = fn(x)
     x * x
 end
 
-def AddFun = fn(f1, f2, x)
+def addfuns = fn(f1, f2, x)
     f1(x) + f2(x)
 end
 
-AddFun(Square, fn (x) x + x end, 5)
+addfuns(square, fn (x) x + x end, 5)
 </pre>
+
+<h2>Statements</h2>
 <p>
-	Functions can also be nested and called recursively, either directly or
-	via an intermediate function. The following example is the standard library
-	definition of the Take function which shows both nested functions and recursive calls.
+	Primer provides a few built in statements. Both <strong>if</strong>
+	statements and <strong>while</strong> loops work with boolean predicates
+	or integer expressions. The if statement can have an optional
+	<strong>else</strong> clause and can be nested to any depth.
 </p>
 <pre>
-def Take = fn (n, list)
-    def Inner = fn (x, list)
-        if (list != nil && x < n)
-            List(Head(list)) ++ Inner(x + 1, Tail(list))
-        else
-            []
-        end
+while (b == true)
+    if (x > 3000)
+        set x = x - 10
+    else
+        set b = false
     end
-    Inner(0, list)
 end
 </pre>
-
-<h3>Lexical Scope</h3>
 <p>
-	Primer is lexically scoped so bindings can shadow other bindings in
-	nested functions. It's also possible to introduce a local lexical
-	block using the with statement. It should also be noted that if,
-	while and for statements introduce their own lexical environments.
+	The <strong>iter</strong> statement loops over the elements of a list.
+	Note that if the list is modified in the loop body, the effect will not
+	be visible until the loop has terminated.
 </p>
 <pre>
-def Outer = fn(x)
-    Show(x)
-    def Inner = fn(x)
-        Show(x)
-        with (x = 12)
-            Show(x)
-        end
-        Show(x)
-    end
-    Show(x)
+iter (e : [1,2,3])
+    show(e)
 end
-
-</pre>
-
-<h3>Operators</h3>
-<p>
-	The standard mathematical operators are available with precedence as in C.
-</p>
-<pre>
-def a = 12 + 3 * 2 / 5 % 2
 </pre>
 <p>
-	The standard logical operators are also available (not all are shown).
+	The <strong>let</strong> block creates a new lexical environment,
+	bringing bindings into scope for the duration of its body.
 </p>
 <pre>
-def m = a == 15
-def n = c != 12
-def p = a <= 6
+let (w = [1,2,3])
+    show(w)
+    let (w = nil, x = 12, y = 4, z = true)
+        show([x + y] ++ [z, w])
+    end
+    show(w)
+end
 </pre>
+<p>
+	Functions, if, let, for and while all introduce their own lexical
+	environments and because Primer is lexically scoped, bindings can be
+	shadowed.
+</p>
 
-<h3>Lists</h3>
+<h2>Lists</h2>
 <p>
 	Lists are heterogeneous and can be nested to an arbitrary depth.
-	They can be concatenated with the ++ operator. The empty list is equal
-	to nil. List equality is tested element by element and nested lists are
-	tested recursively.
+	They can be concatenated with the <strong>++</strong> operator. List
+	equality is tested element-wise and nested lists are tested recursively.
+	The empty list is equal to nil.
 </p>
 <pre>
 def simple = [1,2,3]
 def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
-def mixed = [1, true, 11128.775, Square, 'Y', nil, "foo"]
+def mixed = [1, true, 11128.775, square, 'Y', nil, "foo"]
 def new = simple ++ nested ++ mixed ++ [x, y]
 </pre>
 <p>
-	An atomic item can be prepended to a list with the Cons special form.
+	An atomic item can be prepended to a list with the <strong>cons</strong>
+	special form.
 </p>
 <pre>
-def extended = Cons(0, [1,2,3])
+def extended = cons(0, [1,2,3])
 </pre>
 <p>
 	A number of special forms and standard library functions provide ways of
 	accessing list elements and testing the properties of lists.
 </p>
 <pre>
-Head([1,2,3])
-Tail([1,2,3])
-Last([1,2,3])
-Nth([1,2,3], 0)
-Length([1,2,[3,4,5,6,7],6])
-Empty([])
+head([1,2,3])
+tail([1,2,3])
+last([1,2,3])
+nth([1,2,3], 0)
+length([1,2,[3,4,5,6,7],6])
+empty([])
+</pre>
+<p>
+	String are just lists of characters with additional syntactic sugar
+	which means that many list operations can be used with them.
+</p>
+<pre>
+def name = "John " ++ "Smith"
+show(reverse(name))
+set name = sort(name)
 </pre>
 
-<h3>Strings</h3>
+<h2>Operators</h2>
 <p>
-	String are just lists of characters which means that many list operations
-	can also be used with them.
+	The standard mathematical operators have precedence as in C.
 </p>
 <pre>
-def name = "John" ++ " " ++ "Smith"
-Reverse(name)
+12 + 3 * 2 / 5 % 2
+</pre>
+<p>
+	The standard logical operators are also available (not all are shown).
+</p>
+<pre>
+a == 15 && c != 12 || a <= 6
+</pre>
+<p>
+	The range operator creates a list of integers between lower and upper
+	bounds (inclusive).
+</p>
+<pre>
+50..300
 </pre>
 
-<h3>Conditionals</h3>
+<h2>Standard Library</h2>
 <p>
-	Primer provides a simple if statement with an optional else clause
-	and can be nested.
+	The standard library, found in stdlib.pri, is a small collection of
+	functions that are automatically loaded by the interpreter before it
+	evaluates your program. All of these functions are written in Primer
+	itself so you are free to change the implementation of them as you see
+	fit (for example, some are written in a deliberately functional style to
+	keep them short and elegant but could be rewritten imperatively to
+	improve efficiency).
+</p>
+<p>
+	Note that a small number of functions are actually special forms: cons,
+	head, tail, type and show.
+</p>
+<p>
+	As Primer makes heavy use of lists, many of the standard library
+	functions relate to manipulating them. The following describes some of
+	the most interesting functions but other facilities include searching,
+	sorting and summing.
+</p>
+<p>
+	The <strong>map</strong> function transforms the values of a
+	list by applying a function to each member in turn and returning a new
+	list containing the results. The supplied function should take one
+	argument and return one value.
 </p>
 <pre>
-if (x > 3000)
-    def y = x * a
-    HandleBigNumber(x) + y
-else
-    if (x < 0)
-        HandleNegativeNumber(x)
-    end
-end
-</pre>
-
-<h3>Loops</h3>
-<p>
-	Primer provides two looping constructs: while and for. While loops execute
-	their body for as long as a predicate holds true. Here's a simple example.
-</p>
-<pre>
-while (x < 10)
-    Show(x)
-    let x = x + 1
-end
-</pre>
-<p>
-	A for loop iterates over the elements of a list by assigning each element
-	of the list to a variable in turn.
-</p>
-<pre>
-for (e : [1,2,3])
-    Show(e)
-end
-</pre>
-
-<h3>Map</h3>
-<p>
-	Map is a higher order function provided by the Primer standard library. It
-	applies a function to each member of a list in turn, returning a new list
-	consisting of the results.
-</p>
-<pre>
-def Square = fn (x)
+def square = fn (x)
     x * x
 end
 
-Map(Square, [1,2,3])
+map(square, [1,2,3])
 </pre>
-
-<h3>Filter</h3>
 <p>
-	Filter is a higher order function provided by the Primer standard library.
-	It applies a predicate function to each member of a list in turn, returning
-	a new list consisting of those elements for which the predicate holds.
+	The <strong>filter</strong> function applies a predicate to each member
+	of a list, returning a new list consisting of those elements for
+	which the predicate returns true. The predicate should be a function
+	taking one argument and returning a boolean.
 </p>
 <pre>
-Filter(fn (x) x > 2 end, [1,2,3,4,5])
+filter(even, [1,2,3,4,5])
 </pre>
-
-<h3>FoldL and FoldR</h3>
 <p>
-	Fold, sometimes referred to as Reduce, is a higher order function provided
-	by the Primer standard library. It processes a list by combining elements
-	using a binary function and returns a result. FoldL (left fold) recursively
-	combines the results of combining all but the last element with the last
-	one. FoldR (right fold) recursively combines the first element of the list
-	with the results of combining the tail of the list. 
-</p>
-<p>
-	The initial value is used for combining the elements at the end of the list.
+	Fold, sometimes known as 'reduce', is implemented as two higher order
+	functions, <strong>foldl</strong> and <strong>foldr</strong>. It
+	processes a list by combining elements using a binary
+	function and returns a result. The foldl function (left fold)
+	recursively combines the results of combining all but the last element
+	of the list with the last one. The foldr function (right fold)
+	recursively combines the first element of the list with the results of
+	combining the tail of the list. An initial value is used for combining
+	the elements at the end of the list.
 </p>
 <pre>
-FoldL(fn (x, y) x + y end, 0, [1,2,3,4,5])
-FoldR(fn (x, y) x + y end, 0, [1,2,3,4,5])
+foldl(fn (x, y) x + y end, 0, [1,2,3,4,5])
+foldr(fn (x, y) x + y end, 0, [1,2,3,4,5])
 </pre>
-
-<h3>Range operator</h3>
 <p>
-	The range operator creates a list of integers between lower and upper bounds (inclusive).
+	The <strong>zip</strong> function combines elements from two lists,
+	pairwise, into a new list. If the lists are of unequal length, the
+	resultant list will contain as many elements as the shortest list.
 </p>
 <pre>
-def list2 = 50..300
+zip([1,2,3], [4,5,6])
 </pre>
-
-<h3>Other standard library functions</h3>
-<pre>
-Zip([1,2,3], [4,5,6])
-
-All(fn (x) x > 2, [1,2,3,4])
-Any(fn (x) x > 2, [1,2,3,4])
-
-Drop(2, [1,2,3,4,5])
-DropWhile(fn (x) x < 3 end, [1,2,3,4,5])
-Take(2, [1,2,3])
-TakeWhile(fn (x) x < 3 end, [1,2,3,4,5])
-
-Max([7,2,4,5,1,3,8,6])
-Min([7,2,4,5,1,3,8,6,9])
-
-Find(12, [4,6,10,2,4,11])
-Reverse([1,2,3])
-Sort("feedback")
-
-Sum([1,2,3])
-Product([1,2,3,4,5])
-</pre>
-
-</div>
 </body>
 </html>

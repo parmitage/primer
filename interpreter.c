@@ -50,7 +50,6 @@ void eval(node *p, environment* env)
 			if (b != NULL)
 				eval(b->node, env);
 			else
-				//push(p);
 				logerr("unbound symbol", p->lineno);
 		}
 
@@ -69,6 +68,11 @@ void eval(node *p, environment* env)
 				
 				case DEF:
 				{
+					break;
+				}
+				
+				case ASSIGN:
+				{
 					char* name = p->opr.op[0]->sval;
 					eval(p->opr.op[1], env);
 					binding* binding = binding_new(name, pop());
@@ -76,7 +80,7 @@ void eval(node *p, environment* env)
 					break;
 				}
 				
-				case LET:
+				case SET:
 				{
 					char* name = p->opr.op[0]->sval;
 					eval(p->opr.op[1], env);
@@ -90,18 +94,15 @@ void eval(node *p, environment* env)
 					break;
 				}
 				
-				case WITH:
+				case LET:
 				{
 					environment *ext = environment_new(env);
 					
 					/* create the scoped variable */
-					char* name = p->opr.op[0]->sval;
-					eval(p->opr.op[1], ext);
-					binding* binding = binding_new(name, pop());
-					environment_extend(ext, binding);
+					eval(p->opr.op[0], ext);
 
 					/* evaluate the body of the with block */
-					eval(p->opr.op[2], ext);
+					eval(p->opr.op[1], ext);
 										
 					environment_delete(ext);
 					
@@ -253,7 +254,7 @@ void eval(node *p, environment* env)
 					break;
 				}
 				
-				case FOR:
+				case ITER:
 				{
 					environment *ext = environment_new(env);
 					
@@ -1127,9 +1128,11 @@ node* load_std_lib()
     	exit(-1);
     }
     
+    strcat(libpath, "stdlib.pri");
+    
     if (!file_exists(libpath))
     {
-    	printf("Unable to find standard library at %s\n", libpath);
+    	printf("Unable to find standard library %s\n", libpath);
     	exit(-1);
     }
 	
