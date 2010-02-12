@@ -34,13 +34,9 @@
 <body>
 <h1>Primer</h1>
 <p>
-	Primer is a simple, dynamically typed, interpreted programming language
-	and comes with a small standard library. Please note that as it's my
-	hobby project, Primer is just for fun and not intended as a replacement
-	for your favourite programming language!
-</p>
-<p>
-	If you have any comments or questions, please
+	Primer is a dynamically typed programming language with a mixture of
+	imperative and functional facilities. If you have any
+	comments or questions, please feel free to
 	<a href="mailto:philip.armitage@gmail.com">email</a> me.
 </p>
 
@@ -67,7 +63,8 @@ $ primer hello.pri
 </pre>
 <p>
 	If you receive the error message "Unable to find standard library..."
-	then you may need to restart your shell for the change to take effect.
+	then you may need to restart your shell for the environment variable to
+	be exported correctly.
 </p>
 
 <h2>Definitions</h2>
@@ -86,14 +83,13 @@ def c = 'z'
 def s = "Hello, world!"
 </pre>
 <p>
-	You can also create multiple definitions at a time.
+	You can create multiple definitions at a time.
 </p>
 <pre>
 def foo = 12, bar = true, baz = 1.112
 </pre>
 <p>
-	A binding can be reassigned using <strong>set</strong> and because
-	Primer is dynamically typed, the type need not be the same.
+	A binding can be reassigned using <strong>set</strong>.
 </p>
 <pre>
 def x = 12
@@ -102,22 +98,22 @@ set x = true
 <p>
 	A number of functions are provided by the standard library for
 	determining the type of a variable. The <strong>type</strong> function
-	returns an integer code while the named type predicate functions return
+	returns an integer code while the type predicate functions return
 	a boolean value indicating if the supplied object is of that type.
 </p>
 <pre>
 type(i)
-integer(i)
-float(f)
-bool(b)
-char(c)
-function(square)
+isint(i)
+isfloat(f)
+isbool(b)
+ischar(c)
+isfn(square)
 </pre>
 <p>
 	Functions are introduced with the <strong>fn</strong> keyword. They are
 	first class objects so can be bound to a symbol, passed to another
 	function or stored in a list. Functions can be nested to an arbitrary
-	depth and are lexically scoped. They return the value of the last
+	depth and are lexically scoped. They return the value of their last
 	executed expression and can be called recursively. The following example
 	shows a higher order function being passed both a named and an anonymous
 	function.
@@ -162,7 +158,7 @@ end
 </pre>
 <p>
 	The <strong>let</strong> block creates a new lexical environment,
-	bringing bindings into scope for the duration of its body.
+	bringing bindings into scope for the extent of its body.
 </p>
 <pre>
 let (w = [1,2,3])
@@ -174,8 +170,8 @@ let (w = [1,2,3])
 end
 </pre>
 <p>
-	Functions, if, let, for and while all introduce their own lexical
-	environments and because Primer is lexically scoped, bindings can be
+	Note that fn, if, for and while also introduce their own lexical
+	environments. Because Primer is lexically scoped, bindings can be
 	shadowed.
 </p>
 
@@ -193,32 +189,32 @@ def mixed = [1, true, 11128.775, square, 'Y', nil, "foo"]
 def new = simple ++ nested ++ mixed ++ [x, y]
 </pre>
 <p>
-	An atomic item can be prepended to a list with the <strong>cons</strong>
-	special form.
+	An atomic item can be prepended to a list with <strong>cons</strong>.
 </p>
 <pre>
 def extended = cons(0, [1,2,3])
 </pre>
 <p>
-	A number of special forms and standard library functions provide ways of
-	accessing list elements and testing the properties of lists.
+	A number of functions provide access to list elements such as
+	<strong>head</strong>, <strong>tail</strong>, <strong>last</strong>
+	and <strong>nth</strong>.
 </p>
 <pre>
 head([1,2,3])
 tail([1,2,3])
 last([1,2,3])
 nth([1,2,3], 0)
-length([1,2,[3,4,5,6,7],6])
-empty([])
 </pre>
 <p>
-	String are just lists of characters with additional syntactic sugar
-	which means that many list operations can be used with them.
+	String are lists of characters with additional syntactic sugar meaning
+	that many list operations such as ++, <strong>length</strong>,
+	<strong>reverse</strong> and <strong>sort</strong> can be used with
+	them.
 </p>
 <pre>
 def name = "John " ++ "Smith"
-show(reverse(name))
-set name = sort(name)
+show(length(name))
+set name = reverse(sort(name))
 </pre>
 
 <h2>Operators</h2>

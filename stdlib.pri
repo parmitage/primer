@@ -218,23 +218,23 @@ def even = fn (z)
 	z % 2 == 0
 end
 
-def integer = fn (z)
+def isint = fn (z)
 	type(z) == 1
 end
 
-def float = fn (z)
+def isfloat = fn (z)
 	type(z) == 2
 end
 
-def char = fn (z)
+def ischar = fn (z)
 	type(z) == 5
 end
 
-def bool = fn (z)
+def isbool = fn (z)
 	type(z) == 3
 end
 
-def function = fn (z)
+def isfn = fn (z)
 	type(z) == 6
 end
 
