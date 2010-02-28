@@ -2,7 +2,7 @@
 #define __PRIMER_H__
 
 #define MAX_DEFS 100
-#define MAX_BINDINGS_PER_FRAME 1500
+#define MAX_BINDINGS_PER_FRAME 2500
 
 typedef enum { false = 0, true = 1 } bool;
 
@@ -20,34 +20,34 @@ typedef enum {
 
 /* represents a composite operator in the AST */
 typedef struct {
-	int oper;					/* ident */
-	int nops;					/* arity */
-	struct nodeTag *op[1];		/* operands */
+  int oper;					/* ident */
+  int nops;					/* arity */
+  struct nodeTag *op[1];		/* operands */
 } oprNodeType;
 
 /* represents a typed node in the AST */
 typedef struct nodeTag {
-	t_type type;
-	int lineno;
-	union {
-		int ival;			/* int, bool and char */
-		float fval;
-		char* sval;
-		oprNodeType opr;	/* composite */
-	};
+  t_type type;
+  int lineno;
+  struct environment *env;
+  union {
+    int ival;			/* int, bool and char */
+    float fval;
+    char* sval;
+    oprNodeType opr;	/* composite */
+  };
 } node;
 
-/*	a symbolic name bound to a value in a lexical environment */
+/* a symbolic name bound to a value in a lexical environment */
 typedef struct binding {
-	char* name;
-	struct nodeTag *node;
+  char* name;
+  struct nodeTag *node;
 } binding;
 
-/*	a lexical environment as described in SICP ch.3.2 */
+/* a lexical environment as described in SICP ch.3.2 */
 typedef struct environment {
-	struct environment *enclosing;
-	int count;
-	binding *bindings[MAX_BINDINGS_PER_FRAME];	/* TODO make dynamically resize */
+  struct environment *enclosing;
+  binding *bindings[MAX_BINDINGS_PER_FRAME];
 } environment;
 
 /* error message with source line number */
@@ -120,6 +120,11 @@ node* not(node* node);
 node* mod(node* x, node* y);
 node* append(node* list1, node* list2);
 node* range(node* s, node* e);
+
+/* hashtable */
+unsigned int hash(char *str);
+void hash_insert(binding* hashtable[], char* key, binding* value);
+binding* hash_retreive(binding* hashtable[], char* key);
 
 /* utils */
 void logerr(char* msg, int line);

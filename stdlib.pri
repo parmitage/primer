@@ -9,16 +9,19 @@ def assert = fn (id, actual, expected)
 end
 
 def length = fn (list)
+    def inner = fn(list, accum)
 	if (list != nil)
-		1 + length(tail(list))
+		inner(tail(list), accum + 1)
 	else
-		0
+		accum
 	end
+    end
+    inner(list, 0)
 end
 
 def map = fn (f, list)
 	if (list != nil)
-		cons(map(f, tail(list)), f(head(list)))
+           [f(head(list))] ++ map(f, tail(list))
 	else
 		nil
 	end
@@ -43,7 +46,7 @@ end
 def filter = fn (f, list)
 	if (list != nil)
 		if (f(head(list)) == true)
-			cons(filter(f, tail(list)), head(list))
+			[head(list)] ++ filter(f, tail(list))
 		else
 			filter(f, tail(list))
 		end
@@ -140,7 +143,7 @@ end
 
 def take = fn (n, list)
 	def inner = fn (x, list)
-		if (list != nil && x < n)
+		if (list != nil and x < n)
 			[head(list)] ++ inner(x + 1, tail(list))
 		else
 			[]
@@ -150,7 +153,7 @@ def take = fn (n, list)
 end
 
 def takewhile = fn (f, list)
-	if (list != nil && f(head(list)) == true)
+	if (list != nil and f(head(list)) == true)
 		[head(list)] ++ takewhile(f, tail(list))
 	else
 		[]
@@ -211,11 +214,11 @@ def last = fn (l)
 end
 
 def odd = fn (z)
-	z % 2 != 0
+	z mod 2 != 0
 end
 
 def even = fn (z)
-	z % 2 == 0
+	z mod 2 == 0
 end
 
 def isint = fn (z)
@@ -239,7 +242,7 @@ def isfn = fn (z)
 end
 
 def zip = fn (l1, l2)
-	if (l1 != [] && l2 != [])
+	if (l1 != [] and l2 != [])
 		[[head(l1), head(l2)]] ++ zip(tail(l1), tail(l2))
 	else
 		[]

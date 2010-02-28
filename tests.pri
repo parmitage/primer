@@ -17,19 +17,6 @@ def ifStatement = fn (x)
 	end
 end
 
-def imperative = fn(x)
-	def l = []
-	while (x < 10)
-		set l = l ++ [x]
-		set x = x + 1
-	end
-	def l2 = []
-	iter (y : l)
-		set l2 = l2 ++ [y]
-	end	
-	l2
-end
-
 def returnsArgument = fn (x, y)
 	y
 end
@@ -72,13 +59,13 @@ end
 
 def listCountdown = fn (x)
 	if (x > 0)
-		cons(listCountdown(x - 1), x)
+		[x] ++ listCountdown(x - 1)
 	else
 		nil
 	end
 end
 
-def mm = map(double, l)
+
 
 assert("Types: int equality", 1, 1)
 assert("Types: float equality", 4.5, 4.5)
@@ -114,23 +101,23 @@ assert("Types: anonymous function type check", isfn(fn (x) x end), true)
 
 assert("Operators: integer addition", 2 + 3, 5)
 assert("Operators: integer multiplication", 2 * 3, 6)
-assert("Operators: true or true", true || true, true)
-assert("Operators: true or false", true || false, true)
-assert("Operators: false or true", false || true, true)
-assert("Operators: false or false", false || false, false)
-assert("Operators: true and true", true && true, true)
-assert("Operators: true and false", true && false, false)
-assert("Operators: false and true", false && true, false)
-assert("Operators: false and false", false && false, false)
-assert("Operators: modulus", 11 % 3, 2)
-assert("Operators: not true", !true, false)
-assert("Operators: not false", !false, true)
-assert("Operators: not with equality", !1 == 2, true)
-assert("Operators: not with equality 2", !1 == 1, false)
+assert("Operators: true or true", true or true, true)
+assert("Operators: true or false", true or false, true)
+assert("Operators: false or true", false or true, true)
+assert("Operators: false or false", false or false, false)
+assert("Operators: true and true", true and true, true)
+assert("Operators: true and false", true and false, false)
+assert("Operators: false and true", false and true, false)
+assert("Operators: false and false", false and false, false)
+assert("Operators: modulus", 11 mod 3, 2)
+assert("Operators: not true", not true, false)
+assert("Operators: not false", not false, true)
+assert("Operators: not with equality", not 1 == 2, true)
+assert("Operators: not with equality 2", not 1 == 1, false)
 assert("Operators: unary minus", -10, -10)
 assert("Operators: subtraction", 0-10, -10)
 assert("Operators: precedence", 10 * 2 - 3, 17)
-assert("Operators: complex precedence", 12 + 3 * 2 / 5 % 2, 13)
+assert("Operators: complex precedence", 12 + 3 * 2 / 5 mod 2, 13)
 assert("Operators: unary minus with precedence", -10 * 2 - 3, -23)
 assert("Operators: list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6])
 assert("Operators: nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6])
@@ -154,7 +141,6 @@ assert("Funcall: function returns new list", listCountdown(5), [5,4,3,2,1])
 assert("Funcall: higher order with literals", sumWithFun(2, 3, double), 10)
 assert("Funcall: higher order with variables", sumWithFun(a, b, double), 50)
 assert("Funcall: higher order with fn", sumWithFun(a, b, fn (x) 2 * x end), 50)
-assert("Funcall: imperative features", imperative(0), [0,1,2,3,4,5,6,7,8,9])
 
 assert("Library: cons equals literal list", cons([1,2,3], 4), [4,1,2,3])
 assert("Library: nested cons", cons(cons([0,1], [2,3,4]), [5,[6,7,8]]), [[5,[6,7,8]],[2,3,4],0,1])
@@ -165,6 +151,7 @@ assert("Library: cons onto result of map", cons(map(double, [1,2,3]), 0), [0,2,4
 assert("Library: triple nested cons", cons(cons(cons([1,2,3], 0), 5), 6), [6,5,0,1,2,3])
 assert("Library: map over concatenated lists", map(double, [1,2,3] ++ [4,5,6]), [2,4,6,8,10,12])
 assert("Library: concatenate and cons", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6] ++ [1,2] ++ cons([], 7), [1,2,3,[4,5],4,5,[5,5,5],6,1,2,7])
+
 assert("Library: simple length", length(l), 4)
 assert("Library: test empty list", empty([]), true)
 assert("Library: test non-empty list", empty([1]), false)
@@ -182,7 +169,7 @@ assert("Library: simple nth", nth([44,12,66,87], 2), 66)
 assert("Library: length of nested list", length([1,2,[3,4,5,6,7],6]), 4)
 assert("Library: length of list extracted by nth", length(nth([1,2,[3,4,5,6,7],6], 2)), 5)
 assert("Library: length of the empty list", length([]), 0)
-assert("Library: combined list functions 1", sum(map(double, filter(fn (x) 10 % x == 0 end, cons(cons([1, 2], 3), 4)))), 6)
+assert("Library: combined list functions 1", sum(map(double, filter(fn (x) 10 mod x == 0 end, cons(cons([1, 2], 3), 4)))), 6)
 assert("Library: foldl with fn", foldl(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
 assert("Library: foldr with fn", foldr(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
 assert("Library: any with pass in middle of list", any(fn (x) x == 2 end, [1,2,3,4]), true)
