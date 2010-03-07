@@ -9,7 +9,7 @@ int main(int argc, char** argv)
 {
   if (argc != 2)
     {
-      printf("usage: pl0 <filename>\n");
+      printf("usage: primer <filename>\n");
       return -1;
     }
 	
@@ -1086,26 +1086,15 @@ bool file_exists(const char * path)
 
 /* hashtable stuff */
 
-unsigned int hash(char *str)
+unsigned int hash(char* str)
 {
-    unsigned int hashval;
-    
-    /* we start our hash out at 0 */
-    hashval = 0;
+  unsigned int hash = 0;
+  int c;
 
-    /* for each character, we multiply the old hash by 31 and add the current
-     * character.  Remember that shifting a number left is equivalent to 
-     * multiplying it by 2 raised to the number of places shifted.  So we 
-     * are in effect multiplying hashval by 32 and then subtracting hashval.  
-     * Why do we do this?  Because shifting and subtraction are much more 
-     * efficient operations than multiplication.
-     */
-    for(; *str != '\0'; str++) hashval = *str + (hashval << 5) - hashval;
+  while (c = *str++)
+    hash = c + (hash << 6) + (hash << 16) - hash;
 
-    /* we then return the hash value mod the hashtable size so that it will
-     * fit into the necessary range
-     */
-    return hashval % MAX_BINDINGS_PER_FRAME;
+  return hash % MAX_BINDINGS_PER_FRAME;
 }
 
 void hash_insert(binding* hashtable[], char* key, binding* value)

@@ -1,5 +1,6 @@
 - proper hashtable implementation for environments
 - shadowing a previously lifted binding should replace the lifted version
+- environment_delete is never called
 - concatenating the same string variable onto itself creates an infinite value...
 - add filename to nodes (for error handling?)
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()

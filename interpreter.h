@@ -2,7 +2,7 @@
 #define __PRIMER_H__
 
 #define MAX_DEFS 100
-#define MAX_BINDINGS_PER_FRAME 2500
+#define MAX_BINDINGS_PER_FRAME 1000
 
 typedef enum { false = 0, true = 1 } bool;
 
