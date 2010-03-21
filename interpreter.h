@@ -56,6 +56,11 @@ typedef struct error_tag {
 	char* msg;
 } error;
 
+node* NODE_NIL;
+node* NODE_BOOL_TRUE;
+node* NODE_BOOL_FALSE;
+node* NODE_INT_ZERO;
+
 node* stack[50000];
 int stack_ptr;
 node* ast;

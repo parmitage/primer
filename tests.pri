@@ -5,67 +5,65 @@ def s = "Hello, world!"
 def z = nil
 
 def singleStatement = fn (x)
-	x + b + 2
+  x + b + 2
 end
 
 def ifStatement = fn (x)
-	if (x < 5)
-		def z = 4
-		z + x + test(3)
-	else
-		1
-	end
+  if x < 5 then
+    def z = 4
+    z + x + test(3)
+  else
+    1
+  end
 end
 
 def returnsArgument = fn (x, y)
-	y
+  y
 end
 
 def threeArguments = fn (x, y, z)
-	x * y - z
+  x * y - z
 end
 
 def innerFunction = fn ()
-	def c = 12
-	def inner = fn ()
-		c
-	end
-	inner()
+  def c = 12
+  def inner = fn ()
+    c
+  end
+  inner()
 end
 
 def higherOrderFunction = fn (f)
-	f(2)
+  f(2)
 end
 
 def double = fn(x)
-	x * 2
+  x * 2
 end
 
 def sumWithFun = fn(x, y, f)
-	f(x) + f(y)
+  f(x) + f(y)
 end
 
 def factorial = fn(x)
-	if (x == 0)
-		1
-	else
-		x * factorial(x - 1)
-	end
+  if x == 0 then
+    1
+  else
+    x * factorial(x - 1)
+  end
 end
 
 def greaterThan3 = fn (x)
-	x > 3
+  x > 3
 end
 
 def listCountdown = fn (x)
-	if (x > 0)
-		[x] ++ listCountdown(x - 1)
-	else
-		nil
-	end
+  if x > 0 then
+    [x] ++ listCountdown(x - 1)
+  else
+    nil
+  end
 end
-
-
 
 assert("Types: int equality", 1, 1)
 assert("Types: float equality", 4.5, 4.5)

@@ -4,238 +4,43 @@
 <style>
 body {
 font-family: sans-serif;
-line-height: 140%;
+font-size: large;
 width: 800px;
+line-height: 140%;
 margin: 30px 0px 20px 30px;
 padding: 10px;
 }
-pre {
-font-family: monospace;
-font-size: 14px;
-background: #f1f1f1;
-border-left: 2px solid black;
-margin-right: 10px;
-margin-left: 13px;
-padding: 3px 0 3px 12px;
-}
-a {
-text-decoration: none;
-color: blue;
-}
-a:hover {
-background: blue;
-color: white;
-}
-h2 {
-margin-top: 30px;
-}
-
 </style>
 </head>
 <body>
 <h1>Primer</h1>
 <p>
-Primer is a simple functional programming language in the early stages
-of development. An alpha version will be released shortly under the
-MIT license. If you have any comments or questions, please feel
-free to <a href="mailto:philip.armitage@gmail.com">email</a> me.
+Primer is a simple functional programming language with dynamic
+typing, lexical scope, immutable bindings, lambda expressions,
+closures and tail calls optimization.
 </p>
 <p>
-Unpack the tarball and ensure that the Primer binary is somewhere on
-your PATH. Create the environment variable PRIMER_LIBRARY_PATH and set
-it to the path where stdlib.pri will live on your system. To test that
-everything's working, enter the following code into a text file and save
-it as hello.pri.
+To get an idea of how Primer code looks, here's an implementation of Quicksort</a>:
 </p>
 <pre>
-show("Hello, world!")
-</pre>
-<p>
-At the shell enter:
-</p>
-<pre>
-$ primer hello.pri
-</pre>
-<p>
-Definitions, created with the <strong>def</strong> keyword, intern a new
-symbol which can be bound to a value, an expression or a function
-definition. Values can be integers, floating point numbers, booleans,
-characters or strings as well as the value <strong>nil</strong> which
-represents nothing.
-</p>
-<pre>
-def i = 10
-def f = 3.14
-def b = true
-def c = 'z'
-def s = "Hello, world!"
-</pre>
-<p>
-You can create multiple definitions at a time.
-</p>
-<pre>
-def foo = 12, bar = true, baz = 1.112
-</pre>
-<p>
-Functions are introduced with the <strong>fn</strong> keyword. They are
-first class objects so can be bound to a symbol, passed to another
-function or stored in a list. They can also be passed anonymously.
-Functions can be nested to an arbitrary
-depth and are lexically scoped. They return the value of their last
-executed expression. Functions can be called recursively and Primer
-will optimise tail calls. The following example shows a higher order
-function being passed both a named and an anonymous function.
-</p>
-<pre>
-def square = fn(x)
-    x * x
-end
-
-def addfuns = fn(f1, f2, x)
-    f1(x) + f2(x)
-end
-
-addfuns(square, fn (x) x + x end, 5)
-</pre>
-<p>
-Primer is lexically scoped - functions and if statements create a new
-lexical environment. Additionally, the <strong>let</strong> statement
-creates a new lexical environment which brings bindings into scope for
-the extent of its body. The following example shows simple shadowing
-of bindings.
-</p>
-<pre>
-let (w = [1,2,3])
-    show(w)
-    let (w = nil, x = 12, y = 4, z = true)
-        show([x + y] ++ [z, w])
-    end
-    show(w)
+def qsort = fn (l)
+  if l != nil then
+    def x = head(l), xs = tail(l)
+    qsort(filter(fn (a) a < x end, xs))
+      ++ [x]
+      ++ qsort(filter(fn (a) a >= x end, xs))
+  else
+    []
+  end
 end
 </pre>
 <p>
-Lists are heterogeneous and can be nested to an arbitrary depth.
-They can be concatenated with the <strong>++</strong> operator. List
-equality is tested element-wise and nested lists are tested recursively.
-The empty list is equal to nil.
+An alpha version of Primer will
+be released under the
+<a href="http://www.opensource.org/licenses/mit-license.php">MIT
+license</a> but if you have any comments or questions in the meantime,
+please feel free to <a href="mailto:philip.armitage@gmail.com">email
+me</a>.
 </p>
-<pre>
-def simple = [1,2,3]
-def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
-def mixed = [1, true, 11128.775, square, 'Y', nil, "foo"]
-def new = simple ++ nested ++ mixed ++ [x, y]
-</pre>
-<p>
-An atomic item can be prepended to a list with <strong>cons</strong>.
-</p>
-<pre>
-def extended = cons(0, [1,2,3])
-</pre>
-<p>
-A number of functions provide access to list elements such as
-<strong>head</strong>, <strong>tail</strong>, <strong>last</strong>
-and <strong>nth</strong>.
-</p>
-<pre>
-head([1,2,3])
-tail([1,2,3])
-last([1,2,3])
-nth([1,2,3], 0)
-</pre>
-<p>
-Strings are lists of characters with additional syntactic sugar meaning
-that many list operations such as ++, <strong>length</strong>,
-<strong>reverse</strong> and <strong>sort</strong> can be used with
-them.
-</p>
-<pre>
-def name = "John " ++ "Smith"
-show(length(name))
-set name = reverse(sort(name))
-</pre>
-<p>
-The standard mathematical operators have precedence as in C.
-</p>
-<pre>
-12 + 3 * 2 / 5 mod 2
-</pre>
-<p>
-The standard logical operators are also available (not all are shown).
-</p>
-<pre>
-a == 15 and c != 12 or a <= 6
-</pre>
-<p>
-The range operator creates a list of integers between lower and upper
-bounds (inclusive).
-</p>
-<pre>
-50..300
-</pre>
-<p>
-The <strong>if</strong> statement has an optional <strong>else</strong>
-clause and can be nested to any depth.
-</p>
-<pre>
-if (x > 3000)
-    show("large")
-else
-    show("small")
-end
-</pre>
-<p>
-The <strong>map</strong> function transforms the values of a
-list by applying a function to each member in turn and returning a new
-list containing the results. The supplied function should take one
-argument and return one value.
-</p>
-<pre>
-map(square, [1,2,3])
-</pre>
-<p>
-The <strong>filter</strong> function applies a predicate to each member
-of a list, returning a new list consisting of those elements for
-which the predicate returns true. The predicate should be a function
-taking one argument and returning a boolean.
-</p>
-<pre>
-filter(even, [1,2,3,4,5])
-</pre>
-<p>
-Fold, sometimes known as 'reduce', is implemented as two higher order
-functions, <strong>foldl</strong> and <strong>foldr</strong>. It
-processes a list by combining elements using a binary
-function and returns a result. The foldl function (left fold)
-recursively combines the results of combining all but the last element
-of the list with the last one. The foldr function (right fold)
-recursively combines the first element of the list with the results of
-combining the tail of the list. An initial value is used for combining
-the elements at the end of the list.
-</p>
-<pre>
-foldl(fn (x, y) x + y end, 0, [1,2,3,4,5])
-</pre>
-<p>
-The <strong>zip</strong> function combines elements from two lists,
-pairwise, into a new list. If the lists are of unequal length, the
-resultant list will contain as many elements as the shortest list.
-</p>
-<pre>
-zip([1,2,3], [4,5,6])
-</pre>
-<p>
-A number of functions are provided by the standard library for
-determining the type of a variable. The <strong>type</strong> function
-returns an integer code while the type predicate functions return
-a boolean value indicating if the supplied object is of that type.
-</p>
-<pre>
-type(i)
-isint(i)
-isfloat(f)
-isbool(b)
-ischar(c)
-isfn(square)
-</pre>
 </body>
 </html>

@@ -12,6 +12,11 @@ int main(int argc, char** argv)
       printf("usage: primer <filename>\n");
       return -1;
     }
+
+  NODE_NIL = mknil();
+  NODE_BOOL_TRUE = mkbool(true);
+  NODE_BOOL_FALSE = mkbool(false);
+  NODE_INT_ZERO = mkint(0);
 	
   node* stdlib = load_std_lib();
   lineno = 1;
@@ -79,21 +84,6 @@ void eval(node *p, environment* env)
               eval(p->opr.op[1], env);
               binding* binding = binding_new(name, pop());
               environment_extend(env, binding);
-              break;
-            }
-				
-          case LET:
-            {
-              environment *ext = environment_new(env);
-					
-              /* create the scoped variable */
-              eval(p->opr.op[0], ext);
-
-              /* evaluate the body of the with block */
-              eval(p->opr.op[1], ext);
-										
-              environment_delete(ext);
-					
               break;
             }
 				
@@ -201,6 +191,7 @@ void eval(node *p, environment* env)
               break;
             }
 				
+
           case IF:
             {
               eval(p->opr.op[0], env);					
@@ -209,20 +200,16 @@ void eval(node *p, environment* env)
               if (pred->ival > 0)
                 {
                   environment *ext = environment_new(env);
-                  //eval(p->opr.op[1], ext);
                   p = p->opr.op[1];
                   env = ext;
                   goto eval_start;
-                  //environment_delete(ext);
                 }
               else if (p->opr.nops > 3)
                 {
                   environment *ext = environment_new(env);
-                  //eval(p->opr.op[2], ext);
                   p = p->opr.op[2];
                   env = ext;
                   goto eval_start;
-                  //environment_delete(ext);
                 }
 					
               break;
@@ -428,9 +415,9 @@ environment *environment_delete(environment* env)
 {
   environment *enclosing = env->enclosing;
 	
-  /*	note that we free the string allocated to hold the binding name and
-        the pointer itself but we DO NOT free the node that the binding
-        points to as this is a reference into the AST */
+  /* note that we free the string allocated to hold the binding name and
+     the pointer itself but we DO NOT free the node that the binding
+     points to as this is a reference into the AST */
 	
   free(env);
 	
@@ -526,7 +513,7 @@ node* mkstr(char* value)
   int srclen = strlen(value);
   int destlen = srclen - 1;
   int copylen = srclen - 2;
-  char* temp = (char*)malloc(destlen * sizeof(char));
+  char* temp = (char*)malloc(destlen * sizeof(char) + 1);
   strncpy(temp, value + 1, copylen);
   temp[copylen] = '\0';
   return node_from_string(temp);
@@ -877,16 +864,16 @@ node* lt(node* x, node* y)
   if (x->type == t_float)
     {
       if (y->type == t_float)
-        return mkbool(x->fval < y->fval);
+        return x->fval < y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
       else
-        return mkbool(x->fval < y->ival);
+        return x->fval < y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
     }
   else
     {
       if (y->type == t_float)
-        return mkbool(x->ival < y->fval);
+        return x->ival < y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
       else
-        return mkbool(x->ival < y->ival);
+        return x->ival < y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
     }		
 }
 
@@ -900,16 +887,16 @@ node* lte(node* x, node* y)
   if (x->type == t_float)
     {
       if (y->type == t_float)
-        return mkbool(x->fval <= y->fval);
+        return x->fval <= y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
       else
-        return mkbool(x->fval <= y->ival);
+        return x->fval <= y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
     }
   else
     {
       if (y->type == t_float)
-        return mkbool(x->ival <= y->fval);
+        return x->ival <= y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
       else
-        return mkbool(x->ival <= y->ival);
+        return x->ival <= y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
     }		
 }
 
@@ -921,46 +908,46 @@ node* gte(node* x, node* y)
 node* list_eq(node* l1, node* l2)
 {
   if (l1 == NULL && l2 == NULL)
-    return mkbool(true);
+    return NODE_BOOL_TRUE;
 	
   if (l1->type == t_nil && l2->type == t_nil)
-    return mkbool(true);
+    return NODE_BOOL_TRUE;
 
   if (l1->opr.nops != l2->opr.nops)
-    return mkbool(false);
+    return NODE_BOOL_FALSE;
 	
   if (eq(l1->opr.op[0], l2->opr.op[0])->ival == true)
     {
       if (l1->opr.nops == 2 && l2->opr.nops == 2)
         return list_eq(l1->opr.op[1], l2->opr.op[1]);
       else
-        return mkbool(true);
+        return NODE_BOOL_TRUE;
     }
   else
-    return mkbool(false);
+    return NODE_BOOL_FALSE;
 }
 
 node* eq(node* x, node* y)
 {
   if (x->type != y->type)
-    return mkbool(false);
+    return NODE_BOOL_FALSE;
 		
   if (x->type == t_int || x->type == t_bool)
-    return mkbool(x->ival == y->ival);
+    return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 		
   if (x->type == t_float)
-    return mkbool(x->fval == y->fval);
+    return x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
   if (x->type == t_char)
-    return mkbool(x->ival == y->ival);
+    return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 	
   if (x->type == t_nil)
-    return mkbool(true);
+    return NODE_BOOL_TRUE;
 	
   if (x->type == t_cons)
     return list_eq(x, y);
 		
-  return mkbool(false);
+  return NODE_BOOL_FALSE;
 }
 
 node* neq(node* x, node* y)
@@ -977,7 +964,7 @@ node* and(node* x, node* y)
   else
     {
       // TODO probably should throw error
-      return mkbool(false);
+      return NODE_BOOL_FALSE;
     }
 }
 
@@ -990,16 +977,16 @@ node* or(node* x, node* y)
   else
     {
       // TODO probably should throw error
-      return mkbool(false);
+      return NODE_BOOL_FALSE;
     }
 }
 
 node* not(node* node)
 {
   if (node->ival == true)
-    return mkbool(false);
+    return NODE_BOOL_FALSE;
   else
-    return mkbool(true);
+    return NODE_BOOL_TRUE;
 }
 
 node* mod(node* x, node* y)

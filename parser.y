@@ -25,7 +25,7 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF ASSIGN LAMBDA IF ELSE FUNCALL LET
+%token PROG DEF ASSIGN LAMBDA IF THEN ELSE FUNCALL
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
 %token HEAD TAIL CONS SHOW TYPE
 
@@ -55,9 +55,8 @@ stmt                                                  { $$ = $1; }
 
 stmt:
 DEF assign                                            { $$ = $2; }
-| IF '(' expr ')' stmts %prec IFX end                 { $$ = mkcons(IF, 3, $3, $5, $6); }
-| IF '(' expr ')' stmts ELSE stmts end                { $$ = mkcons(IF, 4, $3, $5, $7, $8); }
-| LET '(' assign ')' stmts end                        { $$ = mkcons(LET, 3, $3, $5, $6); }
+| IF expr THEN stmts %prec IFX end                    { $$ = mkcons(IF, 3, $2, $4, $5); }
+| IF expr THEN stmts ELSE stmts end                    { $$ = mkcons(IF, 4, $2, $4, $6, $7); }
 | expr                                                { $$ = $1; }
 ;
 
