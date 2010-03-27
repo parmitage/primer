@@ -149,7 +149,6 @@ assert("Library: cons onto result of map", cons(map(double, [1,2,3]), 0), [0,2,4
 assert("Library: triple nested cons", cons(cons(cons([1,2,3], 0), 5), 6), [6,5,0,1,2,3])
 assert("Library: map over concatenated lists", map(double, [1,2,3] ++ [4,5,6]), [2,4,6,8,10,12])
 assert("Library: concatenate and cons", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6] ++ [1,2] ++ cons([], 7), [1,2,3,[4,5],4,5,[5,5,5],6,1,2,7])
-
 assert("Library: simple length", length(l), 4)
 assert("Library: test empty list", empty([]), true)
 assert("Library: test non-empty list", empty([1]), false)

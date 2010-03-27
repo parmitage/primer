@@ -21,7 +21,7 @@ end
 
 def map = fn (f, list)
   if list != nil then
-    [f(head(list))] ++ map(f, tail(list))
+    cons(map(f, tail(list)), f(head(list)))
   else
     nil
   end

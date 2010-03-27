@@ -81,19 +81,31 @@ void eval(node *p, environment* env)
           case ASSIGN:
             {
               char* name = p->opr.op[0]->sval;
-              eval(p->opr.op[1], env);
-              binding* binding = binding_new(name, pop());
+              binding* binding = binding_new(name, p->opr.op[1]);
               environment_extend(env, binding);
               break;
             }
 				
           case LAMBDA:
             {
-              /* Direct evaluation of lambda, presumably when passed as
-                 an anonymous function to another function rather than
-                 via a funcall, means pushing the lambda back onto the
-                 stack ready to be evaluated. */
-              push(p);
+	      /* A functions has an associated environment in which its body
+		 will be evaluated. The environment is an extension of the
+		 defining environment which means that it captures all of the
+		 currently defined bindings to form a closure. The catch is
+		 that in the following call:
+		 
+		 f(f(x))
+		 
+		 the outer f creates an environment but this is immediately
+		 overwritten by the inner f.
+		 
+		 To get around this problem we clone the function object itself
+		 and assign it a unique environment before pushing it onto the
+		 stack for FUNCALL to evaluate.
+	      */
+	      node *clone = mkcons(LAMBDA, 2, p->opr.op[0], p->opr.op[1]);
+	      clone->env = environment_new(env);
+	      push(clone);
               break;
             }
 				
@@ -114,10 +126,9 @@ void eval(node *p, environment* env)
                     params = NULL;
                 }
 	      
-              environment *ext = environment_new(env);
-              bind(fn->opr.op[0], ext);
+              bind(fn->opr.op[0], fn->env);
               p = fn->opr.op[1];
-              env = ext;
+              env = fn->env;
               goto eval_start;
 
               break;
@@ -407,6 +418,7 @@ environment* environment_new(environment* enclosing)
 	
   /* enclosing environment will be NULL for global environment */
   env->enclosing = enclosing;
+  env->count = 0;
 	
   return env;
 }
@@ -419,14 +431,14 @@ environment *environment_delete(environment* env)
      the pointer itself but we DO NOT free the node that the binding
      points to as this is a reference into the AST */
 	
-  free(env);
+  //free(env);
 	
   return enclosing;
 }
 
 void environment_extend(environment* env, binding *binding)
 {
-  hash_insert(env->bindings, binding->name, binding);
+  env->bindings[env->count++] = binding;
 }
 
 binding* environment_lookup(environment* env, char* name)
@@ -435,13 +447,14 @@ binding* environment_lookup(environment* env, char* name)
 
   while (env != NULL)
     {
-      binding* b = hash_retreive(env->bindings, name);
-
-      if (b != NULL)
-        {
-          environment_extend(top, b);
-          return b;
-        }
+      for (int i = 0; i < env->count; ++i)
+	{
+	  if (strcmp(env->bindings[i]->name, name) == 0)
+	    {
+	      environment_extend(top, env->bindings[i]);
+	      return env->bindings[i];
+	    }
+	}
 
       env = env->enclosing;
     }
@@ -452,10 +465,10 @@ binding* environment_lookup(environment* env, char* name)
 node *mkint(int value)
 {
   node *p;
-  size_t nodeSize = sizeof(node) + sizeof(int);
-	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
+  int size = sizeof(struct nodeTag) + sizeof(int);
+
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+    memory_alloc_error();
 	
   p->type = t_int;
   p->ival = value;
@@ -467,11 +480,11 @@ node *mkint(int value)
 node *mkfloat(float value)
 {
   node *p;
-  size_t nodeSize = sizeof(node) + sizeof(float);
+  size_t size = sizeof(struct nodeTag) + sizeof(float);
 	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
-	
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+    memory_alloc_error();
+  
   p->type = t_float;
   p->fval = value;
   p->lineno = lineno;
@@ -482,10 +495,10 @@ node *mkfloat(float value)
 node *mkbool(int value)
 {
   node *p;
-  size_t nodeSize = sizeof(node) + sizeof(int);
+  size_t size = sizeof(struct nodeTag) + sizeof(int);
 	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+    memory_alloc_error();
 	
   p->type = t_bool;
   p->ival = value;
@@ -497,9 +510,10 @@ node *mkbool(int value)
 node* mkchar(char c)
 {
   node* p;
+  size_t size = sizeof(struct nodeTag) + sizeof(char);
 		
-  if ((p = malloc(sizeof(node) + sizeof(char))) == NULL)
-    abort();
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+    memory_alloc_error();
 
   p->type = t_char;
   p->lineno = lineno;
@@ -513,7 +527,7 @@ node* mkstr(char* value)
   int srclen = strlen(value);
   int destlen = srclen - 1;
   int copylen = srclen - 2;
-  char* temp = (char*)malloc(destlen * sizeof(char) + 1);
+  char* temp = (char*)malloc(destlen + 1);
   strncpy(temp, value + 1, copylen);
   temp[copylen] = '\0';
   return node_from_string(temp);
@@ -532,10 +546,10 @@ node* node_from_string(char* value)
 node* mknil()
 {
   node *p;
-  size_t nodeSize = sizeof(node) + sizeof(int);
+  size_t size = sizeof(struct nodeTag) + sizeof(int);
 	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+    memory_alloc_error();
 	
   p->type = t_nil;
   p->lineno = lineno;
@@ -546,11 +560,10 @@ node* mknil()
 node *mksym(char* s)
 {
   node *p;
-  size_t nodeSize = sizeof(node) + (strlen(s) * sizeof(char*));
 	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
-	
+  if ((p = (struct nodeTag *)malloc(sizeof(struct nodeTag))) == NULL)
+    memory_alloc_error();
+  
   p->type = t_symbol;
   p->sval = strdup(s);
   p->lineno = lineno;
@@ -563,26 +576,28 @@ node *mkcons(int oper, int nops, ...)
   if (nops == 0)
     return mknil();
 
-  va_list ap;
   node *p;
-  int i;
-  size_t nodeSize = sizeof(node)
-    + sizeof(oprNodeType)
-    + nops * sizeof(node*)
-    + sizeof(environment*);
-	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
+  
+  if ((p = (struct nodeTag *)malloc(sizeof(struct nodeTag))) == NULL)
+    memory_alloc_error();
 	
   p->type = t_cons;
   p->lineno = lineno;
   p->opr.oper = oper;
   p->opr.nops = nops;
-	
+
+  //size_t size = (2 * sizeof(struct environment)) + (MAX_BINDINGS_PER_FRAME * sizeof(struct binding));
+  //p->env = (struct environment *)malloc(size);
+
+  va_list ap;
   va_start(ap, nops);
 	
-  for (i = 0; i < nops; i++)
-    p->opr.op[i] = va_arg(ap, node*);
+  for (int i = 0; i < nops; i++)
+    {
+      node *arg = va_arg(ap, node*);
+      p->opr.op[i] = (struct nodeTag *)malloc(sizeof(arg));
+      p->opr.op[i] = arg;
+    }
 	
   va_end(ap);
 	
@@ -592,16 +607,22 @@ node *mkcons(int oper, int nops, ...)
 node* mkerr(char* msg, int lineno)
 {
   node *p;
-  size_t nodeSize = sizeof(node) + (strlen(msg) * sizeof(char*));
+  size_t size = sizeof(struct nodeTag) + (strlen(msg) * sizeof(char*));
 	
-  if ((p = malloc(nodeSize)) == NULL)
-    abort();
+  if ((p = (node*)malloc(size)) == NULL)
+    memory_alloc_error();
 	
   p->type = t_error;
   p->sval = strdup(msg);
   p->lineno = lineno;
 	
   return p;
+}
+
+void memory_alloc_error()
+{
+  printf("memory_alloc_error()\n");
+  abort();
 }
 
 void nodefree(node *p)
@@ -617,7 +638,7 @@ void nodefree(node *p)
         nodefree(p->opr.op[i]);
     }
 	
-  free (p);
+  free(p);
 }
 
 void push(node* node)
@@ -1069,28 +1090,5 @@ bool file_exists(const char * path)
       fclose(istream);
       return true;
     }
-}
-
-/* hashtable stuff */
-
-unsigned int hash(char* str)
-{
-  unsigned int hash = 0;
-  int c;
-
-  while (c = *str++)
-    hash = c + (hash << 6) + (hash << 16) - hash;
-
-  return hash % MAX_BINDINGS_PER_FRAME;
-}
-
-void hash_insert(binding* hashtable[], char* key, binding* value)
-{
-  hashtable[hash(key)] = value;
-}
-
-binding* hash_retreive(binding* hashtable[], char* key)
-{
-  return hashtable[hash(key)];
 }
 

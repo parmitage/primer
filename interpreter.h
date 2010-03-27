@@ -8,18 +8,18 @@ typedef enum { false = 0, true = 1 } bool;
 
 /* supported types */ 
 typedef enum {
-	t_nil,
-	t_int,
-	t_float,
-	t_bool,
-	t_symbol,
-	t_char,
-	t_cons,
-	t_error
+  t_nil,
+  t_int,
+  t_float,
+  t_bool,
+  t_symbol,
+  t_char,
+  t_cons,
+  t_error
 } t_type;
 
 /* represents a composite operator in the AST */
-typedef struct {
+typedef struct oprNodeType {
   int oper;					/* ident */
   int nops;					/* arity */
   struct nodeTag *op[1];		/* operands */
@@ -47,13 +47,14 @@ typedef struct binding {
 /* a lexical environment as described in SICP ch.3.2 */
 typedef struct environment {
   struct environment *enclosing;
+  int count;
   binding *bindings[MAX_BINDINGS_PER_FRAME];
 } environment;
 
 /* error message with source line number */
 typedef struct error_tag {
-	int line;
-	char* msg;
+  int line;
+  char* msg;
 } error;
 
 node* NODE_NIL;
@@ -79,10 +80,11 @@ node* mkchar(char value);
 node* mkstr(char* value);
 node* mknil();
 node* mkerr(char* msg, int lineno);
-
-/* node functions */
-void nodefree(node *p);
 node* node_from_string(char* value);
+
+/* allocator */
+void memory_alloc_error();
+void nodefree(node *p);
 
 /* stack operations */
 void push(node* node);
@@ -125,11 +127,6 @@ node* not(node* node);
 node* mod(node* x, node* y);
 node* append(node* list1, node* list2);
 node* range(node* s, node* e);
-
-/* hashtable */
-unsigned int hash(char *str);
-void hash_insert(binding* hashtable[], char* key, binding* value);
-binding* hash_retreive(binding* hashtable[], char* key);
 
 /* utils */
 void logerr(char* msg, int line);
