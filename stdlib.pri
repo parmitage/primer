@@ -248,3 +248,14 @@ def zip = fn (l1, l2)
     []
   end
 end
+
+def range = fn (from, to)
+  def inner = fn (list, count)
+    if count < from then
+      list
+    else
+      inner([count] ++ list, count - 1)
+    end
+  end
+  inner([], to)
+end

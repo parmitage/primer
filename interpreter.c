@@ -101,7 +101,9 @@ void eval(node *p, environment* env)
 		 
 		 To get around this problem we clone the function object itself
 		 and assign it a unique environment before pushing it onto the
-		 stack for FUNCALL to evaluate.
+		 stack for FUNCALL to evaluate. This works but is inefficient
+		 so could be improved in future, especially to make the GC
+		 implementation simpler.
 	      */
 	      node *clone = mkcons(LAMBDA, 2, p->opr.op[0], p->opr.op[1]);
 	      clone->env = environment_new(env);
@@ -347,14 +349,6 @@ void eval(node *p, environment* env)
               break;
             }
 				
-          case RANGE:
-            {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(range(pop(), pop()));
-              break;
-            }
-				
           case NOT:
             {
               eval(p->opr.op[0], env);
@@ -560,8 +554,9 @@ node* mknil()
 node *mksym(char* s)
 {
   node *p;
-	
-  if ((p = (struct nodeTag *)malloc(sizeof(struct nodeTag))) == NULL)
+  size_t size = sizeof(struct nodeTag) + strlen(s);
+
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_symbol;
@@ -576,18 +571,17 @@ node *mkcons(int oper, int nops, ...)
   if (nops == 0)
     return mknil();
 
-  node *p;
-  
-  if ((p = (struct nodeTag *)malloc(sizeof(struct nodeTag))) == NULL)
+  node *p;  
+  size_t size = sizeof(struct nodeTag) + sizeof(struct oprNodeType);
+
+  if ((p = (struct nodeTag *)malloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_cons;
   p->lineno = lineno;
   p->opr.oper = oper;
   p->opr.nops = nops;
-
-  //size_t size = (2 * sizeof(struct environment)) + (MAX_BINDINGS_PER_FRAME * sizeof(struct binding));
-  //p->env = (struct environment *)malloc(size);
+  p->env = NULL;
 
   va_list ap;
   va_start(ap, nops);
@@ -607,7 +601,7 @@ node *mkcons(int oper, int nops, ...)
 node* mkerr(char* msg, int lineno)
 {
   node *p;
-  size_t size = sizeof(struct nodeTag) + (strlen(msg) * sizeof(char*));
+  size_t size = sizeof(struct nodeTag) + strlen(msg);
 	
   if ((p = (node*)malloc(size)) == NULL)
     memory_alloc_error();

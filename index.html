@@ -1,46 +1,278 @@
-<html>
-<head>
-<title>Primer</title>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html> 
+<head> 
+<title>Primer</title> 
 <style>
-body {
-font-family: sans-serif;
-font-size: large;
-width: 800px;
-line-height: 140%;
-margin: 30px 0px 20px 30px;
-padding: 10px;
+html {
+background: #d1d1d1;
 }
-</style>
-</head>
+div#content {
+background: white;
+font-family: sans-serif;
+font-size: 14pt;
+line-height: 140%;
+width: 900px;
+margin: 20px auto;
+padding: 30px;
+}
+pre {
+font-family: monospace;
+background: #f1f1f1;
+border-left: 2px solid black;
+margin-right: 10px;
+margin-left: 13px;
+padding: 3px 0 3px 12px;
+}
+p {
+margin-top: 30px;
+}
+a {
+text-decoration: none;
+color: blue;
+}
+a:hover {
+background: blue;
+color: white;
+}
+</style> 
+</head> 
 <body>
-<h1>Primer</h1>
-<p>
-Primer is a simple functional programming language with dynamic
-typing, lexical scope, immutable bindings, lambda expressions,
-closures and tail calls optimization.
-</p>
-<p>
-To get an idea of how Primer code looks, here's an implementation of Quicksort</a>:
+<div id="content">
+  <h1>Primer</h1>
+  <p>
+  Primer is a simple functional programming language which features:
+  <ul>
+    <li>dynamic typing</li>
+    <li>immutable bindings</li>
+    <li>lambda expressions</li>
+    <li>closures</li>
+    <li>tail call elimination</li>
+  </ul>
+  </p>
+  <p>
+  To get an idea of how Primer looks, here's an implementation of Quicksort</a>:
+  </p>
+  <pre>
+def qsort = fn (l)
+    if l != nil then
+        def x = head(l), xs = tail(l)
+        qsort(filter(fn (a) a < x end, xs))
+            ++ [x]
+            ++ qsort(filter(fn (a) a >= x end, xs))
+    else
+        []
+    end
+end
+</pre>
+  <p> 
+  Primer is still in the early stages of development but an alpha
+  version will be released shortly under the MIT license. If you have
+  any comments or questions, please feel free to
+  <a href="mailto:philip.armitage@gmail.com">email</a> me.
+  </p> 
+  <p> 
+  Unpack the tarball and ensure that the Primer binary is somewhere on
+  your PATH. Create the environment variable PRIMER_LIBRARY_PATH and set
+  it to the path where stdlib.pri will live on your system. To test that
+  everything's working, enter the following code into a text file and save
+  it as hello.pri.
+  </p> 
+  <pre>
+show("Hello, world!")
+</pre> 
+  <p> 
+  At the shell enter:
+  </p> 
+  <pre>
+$ primer hello.pri
+</pre> 
+  <p> 
+  The <strong>def</strong> keyword binds a symbol to a value, an
+  expression or a function definition. Bindings are
+  <strong>immutable</strong>. Values can be integers, floating point
+  numbers, booleans, characters or strings as well as the value
+  <strong>nil</strong> which represents nothing.
+  </p> 
+  <pre>
+def ival = 10
+def fval = 3.14
+def bval = true, cval = 'z', sval = "Hello, world!"
+</pre> 
+  <p>
+  A set of type predicates are available to test the type of a binding:
+  <strong>isint</strong>, <strong>isbool</strong>,
+  <strong>isfn</strong>, etc.
+  </p>
+  <pre>
+isint(100) == true
+isfn(map) == true
+ischar('g') == true
+</pre>
+  <p> 
+  Functions are introduced with the <strong>fn</strong> keyword. They
+  return the value of their last expression.
+  </p>
+  <pre>
+def square = fn(x)
+  x * x
+end
+</pre>
+  <p>
+  Primer functions are first class objects so can be bound to a symbol,
+  passed to another function, returned from a function or stored in a list.
 </p>
 <pre>
-def qsort = fn (l)
-  if l != nil then
-    def x = head(l), xs = tail(l)
-    qsort(filter(fn (a) a < x end, xs))
-      ++ [x]
-      ++ qsort(filter(fn (a) a >= x end, xs))
-  else
-    []
+def addFuns = fn(f1, f2, x)
+  f1(x) + f2(x)
+end
+
+addFuns(square, square, 5)
+</pre>
+<p>
+Primer supports <strong>lambda expressions</strong>.
+</p>
+<pre>
+addFuns(fn (x) x * 2 end, fn (x) x * 5 end, 5)
+</pre>
+<p>
+Functions can be <strong>nested</strong> and called
+<strong>recursively</strong>. Primer will <strong>optimise tail
+calls</strong>.
+</p>
+<pre>
+def projectEuler1 = fn (limit)
+  def inner = fn (x, accum)
+    if x < limit then
+      if x mod 3 == 0 or x mod 5 == 0 then
+        inner(x + 1, accum + x)
+      else
+        inner(x + 1, accum)
+      end
+    else
+      accum
+    end
   end
+  inner(0, 0)
 end
 </pre>
 <p>
-An alpha version of Primer will
-be released under the
-<a href="http://www.opensource.org/licenses/mit-license.php">MIT
-license</a> but if you have any comments or questions in the meantime,
-please feel free to <a href="mailto:philip.armitage@gmail.com">email
-me</a>.
+Primer is <strong>lexically scoped</strong> and supports
+<strong>closures</strong>.
 </p>
+<pre>
+def makeAdder = fn (y)
+  fn (a) y + a end
+end
+
+def add1 = makeAdder(1)
+def add2 = makeAdder(2)
+
+show(add1(2))
+show(add2(2))
+</pre>
+<p>
+Lists are <strong>heterogeneous</strong> and can be nested to an
+arbitrary depth.
+</p>
+<pre>
+def simple = [1,2,3]
+def nested = [1,2,[12,15,16,[44],67],3,3,4,2]
+def mixed = [1, true, 11128.775, square, 'Y', nil, "foo"]
+</pre>
+<p>
+The <strong>++</strong> operator concatenates two lists.
+</p>
+<pre>
+def new = simple ++ nested ++ mixed ++ [x, y]
+</pre>
+<p>
+An atom can be prepended to a list with <strong>cons</strong>.
+</p>
+<pre>
+cons(0, [1,2,3]) == [0,1,2,3]
+</pre>
+<p>
+A number of functions provide access to list elements such as
+<strong>head</strong>, <strong>tail</strong>, <strong>last</strong> 
+and <strong>nth</strong>.
+</p>
+<pre>
+head([1,2,3]) == 1
+tail([1,2,3]) == [2,3]
+last([1,2,3]) == 3
+nth([1,2,3], 0) == 1
+</pre>
+<p>
+List equality is tested element-wise and nested lists are tested
+recursively. The empty list is equal to nil.
+</p>
+<pre>
+[] == nil
+</pre>
+<p>
+Strings are syntactic sugar for lists of characters so many list
+operations such as ++, <strong>length</strong>,
+<strong>reverse</strong> and <strong>sort</strong> can be used with them.
+</p>
+<pre>
+def name = "John " ++ "Smith"
+show(length(name))
+show(reverse(sort(name)))
+</pre>
+<p>
+The standard mathematical operators have precedence as in C.
+</p>
+<pre>
+12 + 3 * 2 / 5 mod 2
+</pre>
+<p>
+The standard logical operators are also available (not all are shown).
+</p>
+<pre>
+a == 15 and c != 12 or a <= 6
+</pre>
+<p>
+The <strong>if</strong> statement has an optional <strong>else</strong> 
+clause and can be nested.
+</p>
+<pre>
+if x > 3000 then
+  show("large")
+else
+  show("small")
+end
+</pre>
+<p>
+<strong>map</strong> transforms the values of a list by applying a
+function to each member in turn and returns a new list containing the
+results.
+</p>
+<pre>
+map(square, [1,2,3])
+</pre>
+<p>
+<strong>filter</strong> applies a predicate to each member of a list,
+returning a new list containing those elements for which the predicate
+returns true.
+</p>
+<pre>
+filter(even, [1,2,3,4,5])
+</pre>
+<p>
+<strong>foldl</strong> and <strong>foldr</strong> recursively combine list
+elements using a binary function and an initial value.
+</p>
+<pre>
+foldl(fn (x, y) x + y end, 0, [1,2,3,4,5])
+</pre>
+<p>
+<strong>zip</strong> combines elements from two lists, pairwise, into
+a new list. If the lists are of unequal length, the resultant list
+will contain as many elements as the shorter list.
+</p>
+<pre>
+zip([1,2,3], [4,5,6])
+</pre>
+</div>
 </body>
 </html>

@@ -33,7 +33,7 @@
 %nonassoc ELSE
 
 %left NOT
-%left AND OR RANGE
+%left AND OR
 %left GE LE EQ NE APPEND '>' '<'
 %left '+' '-'
 %left '*' '/' MOD
@@ -94,7 +94,6 @@ INTEGER                                               { $$ = mkint($1); }
 | expr OR expr                                        { $$ = mkcons(OR, 2, $1, $3); }
 | expr MOD expr                                       { $$ = mkcons(MOD, 2, $1, $3); }
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
-| expr RANGE expr                                     { $$ = mkcons(RANGE, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }

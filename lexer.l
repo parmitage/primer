@@ -19,7 +19,6 @@ void yyerror(char *);
 "and"                                             return AND;
 "or"                                              return OR;
 "++"                                              return APPEND;
-".."                                              return RANGE;
 "mod"                                             return MOD;
 "if"                                              return IF;
 "then"                                            return THEN;

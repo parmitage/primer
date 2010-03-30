@@ -65,6 +65,13 @@ def listCountdown = fn (x)
   end
 end
 
+def makeAdder = fn (y)
+  fn (a) y + a end
+end
+
+def add1 = makeAdder(1)
+def add2 = makeAdder(2)
+
 assert("Types: int equality", 1, 1)
 assert("Types: float equality", 4.5, 4.5)
 assert("Types: bool equality 1", true, true)
@@ -120,8 +127,7 @@ assert("Operators: unary minus with precedence", -10 * 2 - 3, -23)
 assert("Operators: list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6])
 assert("Operators: nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6])
 assert("Operators: string append", "this" ++ " is " ++ "a test", "this is a test")
-assert("Operators: simple range", 1..5, [1,2,3,4,5])
-assert("Operators: precedence of range vs append", 1..5 ++ 6..10 ++ 11..15, [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])
+assert("Operators: simple range", range(1, 5), [1,2,3,4,5])
 assert("Operators: greater than", 5 > 2, true)
 assert("Operators: greater than fails", 5 > 9, false)
 assert("Operators: less than", 2 < 5, true)
@@ -139,6 +145,9 @@ assert("Funcall: function returns new list", listCountdown(5), [5,4,3,2,1])
 assert("Funcall: higher order with literals", sumWithFun(2, 3, double), 10)
 assert("Funcall: higher order with variables", sumWithFun(a, b, double), 50)
 assert("Funcall: higher order with fn", sumWithFun(a, b, fn (x) 2 * x end), 50)
+assert("Funcall: function with itself as parameter", double(double(2)), 8)
+assert("Funcall: closure one", add1(2), 3)
+assert("Funcall: closure two", add2(2), 4)
 
 assert("Library: cons equals literal list", cons([1,2,3], 4), [4,1,2,3])
 assert("Library: nested cons", cons(cons([0,1], [2,3,4]), [5,[6,7,8]]), [[5,[6,7,8]],[2,3,4],0,1])
@@ -232,3 +241,4 @@ assert("Library: tail of string", tail(s), "ello, world!")
 assert("Library: zip", zip([1,2,3], [4,5,6]), [[1,4],[2,5],[3,6]])
 assert("Library: zip with short first list", zip([1,2,3], [4,5,6,7]), [[1,4],[2,5],[3,6]])
 assert("Library: zip with short second list", zip([1,2,3,4], [4,5,6]), [[1,4],[2,5],[3,6]])
+assert("Operators: concatenated ranges", range(1, 5) ++ range(6, 10) ++ range(11, 15), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15])

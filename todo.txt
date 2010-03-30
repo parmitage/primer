@@ -1,18 +1,13 @@
-- proper hashtable implementation for environments
+- tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
-- environment_delete is never called
-- use END in function and IF blocks to signal potential cleanup?
 - concatenating the same string variable onto itself creates an infinite value...
 - add filename to nodes (for error handling?)
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
 - re-introduce full funcall support in parser -> e.g. [x]()
 - 3 shift/reduce errors introduced by unary minus
-- strings still seem to cause some problems on Windows
 - returning a value and not using it sometimes causes a crash?
 - smarter dispatch of built-in functions (Michael's suggestion)
--------------------------------------------------------------------------------
-- gc!
-- closures!
+- GC
 - REPL?
 - optimise list eval (currently evaluates each item and reconstructs to avoid non-evaluating symbols)
 - should attempted redefinition of a binding in the same scope throw an error?
