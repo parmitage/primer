@@ -101,9 +101,7 @@ void eval(node *p, environment* env)
 		 
 		 To get around this problem we clone the function object itself
 		 and assign it a unique environment before pushing it onto the
-		 stack for FUNCALL to evaluate. This works but is inefficient
-		 so could be improved in future, especially to make the GC
-		 implementation simpler.
+		 stack for FUNCALL to evaluate.
 	      */
 	      node *clone = mkcons(LAMBDA, 2, p->opr.op[0], p->opr.op[1]);
 	      clone->env = environment_new(env);
@@ -135,9 +133,9 @@ void eval(node *p, environment* env)
 
               break;
             }
-				
-          case LIST:
-            {
+
+           case LIST:
+             {
               /* Because we can store symbols in lists we evaluate the
                  list contents. Probably could make this significantly
                  more efficient! */
@@ -149,7 +147,7 @@ void eval(node *p, environment* env)
                 case 1:
                   eval(p->opr.op[0], env);
                   push(mkcons(LIST, 1, pop()));
-                  break;
+                 break;
                 case 2:
                   eval(p->opr.op[0], env);
                   eval(p->opr.op[1], env);
@@ -157,7 +155,7 @@ void eval(node *p, environment* env)
                   break;
                 }
               break;
-            }
+             }
 				
           case STRING:
             {
@@ -1010,25 +1008,6 @@ node* mod(node* x, node* y)
     return mkint(x->ival % y->ival);
   else
     return mkerr("% operator only supports integers", x->lineno);
-}
-
-node* range(node* s, node* e)
-{
-  node* l;
-
-  if (s->type == t_int || e->type == t_int)
-    {
-      l = mknil();
-			
-      for (int i = e->ival; i >= s->ival; --i)
-        l = cons(l, mkint(i));
-    }
-  else
-    {
-      l = mkerr(".. operator only supports integer ranges", s->lineno);
-    }
-	
-  return l;
 }
 
 node* load_std_lib()

@@ -79,6 +79,30 @@ def find = fn (x, list)
   end
 end
 
+def findByFn = fn (x, f, list)
+  if f(head(list)) == x then
+    head(list)
+  else
+    if tail(list) != nil then
+      findByFn(x, f, tail(list))
+    else
+      nil
+    end
+  end
+end
+
+def replace = fn (x, y, list)
+  if list then  
+    if head(list) == x then
+      [y] ++ replace(x, y, tail(list))
+    else
+      [head(list)] ++ replace(x, y, tail(list))
+    end
+  else
+    []
+  end    
+end
+
 def sum = fn (list)
   if list != nil then
     head(list) + sum(tail(list))
@@ -258,4 +282,12 @@ def range = fn (from, to)
     end
   end
   inner([], to)
+end
+
+def intersperse = fn (sep, l)
+  if length(l) == 1 then
+    [head(l)]
+  else
+    [head(l)] ++ [sep] ++ intersperse(sep, tail(l))
+  end
 end
