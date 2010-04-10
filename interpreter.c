@@ -18,12 +18,11 @@ int main(int argc, char** argv)
   NODE_BOOL_FALSE = mkbool(false);
   NODE_INT_ZERO = mkint(0);
 	
-  node* stdlib = load_std_lib();
+  //node* stdlib = load_std_lib();
   lineno = 1;
   parse(argv[1]);
-  node* program = create_program(stdlib, ast);
-  eval(program, NULL);
-	
+  //node* program = create_program(mknil(), ast);
+  eval(ast, NULL);
   return 0;
 }
 
@@ -57,7 +56,10 @@ void eval(node *p, environment* env)
         if (b != NULL)
           eval(b->node, env);
         else
-          logerr("unbound symbol", p->lineno);
+          {
+            //printf("%s\n", p->sval);
+            logerr("unbound symbol", p->lineno);
+          }
       }
 
     case t_cons:
@@ -68,8 +70,21 @@ void eval(node *p, environment* env)
             {
               /* create the global lexical environment */
               env = environment_new(NULL);
+              eval(library_load("base"), env);
               eval(p->opr.op[0], env);
               env = environment_delete(env);
+              break;
+            }
+
+          case USE:
+            {
+              char *name = p->opr.op[0]->sval;
+              node *module = library_load(name);
+              node *namespace = mkcons(LAMBDA, 2, NULL, NULL);
+              namespace->env = environment_new(env);
+              eval(module, namespace->env);
+              binding* binding = binding_new(name, namespace);
+              environment_extend(env, binding);
               break;
             }
 				
@@ -131,6 +146,42 @@ void eval(node *p, environment* env)
               env = fn->env;
               goto eval_start;
 
+              break;
+            }
+
+          case MODULECALL:
+            {
+              //eval(p->opr.op[0], env);
+              node* module = NULL;
+              
+               binding *b = environment_lookup(env, p->opr.op[0]->sval);
+			
+               if (b != NULL)
+                 module = b->node;
+
+              if (module != NULL)
+                {
+                  //environment_print(module->env);
+                  eval(p->opr.op[1], module->env);
+                  node *fn = pop();
+                  node *params = p->opr.op[2];
+
+                  while (params != NULL)
+                    {
+                      if (params->opr.nops > 0)
+                        {
+                          eval(params->opr.op[0], env);
+                          params = params->opr.op[1];
+                        }
+                      else
+                        params = NULL;
+                    }
+                  
+                  bind(fn->opr.op[0], fn->env);
+                  p = fn->opr.op[1];
+                  env = fn->env;
+                  goto eval_start;
+                }
               break;
             }
 
@@ -454,6 +505,19 @@ binding* environment_lookup(environment* env, char* name)
   return NULL;
 }
 
+void *environment_print(environment* env)
+{
+  while (env != NULL)
+    {
+      for (int i = 0; i < env->count; ++i)
+	{
+          printf("%s\n", env->bindings[i]->name);
+	}
+      printf("^^^^\n");
+      env = env->enclosing;
+    }
+}
+
 node *mkint(int value)
 {
   node *p;
@@ -552,7 +616,7 @@ node* mknil()
 node *mksym(char* s)
 {
   node *p;
-  size_t size = sizeof(struct nodeTag) + strlen(s);
+  size_t size = sizeof(struct nodeTag) + strlen(s) + 1;
 
   if ((p = (struct nodeTag *)malloc(size)) == NULL)
     memory_alloc_error();
@@ -592,21 +656,6 @@ node *mkcons(int oper, int nops, ...)
     }
 	
   va_end(ap);
-	
-  return p;
-}
-
-node* mkerr(char* msg, int lineno)
-{
-  node *p;
-  size_t size = sizeof(struct nodeTag) + strlen(msg);
-	
-  if ((p = (node*)malloc(size)) == NULL)
-    memory_alloc_error();
-	
-  p->type = t_error;
-  p->sval = strdup(msg);
-  p->lineno = lineno;
 	
   return p;
 }
@@ -1007,7 +1056,7 @@ node* mod(node* x, node* y)
   if (x->type == t_int && y->type == t_int)
     return mkint(x->ival % y->ival);
   else
-    return mkerr("% operator only supports integers", x->lineno);
+    return 0;
 }
 
 node* load_std_lib()
@@ -1031,6 +1080,28 @@ node* load_std_lib()
 	
   parse(libpath);
   return ast->opr.op[0];
+}
+
+node* library_load(char* name)
+{
+  char *libroot, libpath[500];
+  libroot = getenv("PRIMER_LIBRARY_PATH");
+  	
+  if (libroot == NULL)
+    {
+      printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
+      exit(-1);
+    }
+    
+  sprintf(libpath, "%s%s.pri", libroot, name);
+    
+  if (!file_exists(libpath))
+    {
+      printf("Unable to find library %s\n", name);
+      exit(-1);
+    }
+  
+  return parsel(libpath);
 }
 
 node* create_program(node* stdlib, node* user)

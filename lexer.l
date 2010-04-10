@@ -34,6 +34,7 @@ void yyerror(char *);
 "cons"                                            return CONS;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
+"use"                                             return USE;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 [a-zA-Z][a-zA-Z0-9]*                              { yylval.sval = strdup(yytext); return SYMBOL; }

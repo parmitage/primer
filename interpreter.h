@@ -64,11 +64,12 @@ node* NODE_INT_ZERO;
 
 node* stack[50000];
 int stack_ptr;
-node* ast;
+node *temp, *ast;
 int lineno;
 
 /* driver for yacc */
 void parse(char* filename);
+node* parsel(char* filename);
 
 /* constructors for AST nodes */
 node* mkcons(int oper, int nops, ...);
@@ -79,7 +80,6 @@ node* mkbool(int value);
 node* mkchar(char value);
 node* mkstr(char* value);
 node* mknil();
-node* mkerr(char* msg, int lineno);
 node* node_from_string(char* value);
 
 /* allocator */
@@ -100,6 +100,7 @@ environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
 void environment_extend(environment* env, binding *binding);
 binding* environment_lookup(environment* env, char* ident);
+void *environment_print(environment* env);
 
 /* special forms */
 node* car(node* node);
@@ -127,6 +128,9 @@ node* not(node* node);
 node* mod(node* x, node* y);
 node* append(node* list1, node* list2);
 node* range(node* s, node* e);
+
+/* library loading */
+node* library_load(char* name);
 
 /* utils */
 void logerr(char* msg, int line);

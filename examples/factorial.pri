@@ -1,5 +1,5 @@
 def fac1 = fn (n)
-  if (n == 0)
+  if n == 0 then
      1
   else
      n * fac1 (n - 1)
@@ -8,7 +8,7 @@ end
 
 def fac2 = fn (n)
   def inner = fn (i, acc)
-    if (i == 0)
+    if i == 0 then
       acc
     else
       inner (i - 1, acc * i)
