@@ -94,7 +94,7 @@ node* pop();
 void eval(node *p, environment* env);
 
 /* environment related functions */
-void bind(node* params, environment* env);
+node* bind(node *args, node *params, environment *fnenv, environment *argenv);
 binding* binding_new(char* name, node* node);
 environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
@@ -132,10 +132,10 @@ node* range(node* s, node* e);
 /* library loading */
 node* library_load(char* name);
 
+/* error handling */
+void error_log(char *msg, node *node);
+
 /* utils */
-void logerr(char* msg, int line);
 bool file_exists(const char * filename);
-node* load_std_lib();
-node* create_program(node* stdlib, node* user);
 
 #endif

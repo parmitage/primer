@@ -128,7 +128,7 @@ void yyerror(char *s)
 {
   char* errmsg = malloc(200);
   errmsg[0] = '\0';
-  logerr(s, lineno);
+  error_log(s, NULL);
 }
 
 void parse(char* filename)

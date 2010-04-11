@@ -18,10 +18,8 @@ int main(int argc, char** argv)
   NODE_BOOL_FALSE = mkbool(false);
   NODE_INT_ZERO = mkint(0);
 	
-  //node* stdlib = load_std_lib();
   lineno = 1;
   parse(argv[1]);
-  //node* program = create_program(mknil(), ast);
   eval(ast, NULL);
   return 0;
 }
@@ -43,12 +41,6 @@ void eval(node *p, environment* env)
       push(p);
       break;
 
-    case t_error:
-      {
-        logerr(p->sval, p->lineno);
-        break;
-      }
-
     case t_symbol:
       {
         binding *b = environment_lookup(env, p->sval);
@@ -56,10 +48,7 @@ void eval(node *p, environment* env)
         if (b != NULL)
           eval(b->node, env);
         else
-          {
-            //printf("%s\n", p->sval);
-            logerr("unbound symbol", p->lineno);
-          }
+          error_log("unbound symbol", p);
       }
 
     case t_cons:
@@ -68,7 +57,6 @@ void eval(node *p, environment* env)
           {
           case PROG:
             {
-              /* create the global lexical environment */
               env = environment_new(NULL);
               eval(library_load("base"), env);
               eval(p->opr.op[0], env);
@@ -129,55 +117,27 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               node* fn = pop();
               node *params = p->opr.op[1];
-
-              while (params != NULL)
-                {
-                  if (params->opr.nops > 0)
-                    {
-                      eval(params->opr.op[0], env);
-                      params = params->opr.op[1];
-                    }
-                  else
-                    params = NULL;
-                }
-	      
-              bind(fn->opr.op[0], fn->env);
+              bind(fn->opr.op[0], params, fn->env, env);
               p = fn->opr.op[1];
               env = fn->env;
               goto eval_start;
-
               break;
             }
 
           case MODULECALL:
             {
-              //eval(p->opr.op[0], env);
-              node* module = NULL;
-              
-               binding *b = environment_lookup(env, p->opr.op[0]->sval);
+              node* module = NULL;              
+              binding *b = environment_lookup(env, p->opr.op[0]->sval);
 			
                if (b != NULL)
                  module = b->node;
 
               if (module != NULL)
                 {
-                  //environment_print(module->env);
                   eval(p->opr.op[1], module->env);
                   node *fn = pop();
                   node *params = p->opr.op[2];
-
-                  while (params != NULL)
-                    {
-                      if (params->opr.nops > 0)
-                        {
-                          eval(params->opr.op[0], env);
-                          params = params->opr.op[1];
-                        }
-                      else
-                        params = NULL;
-                    }
-                  
-                  bind(fn->opr.op[0], fn->env);
+                  bind(fn->opr.op[0], params, fn->env, env);
                   p = fn->opr.op[1];
                   env = fn->env;
                   goto eval_start;
@@ -427,19 +387,21 @@ void eval(node *p, environment* env)
     }
 }
 
-void bind(node* params, environment* env)
+//void bind(node* params, environment* env)
+node* bind(node *args, node *params, environment *fnenv, environment *argenv)
 {
   if (params != NULL)
     {		
       if (params->opr.nops > 1)
         {
-          bind(params->opr.op[1], env);
+          bind(args->opr.op[1], params->opr.op[1], fnenv, argenv);
         }
 		
       if (params->opr.nops > 0)
         {
-          binding* binding = binding_new(params->opr.op[0]->sval, pop());
-          environment_extend(env, binding);
+          eval(params->opr.op[0], argenv);
+          binding* binding = binding_new(args->opr.op[0]->sval, pop());
+          environment_extend(fnenv, binding);
         }
     }
 }
@@ -756,6 +718,11 @@ int node_type(node* node)
 
 void display_primitive(node* node, int depth)
 {
+  //printf("%i", depth);
+
+  for (int i = 0; i < depth; ++i)
+    printf(" ");
+
   switch (node->type)
     {
     case t_int:
@@ -799,7 +766,7 @@ void display_primitive(node* node, int depth)
               if (depth == 0)
                 printf("[");
 						
-              display_primitive(node->opr.op[0], depth++);
+              display_primitive(node->opr.op[0], depth+2);
 					
               if (node->opr.nops > 1 && node->opr.op[1] != NULL)
                 {
@@ -814,14 +781,108 @@ void display_primitive(node* node, int depth)
               if (node->opr.op[1] == NULL)
                 printf("]");
 							
-              --depth;
-					
+              break;
+            }
+
+          case FUNCALL:
+            {
+              display_primitive(node->opr.op[0], depth);
+              printf("(");
+              display_primitive(node->opr.op[1], 0);
+              printf(")");
               break;
             }
 				
           case LAMBDA:
             {
-              printf("LAMBDA");
+              printf("fn (");
+              display_primitive(node->opr.op[0], depth);
+              printf(")\n");
+              display_primitive(node->opr.op[1], depth+2);
+              printf("end\n");
+              break;
+            }
+
+          case ';':
+            {
+              display_primitive(node->opr.op[0], 0);
+              printf("\n");
+              display_primitive(node->opr.op[1], depth);
+              break;
+            }
+
+          case ',':
+            {
+              struct nodeTag *params = node;
+
+              while (params != NULL)
+                {
+                  if (params->opr.nops > 0)
+                    {
+                      display_primitive(params->opr.op[0], 0);
+                      params = params->opr.op[1];
+                      if (params != NULL)
+                        printf(", ");
+                    }
+                  else
+                    params = NULL;
+                }
+
+              break;
+            }
+
+          case ASSIGN:
+            {
+              display_primitive(node->opr.op[0], depth);
+              printf(" = ");
+              display_primitive(node->opr.op[1], 0);
+              break;
+            }
+
+          case IF:
+            {
+              printf("if ");
+              display_primitive(node->opr.op[0], 0);
+              printf(" then\n");
+              display_primitive(node->opr.op[1], depth+2);
+              printf("\nend\n");
+              break;
+            }
+
+          case '>':
+          case '<':
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+          case GE:
+          case LE:
+          case MOD:
+          case AND:
+          case OR:
+          case EQ:
+          case NE:
+            {
+              display_primitive(node->opr.op[0], depth);
+              
+              switch (node->opr.oper)
+                {
+                case '>': printf(" > "); break;
+                case '<': printf(" < "); break;
+                case '+': printf(" + "); break;
+                case '-': printf(" - "); break;
+                case '*': printf(" * "); break;
+                case '/': printf(" / "); break;
+                case GE: printf(" >= "); break;
+                case LE: printf(" <= "); break;
+                case MOD: printf(" mod "); break;
+                case AND: printf(" and "); break;
+                case OR: printf(" or "); break;
+                case EQ: printf(" == "); break;
+                case NE: printf(" != "); break;
+                }
+
+              display_primitive(node->opr.op[1], 0);
               break;
             }
           }
@@ -831,10 +892,6 @@ void display_primitive(node* node, int depth)
 		
     case t_symbol:
       printf("%s", node->sval);
-      break;
-			
-    case t_error:
-      logerr(node->sval, node	->lineno);
       break;
     }		
 }
@@ -1059,29 +1116,6 @@ node* mod(node* x, node* y)
     return 0;
 }
 
-node* load_std_lib()
-{
-  char* libpath;
-  libpath = getenv("PRIMER_LIBRARY_PATH");
-  	
-  if (libpath == NULL)
-    {
-      printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
-      exit(-1);
-    }
-    
-  strcat(libpath, "stdlib.pri");
-    
-  if (!file_exists(libpath))
-    {
-      printf("Unable to find standard library %s\n", libpath);
-      exit(-1);
-    }
-	
-  parse(libpath);
-  return ast->opr.op[0];
-}
-
 node* library_load(char* name)
 {
   char *libroot, libpath[500];
@@ -1097,23 +1131,18 @@ node* library_load(char* name)
     
   if (!file_exists(libpath))
     {
-      printf("Unable to find library %s\n", name);
+      printf("Unable to find library: %s\n", name);
       exit(-1);
     }
   
   return parsel(libpath);
 }
 
-node* create_program(node* stdlib, node* user)
+void error_log(char *msg, node *node)
 {
-  node* level1 = mkcons(';', 2, stdlib, ast->opr.op[0]);
-  return mkcons(PROG, 1, level1);
-}
-
-void logerr(char* msg, int line)
-{
-  printf("error at line %i: %s\n", line, msg);
-  exit(1);
+  printf("error: %s\ndetails: ", msg);
+  if (node != NULL)
+    display(node);
 }
 
 void dbg(char* msg)

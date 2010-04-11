@@ -1,16 +1,17 @@
+- memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
 - concatenating the same string variable onto itself creates an infinite value...
-- add filename to nodes (for error handling?)
+- re-introduce line numbers, respecting file/module name and position
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
 - re-introduce full funcall support in parser -> e.g. [x]()
 - 3 shift/reduce errors introduced by unary minus
-- returning a value and not using it sometimes causes a crash?
+- returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
 - smarter dispatch of built-in functions (Michael's suggestion)
 - GC
-- include / using / library loading facility
 - REPL?
 - should attempted redefinition of a binding in the same scope throw an error?
-- printer for lambdas (e.g. full pretty printer)
+- full pretty printer (not all forms are covered yet)
 - printing lists of strings is broken
+- currying
