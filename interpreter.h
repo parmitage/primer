@@ -92,6 +92,8 @@ node* pop();
 
 /* the evaluator */
 void eval(node *p, environment* env);
+bool cond(node *p, environment *env, bool match);
+int length(node* node);
 
 /* environment related functions */
 node* bind(node *args, node *params, environment *fnenv, environment *argenv);

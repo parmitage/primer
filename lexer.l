@@ -23,6 +23,7 @@ void yyerror(char *);
 "if"                                              return IF;
 "then"                                            return THEN;
 "else"                                            return ELSE;
+"elif"                                            return ELIF;
 "def"                                             return DEF;
 "fn"                                              return LAMBDA;
 "true"                                            return TRUE;
@@ -35,6 +36,8 @@ void yyerror(char *);
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "use"                                             return USE;
+"length"                                          return LENGTH;
+"nth"                                             return NTH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 [a-zA-Z][a-zA-Z0-9]*                              { yylval.sval = strdup(yytext); return SYMBOL; }

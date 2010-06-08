@@ -25,9 +25,9 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF ASSIGN LAMBDA IF THEN ELSE FUNCALL MODULECALL USE
+%token PROG DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND FUNCALL MODULECALL USE
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
-%token HEAD TAIL CONS SHOW TYPE
+%token HEAD TAIL CONS SHOW TYPE LENGTH NTH
 
 %nonassoc IFX
 %nonassoc ELSE
@@ -40,7 +40,7 @@
 
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt expr assign params list identifier end
+%type <nPtr> program stmts stmt expr assign list identifier end alt alts
 
 %%
 
@@ -57,8 +57,19 @@ stmt:
 DEF assign                                            { $$ = $2; }
 | IF expr THEN stmts %prec IFX end                    { $$ = mkcons(IF, 3, $2, $4, $5); }
 | IF expr THEN stmts ELSE stmts end                   { $$ = mkcons(IF, 4, $2, $4, $6, $7); }
+| IF expr THEN stmts alts END                         { $$ = mkcons(COND, 3, $2, $4, $5); }
+| IF expr THEN stmts alts ELSE stmts END              { $$ = mkcons(COND, 4, $2, $4, $5, $7); }
 | USE identifier                                      { $$ = mkcons(USE, 1, $2); }
 | expr                                                { $$ = $1; }
+;
+
+alts:
+alt                                                   { $$ = $1; }
+| alts alt                                            { $$ = mkcons('|', 2, $1, $2); }
+;
+
+alt:
+ELIF expr THEN stmts                                  { $$ = mkcons(ELIF, 2, $2, $4); }
 ;
 
 end :
@@ -74,14 +85,16 @@ INTEGER                                               { $$ = mkint($1); }
 | STRING                                              { $$ = mkstr($1); }
 | NIL                                                 { $$ = mknil(); }
 | identifier                                          { $$ = $1; }
-| LAMBDA '(' params ')' stmts END                     { $$ = mkcons(LAMBDA, 2, $3, $5); }
-| identifier '(' params ')'                           { $$ = mkcons(FUNCALL, 2, $1, $3); }
-| identifier ':' identifier '(' params ')'            { $$ = mkcons(MODULECALL, 3, $1, $3, $5); }
+| LAMBDA '(' list ')' stmts END                       { $$ = mkcons(LAMBDA, 2, $3, $5); }
+| identifier '(' list ')'                             { $$ = mkcons(FUNCALL, 2, $1, $3); }
+| identifier ':' identifier '(' list ')'              { $$ = mkcons(MODULECALL, 3, $1, $3, $5); }
 | HEAD '(' expr ')'                                   { $$ = mkcons(HEAD, 1, $3); }
 | TAIL '(' expr ')'                                   { $$ = mkcons(TAIL, 1, $3); }
 | CONS '(' expr ',' expr ')'                          { $$ = mkcons(CONS, 2, $3, $5); }
 | SHOW '(' expr ')'                                   { $$ = mkcons(SHOW, 1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkcons(TYPE, 1, $3); }
+| LENGTH '(' expr ')'                                 { $$ = mkcons(LENGTH, 1, $3); }
+| NTH '(' expr ',' expr ')'                           { $$ = mkcons(NTH, 2, $3, $5); }
 | expr '+' expr                                       { $$ = mkcons('+', 2, $1, $3); }
 | expr '-' expr                                       { $$ = mkcons('-', 2, $1, $3); }
 | expr '*' expr                                       { $$ = mkcons('*', 2, $1, $3); }
@@ -108,12 +121,6 @@ identifier '=' expr                                   { $$ = mkcons(ASSIGN, 2, $
 
 identifier:
 SYMBOL                                                { $$ = mksym($1); }
-;
-
-params:
-expr                                                  { $$ = mkcons(',', 1, $1); }
-| expr ',' params                                     { $$ = mkcons(',', 2, $1, $3); }
-| /* empty lambda list */                             { $$ = mkcons(',', 0); }
 ;
 
 list:

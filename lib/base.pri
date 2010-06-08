@@ -8,17 +8,6 @@ def assert = fn (id, actual, expected)
   end
 end
 
-def length = fn (list)
-  def inner = fn(list, accum)
-    if list != nil then
-      inner(tail(list), accum + 1)
-    else
-      accum
-    end
-  end
-  inner(list, 0)
-end
-
 def map = fn (f, list)
   if list != nil then
     cons(map(f, tail(list)), f(head(list)))
@@ -126,21 +115,6 @@ def product = fn (l)
   end
 end
 
-def nth = fn (list, n)
-  def inner = fn (list, x)
-    if list != nil then
-      if x == n then
-        head(list)
-      else
-        inner(tail(list), x + 1)
-      end
-    else
-      nil
-    end
-  end
-  inner(list, 0)
-end
-
 def any = fn (pred, list)
   if list != nil then
     if pred(head(list)) == true then
@@ -153,10 +127,10 @@ def any = fn (pred, list)
   end
 end
 
-def all = fn (pred, list)
-  if list != nil then
-    if pred(head(list)) == true then
-      all(pred, tail(list))
+def all = fn (pred, l)
+  if l then
+    if pred(head(l)) then
+      all(pred, tail(l))
     else
       false
     end

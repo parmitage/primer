@@ -1,3 +1,12 @@
+- remove assign ',' assign (useless and causes one conflict)
+- switch to ML like syntax
+    - reintroduce anonymou lambda syntax
+    - elif or turn if into cond (need syntax for it...)
+    - make if an expression
+    - use : for cons?
+- mechanism to turn operators into functions?
+- reimplement every, any, sum, product in terms of reduce
+- like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
@@ -9,9 +18,11 @@
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
 - smarter dispatch of built-in functions (Michael's suggestion)
-- GC
-- REPL?
 - should attempted redefinition of a binding in the same scope throw an error?
 - full pretty printer (not all forms are covered yet)
 - printing lists of strings is broken
+- gc
+- repl
 - currying
+- lazy evaluation
+- pattern matching

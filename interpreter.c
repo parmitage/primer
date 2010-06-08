@@ -212,9 +212,8 @@ void eval(node *p, environment* env)
               eval(p->opr.op[1], env);
               break;
             }
-				
 
-          case IF:
+            case IF:
             {
               eval(p->opr.op[0], env);					
               node *pred = pop();
@@ -234,6 +233,76 @@ void eval(node *p, environment* env)
                   goto eval_start;
                 }
 					
+              break;
+            }
+
+          case COND:
+            {
+              eval(p->opr.op[0], env);
+              node *pred = pop();
+              bool pass = false;
+		
+              /* try the first branch, if that fails then try the elif's */
+              if (pred->ival > 0)
+                {
+                  environment *ext = environment_new(env);
+                  p = p->opr.op[1];
+                  env = ext;
+                  goto eval_start;
+                }
+              else
+                {
+                  pass = cond(p->opr.op[2], env, false);
+                }
+
+              /* if we've got this far, no branch has passed so if there's an
+                 else clause, evaluate it */
+              if (!pass && p->opr.nops == 4)
+                {
+                  environment *ext = environment_new(env);
+                  p = p->opr.op[3];
+                  env = ext;
+                  goto eval_start;
+                }
+              
+              break;
+            }
+
+          case LENGTH:
+            {
+              eval(p->opr.op[0], env);
+              node* val = pop();
+              push(mkint(length(val)));
+              break;
+            }
+
+          case NTH:
+            {
+              eval(p->opr.op[0], env);
+              node *list = pop();
+              eval(p->opr.op[1], env);
+              int index = pop()->ival, n = 0;
+              bool found = false;
+
+              while (!found)
+                {
+                  if (list == NULL || index < 0)
+                    {
+                      push(NODE_NIL);
+                      found = true;
+                    }
+                  else if (index == n)
+                    {
+                      push(car(list));
+                      found = true;
+                    }
+                  else
+                    {
+                      list = cdr(list);
+                      ++n;
+                    }
+                }
+              
               break;
             }
 				
@@ -387,7 +456,50 @@ void eval(node *p, environment* env)
     }
 }
 
-//void bind(node* params, environment* env)
+bool cond(node *p, environment *env, bool match)
+{
+  bool m = match;
+
+  if (match == false && p != NULL && p->opr.oper == ELIF)
+    {	
+      eval(p->opr.op[0], env);
+      
+      if (pop()->ival == true)
+        {
+          eval(p->opr.op[1], env);
+          m = true;
+        }
+    }
+  else if (match == false && p != NULL && p->opr.oper == '|')
+    {
+      if (p->opr.nops > 0)
+        m = cond(p->opr.op[0], env, m);
+      
+      if (p->opr.nops > 1)
+        m = cond(p->opr.op[1], env, m);
+    }
+
+  return m;
+}
+
+int length(node* node)
+{
+  if (node == NULL)
+    return -1;
+
+  if (node->type == t_cons)
+    {
+      if (node->opr.nops > 1 && node->opr.op[1] != NULL)
+        return 1 + length(node->opr.op[1]);
+      else
+        return node->opr.nops;
+    }
+  else if (node->type == t_nil)
+    return 0;
+  else
+    return 1;
+}
+
 node* bind(node *args, node *params, environment *fnenv, environment *argenv)
 {
   if (params != NULL)
