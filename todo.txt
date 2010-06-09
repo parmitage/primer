@@ -1,9 +1,13 @@
-- remove assign ',' assign (useless and causes one conflict)
-- switch to ML like syntax
-    - reintroduce anonymou lambda syntax
-    - elif or turn if into cond (need syntax for it...)
-    - make if an expression
-    - use : for cons?
+- rename interpreter.* to evaluator.*
+- lists totally broken
+- proper clone: f(f(x)) doesn't work!
+- elif or cond
+- make cons work as both prepend and append
+- main - needs some thought
+- update standard library
+- update tests
+- update examples
+- reintroduce package system
 - mechanism to turn operators into functions?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
@@ -14,7 +18,6 @@
 - re-introduce line numbers, respecting file/module name and position
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
 - re-introduce full funcall support in parser -> e.g. [x]()
-- 3 shift/reduce errors introduced by unary minus
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
 - smarter dispatch of built-in functions (Michael's suggestion)

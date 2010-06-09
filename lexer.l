@@ -11,6 +11,8 @@ void yyerror(char *);
 
 %%
 
+"main"                                            return MAIN;
+"#"                                               return COMMENT;
 "not"                                             return NOT;
 ">="                                              return GE;
 "<="                                              return LE;
@@ -24,8 +26,8 @@ void yyerror(char *);
 "then"                                            return THEN;
 "else"                                            return ELSE;
 "elif"                                            return ELIF;
-"def"                                             return DEF;
-"fn"                                              return LAMBDA;
+"lambda"                                          return LAMBDA;
+"where"                                           return WHERE;
 "true"                                            return TRUE;
 "false"                                           return FALSE;
 "nil"                                             return NIL;

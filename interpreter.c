@@ -58,30 +58,20 @@ void eval(node *p, environment* env)
           case PROG:
             {
               env = environment_new(NULL);
-              eval(library_load("base"), env);
+              //eval(library_load("base"), env);
               eval(p->opr.op[0], env);
               env = environment_delete(env);
               break;
             }
 
-          case USE:
+          case MAIN:
             {
-              char *name = p->opr.op[0]->sval;
-              node *module = library_load(name);
-              node *namespace = mkcons(LAMBDA, 2, NULL, NULL);
-              namespace->env = environment_new(env);
-              eval(module, namespace->env);
-              binding* binding = binding_new(name, namespace);
-              environment_extend(env, binding);
+              eval(p->opr.op[0], env);
+              display(pop());
               break;
             }
-				
+
           case DEF:
-            {
-              break;
-            }
-				
-          case ASSIGN:
             {
               char* name = p->opr.op[0]->sval;
               binding* binding = binding_new(name, p->opr.op[1]);
@@ -91,24 +81,9 @@ void eval(node *p, environment* env)
 				
           case LAMBDA:
             {
-	      /* A functions has an associated environment in which its body
-		 will be evaluated. The environment is an extension of the
-		 defining environment which means that it captures all of the
-		 currently defined bindings to form a closure. The catch is
-		 that in the following call:
-		 
-		 f(f(x))
-		 
-		 the outer f creates an environment but this is immediately
-		 overwritten by the inner f.
-		 
-		 To get around this problem we clone the function object itself
-		 and assign it a unique environment before pushing it onto the
-		 stack for FUNCALL to evaluate.
-	      */
-	      node *clone = mkcons(LAMBDA, 2, p->opr.op[0], p->opr.op[1]);
-	      clone->env = environment_new(env);
-	      push(clone);
+              /* TODO clone the environment to avoid overwrite it in f(f(x)) */
+              p->env = environment_new(env);
+              push(p);
               break;
             }
 				
@@ -116,33 +91,19 @@ void eval(node *p, environment* env)
             {
               eval(p->opr.op[0], env);
               node* fn = pop();
+
+              /* bind parameters */
               node *params = p->opr.op[1];
               bind(fn->opr.op[0], params, fn->env, env);
+
+              /* evaluate inner definitions */
+              if (fn->opr.nops == 3)
+                eval(fn->opr.op[2], fn->env);
+
+              /* eliminate tail call */
               p = fn->opr.op[1];
               env = fn->env;
               goto eval_start;
-              break;
-            }
-
-          case MODULECALL:
-            {
-              node* module = NULL;              
-              binding *b = environment_lookup(env, p->opr.op[0]->sval);
-			
-               if (b != NULL)
-                 module = b->node;
-
-              if (module != NULL)
-                {
-                  eval(p->opr.op[1], module->env);
-                  node *fn = pop();
-                  node *params = p->opr.op[2];
-                  bind(fn->opr.op[0], params, fn->env, env);
-                  p = fn->opr.op[1];
-                  env = fn->env;
-                  goto eval_start;
-                }
-              break;
             }
 
            case LIST:
@@ -233,38 +194,6 @@ void eval(node *p, environment* env)
                   goto eval_start;
                 }
 					
-              break;
-            }
-
-          case COND:
-            {
-              eval(p->opr.op[0], env);
-              node *pred = pop();
-              bool pass = false;
-		
-              /* try the first branch, if that fails then try the elif's */
-              if (pred->ival > 0)
-                {
-                  environment *ext = environment_new(env);
-                  p = p->opr.op[1];
-                  env = ext;
-                  goto eval_start;
-                }
-              else
-                {
-                  pass = cond(p->opr.op[2], env, false);
-                }
-
-              /* if we've got this far, no branch has passed so if there's an
-                 else clause, evaluate it */
-              if (!pass && p->opr.nops == 4)
-                {
-                  environment *ext = environment_new(env);
-                  p = p->opr.op[3];
-                  env = ext;
-                  goto eval_start;
-                }
-              
               break;
             }
 
@@ -454,32 +383,6 @@ void eval(node *p, environment* env)
           }
       }
     }
-}
-
-bool cond(node *p, environment *env, bool match)
-{
-  bool m = match;
-
-  if (match == false && p != NULL && p->opr.oper == ELIF)
-    {	
-      eval(p->opr.op[0], env);
-      
-      if (pop()->ival == true)
-        {
-          eval(p->opr.op[1], env);
-          m = true;
-        }
-    }
-  else if (match == false && p != NULL && p->opr.oper == '|')
-    {
-      if (p->opr.nops > 0)
-        m = cond(p->opr.op[0], env, m);
-      
-      if (p->opr.nops > 1)
-        m = cond(p->opr.op[1], env, m);
-    }
-
-  return m;
 }
 
 int length(node* node)

@@ -25,8 +25,8 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND FUNCALL MODULECALL USE
-%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
+%token PROG MAIN DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND FUNCALL COMMENT MODULECALL USE
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST WHERE
 %token HEAD TAIL CONS SHOW TYPE LENGTH NTH
 
 %nonassoc IFX
@@ -40,7 +40,7 @@
 
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt expr assign list identifier end alt alts
+%type <nPtr> program stmts stmt exprs expr symbol
 
 %%
 
@@ -53,27 +53,16 @@ stmt                                                  { $$ = $1; }
 | stmts stmt                                          { $$ = mkcons(';', 2, $1, $2); }
 ;
 
+exprs:
+expr                                                  { $$ = mkcons(';', 1, $1); }
+| expr ',' exprs                                      { $$ = mkcons(';', 2, $1, $3); }
+| /* empty */                                         { $$ = mkcons(';', 0); }
+;
+
 stmt:
-DEF assign                                            { $$ = $2; }
-| IF expr THEN stmts %prec IFX end                    { $$ = mkcons(IF, 3, $2, $4, $5); }
-| IF expr THEN stmts ELSE stmts end                   { $$ = mkcons(IF, 4, $2, $4, $6, $7); }
-| IF expr THEN stmts alts END                         { $$ = mkcons(COND, 3, $2, $4, $5); }
-| IF expr THEN stmts alts ELSE stmts END              { $$ = mkcons(COND, 4, $2, $4, $5, $7); }
-| USE identifier                                      { $$ = mkcons(USE, 1, $2); }
-| expr                                                { $$ = $1; }
-;
-
-alts:
-alt                                                   { $$ = $1; }
-| alts alt                                            { $$ = mkcons('|', 2, $1, $2); }
-;
-
-alt:
-ELIF expr THEN stmts                                  { $$ = mkcons(ELIF, 2, $2, $4); }
-;
-
-end :
-END                                                   { $$ = mkcons(END, 0); }
+symbol '=' expr                                       { $$ = mkcons(DEF, 2, $1, $3); }
+| COMMENT stmt                                        { $$ = mkcons(COMMENT, 0); }
+| MAIN '=' expr                                       { $$ = mkcons(MAIN, 1, $3); }
 ;
 
 expr:
@@ -84,10 +73,12 @@ INTEGER                                               { $$ = mkint($1); }
 | FALSE                                               { $$ = mkbool(0); }
 | STRING                                              { $$ = mkstr($1); }
 | NIL                                                 { $$ = mknil(); }
-| identifier                                          { $$ = $1; }
-| LAMBDA '(' list ')' stmts END                       { $$ = mkcons(LAMBDA, 2, $3, $5); }
-| identifier '(' list ')'                             { $$ = mkcons(FUNCALL, 2, $1, $3); }
-| identifier ':' identifier '(' list ')'              { $$ = mkcons(MODULECALL, 3, $1, $3, $5); }
+| symbol                                              { $$ = $1; }
+| symbol '(' exprs ')'                                { $$ = mkcons(FUNCALL, 2, $1, $3); }
+| LAMBDA '(' exprs ')' exprs END                      { $$ = mkcons(LAMBDA, 2, $3, $5); }
+| LAMBDA '(' exprs ')' exprs WHERE stmts END          { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
+| IF expr THEN exprs %prec IFX END                    { $$ = mkcons(IF, 2, $2, $4); }
+| IF expr THEN exprs ELSE exprs END                   { $$ = mkcons(IF, 3, $2, $4, $6); }
 | HEAD '(' expr ')'                                   { $$ = mkcons(HEAD, 1, $3); }
 | TAIL '(' expr ')'                                   { $$ = mkcons(TAIL, 1, $3); }
 | CONS '(' expr ',' expr ')'                          { $$ = mkcons(CONS, 2, $3, $5); }
@@ -111,22 +102,11 @@ INTEGER                                               { $$ = mkint($1); }
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
-| '[' list ']'                                        { $$ = $2; }
+| '[' exprs ']'                                       { $$ = mkcons(LIST, 1, $2); }
 ;
 
-assign:
-identifier '=' expr                                   { $$ = mkcons(ASSIGN, 2, $1, $3); }
-| assign ',' assign                                   { $$ = mkcons(';', 2, $1, $3); }
-;
-
-identifier:
+symbol:
 SYMBOL                                                { $$ = mksym($1); }
-;
-
-list:
-expr                                                  { $$ = mkcons(LIST, 1, $1); }
-| expr ',' list                                       { $$ = mkcons(LIST, 2, $1, $3); }
-| /* empty list */                                    { $$ = mkcons(LIST, 0); }
 ;
 
 %%
