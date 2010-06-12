@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "interpreter.h"
+#include "eval.h"
 
   void yyerror(char *s);
   extern FILE *yyin;
@@ -25,7 +25,7 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG MAIN DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND FUNCALL COMMENT MODULECALL USE
+%token PROG MAIN DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST WHERE
 %token HEAD TAIL CONS SHOW TYPE LENGTH NTH
 
@@ -40,7 +40,7 @@
 
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt exprs expr symbol
+%type <nPtr> program stmts stmt exprs expr list symbol
 
 %%
 
@@ -61,8 +61,13 @@ expr                                                  { $$ = mkcons(';', 1, $1);
 
 stmt:
 symbol '=' expr                                       { $$ = mkcons(DEF, 2, $1, $3); }
-| COMMENT stmt                                        { $$ = mkcons(COMMENT, 0); }
-| MAIN '=' expr                                       { $$ = mkcons(MAIN, 1, $3); }
+| expr                                                { $$ = $1; }
+;
+
+list:
+expr                                                  { $$ = mkcons(LIST, 1, $1); }
+| expr ',' list                                       { $$ = mkcons(LIST, 2, $1, $3); }
+| /* empty list */                                    { $$ = mkcons(LIST, 0); }
 ;
 
 expr:
@@ -74,7 +79,7 @@ INTEGER                                               { $$ = mkint($1); }
 | STRING                                              { $$ = mkstr($1); }
 | NIL                                                 { $$ = mknil(); }
 | symbol                                              { $$ = $1; }
-| symbol '(' exprs ')'                                { $$ = mkcons(FUNCALL, 2, $1, $3); }
+| symbol '(' exprs ')'                                { $$ = mkcons(APPLY, 2, $1, $3); }
 | LAMBDA '(' exprs ')' exprs END                      { $$ = mkcons(LAMBDA, 2, $3, $5); }
 | LAMBDA '(' exprs ')' exprs WHERE stmts END          { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
 | IF expr THEN exprs %prec IFX END                    { $$ = mkcons(IF, 2, $2, $4); }
@@ -102,7 +107,7 @@ INTEGER                                               { $$ = mkint($1); }
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
-| '[' exprs ']'                                       { $$ = mkcons(LIST, 1, $2); }
+| '[' list ']'                                        { $$ = $2; }
 ;
 
 symbol:

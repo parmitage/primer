@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "interpreter.h"
+#include "eval.h"
 #include "y.tab.h"
 
 int main(int argc, char** argv)
@@ -87,7 +87,7 @@ void eval(node *p, environment* env)
               break;
             }
 				
-          case FUNCALL:
+          case APPLY:
             {
               eval(p->opr.op[0], env);
               node* fn = pop();
@@ -799,7 +799,7 @@ void display_primitive(node* node, int depth)
               break;
             }
 
-          case FUNCALL:
+          case APPLY:
             {
               display_primitive(node->opr.op[0], depth);
               printf("(");

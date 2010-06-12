@@ -1,9 +1,8 @@
-- rename interpreter.* to evaluator.*
-- lists totally broken
 - proper clone: f(f(x)) doesn't work!
 - elif or cond
 - make cons work as both prepend and append
 - main - needs some thought
+- let
 - update standard library
 - update tests
 - update examples
