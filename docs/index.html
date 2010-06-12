@@ -1,0 +1,201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html> 
+<head> 
+<title>Primer</title> 
+<style>
+html {
+background-color: #253a56;
+color: white;
+font-family: "trebuchet ms", verdana, sans-serif;
+
+line-height: 140%;
+}
+div#content {
+width: 760px;
+padding: 20px 30px 20px 30px;
+}
+pre {
+font-family: monospace;
+border-left: 2px solid white;
+margin-right: 10px;
+margin-left: 13px;
+padding: 3px 0 3px 12px;
+}
+p {
+margin-top: 30px;
+}
+a {
+text-decoration: none;
+color: yellow;
+}
+a:hover {
+background: yellow;
+color: black;
+}
+</style> 
+</head> 
+<body>
+<div id="content">
+  <h1>Primer</h1>
+  <hr/>
+  <p>
+  Primer is my little functional programming language, written mainly
+  for fun! Here's how it looks:
+  </p>
+  <pre>
+sort = lambda (l)
+  if l then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
+  else [] end
+  where x = head(l)
+        xs = tail(l)
+        lt = lambda (a) a < x end
+        gte = lambda (a) a >= x end
+end
+</pre>
+  <p> 
+  Primer is still in the early stages of development but an alpha
+  version will be released shortly under the MIT license. If you have
+  any comments or questions, please feel free to
+  <a href="mailto:philip.armitage@gmail.com">email</a> me.
+  </p>
+  <p>
+  The rest of this page provides a quick tour of Primer.
+  </p>
+  <p> 
+  Bindings are immutable.
+  </p> 
+  <pre>
+lucky = 7
+pi = 3.14159
+happy = true
+last = 'z'
+friendly = "Hello, world!"
+</pre>
+  <p> 
+  Functions return the value of their last expression.
+  </p>
+  <pre>
+square = lambda (x) x * x end
+</pre>
+  <p>
+  Functions are first class objects.
+  </p>
+<pre>
+addFuns = lambda (f1, f2, x) f1(x) + f2(x) end
+addFuns(square, square, 5)
+</pre>
+<p>
+Functions can be used anonymously.
+</p>
+<pre>
+addFuns(lambda (x) x * 2 end, lambda (x) x * 5 end, 5)
+</pre>
+<p>
+Tail calls are eliminated.
+</p>
+<pre>
+projectEuler1 = lambda (limit) inner(0, 0)
+  where inner = lambda (x, accum)
+                  if x < limit then
+                    if x mod 3 == 0 or x mod 5 == 0
+                    then inner(x + 1, accum + x)
+                    else inner(x + 1, accum) end
+                  else accum end
+                end
+  end
+</pre>
+<p>
+Primer supports closures.
+</p>
+<pre>
+makeAdder = lambda (y)
+  lambda (a) y + a end
+end
+
+add1 = makeAdder(1)
+add2 = makeAdder(2)
+
+show(add1(2))
+show(add2(2))
+</pre>
+<p>
+Lists are heterogeneous and can be nested.
+</p>
+<pre>
+collection = [1,true,[12.1234,15,square,['Y'],nil],3,"foo",4,2]
+</pre>
+<p>
+The ++ operator concatenates two lists.
+</p>
+<pre>
+new = collection ++ [x, y]
+</pre>
+<p>
+An atom can be prepended to a list with cons.
+</p>
+<pre>
+cons(0, [1,2,3]) == [0,1,2,3]
+</pre>
+<p>
+A number of functions provide access to list elements.
+</p>
+<pre>
+head([1,2,3]) == 1
+tail([1,2,3]) == [2,3]
+last([1,2,3]) == 3
+nth([1,2,3], 0) == 1
+</pre>
+<p>
+The empty list is equal to nil.
+</p>
+<pre>
+[] == nil
+</pre>
+<p>
+Strings are syntactic sugar for lists of characters.
+</p>
+<pre>
+fullName = "John " ++ "Smith"
+length(fullName)
+reverse(sort(fullName))
+</pre>
+<p>
+The standard mathematical operators have precedence as in C.
+</p>
+<pre>
+12 + 3 * 2 / 5 mod 2
+</pre>
+<p>
+The standard logical operators are also available (not all are shown).
+</p>
+<pre>
+a == 15 and c != 12 or a <= 6
+</pre>
+<p>
+The if statement has an optional else clause and can be nested.
+</p>
+<pre>
+if x > 3000
+then show("large")
+else show("small") end
+</pre>
+<p>
+The standard higher order functions are provided.
+</p>
+<pre>
+map(square, [1,2,3])
+reduce(sum, 0, [1,2,3,4,5])
+filter(even, [1,2,3,4,5])
+zip([1,2,3], [4,5,6])
+</pre>
+<p>
+A set of type predicates are available.
+</p>
+<pre>
+isint(100) == true
+isfn(map) == true
+ischar('g') == true
+</pre>
+</div>
+</body>
+</html>
