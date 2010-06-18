@@ -1,267 +1,168 @@
-def null = fn (x)
-  x
-end
-
-def assert = fn (id, actual, expected)
-  if actual != expected then
+assert = fn (id, act, exp)
+  if act != exp then
     show(id)
-  end
+  else nil
 end
 
-def map = fn (f, list)
-  if list != nil then
-    cons(map(f, tail(list)), f(head(list)))
+map = fn (f, xs)
+  if xs then
+    cons(map(f, tail(xs)), f(head(xs)))
+  else nil
+end
+
+reduce = fn (f, init, xs)
+  if xs then
+    reduce(f, f(init, head(xs)), tail(xs))
+  else init
+end
+
+reduceRight = fn (f, init, xs)
+  if xs then
+    f(head(xs), reduceRight(f, init, tail(xs)))
+  else init
+end
+
+filter = fn (f, xs)
+  if xs then
+    if f(head(xs)) then
+      [head(xs)] ++ filter(f, tail(xs))
+    else filter(f, tail(xs))
+  else nil
+end
+
+empty = fn (xs) length(xs) == 0 end
+
+reverse = fn (xs)
+  if tail(xs) then
+    reverse(tail(xs)) ++ [head(xs)]
+  else xs
+end
+
+find = fn (a, xs)
+  if head(xs) == a then
+    head(xs)
   else
-    nil
-  end
+    if tail(xs) then
+      find(a, tail(xs))
+    else nil
 end
 
-def foldl = fn (f, init, list)
-  if list != nil then
-    foldl(f, f(init, head(list)), tail(list))
+findByFn = fn (a, f, xs)
+  if f(head(xs)) == a then
+    head(xs)
   else
-    init
-  end
+    if tail(xs) then
+      findByFn(a, f, tail(xs))
+    else nil
 end
 
-def foldr = fn (f, init, list)
-  if list != nil then
-    f(head(list), foldr(f, init, tail(list)))
-  else
-    init
-  end
+replace = fn (a, b, xs)
+  if xs then  
+    if head(xs) == a then
+      [b] ++ replace(a, b, tail(xs))
+    else [head(xs)] ++ replace(a, b, tail(xs))
+  else []
 end
 
-def filter = fn (f, list)
-  if list != nil then
-    if f(head(list)) == true then
-      [head(list)] ++ filter(f, tail(list))
-    else
-      filter(f, tail(list))
-    end
-  else
-    nil
-  end
+sum = fn (xs)
+  if xs then
+    head(xs) + sum(tail(xs))
+  else 0
 end
 
-def empty = fn (list)
-  length(list) == 0
+product = fn (xs)
+  if empty(xs) then 0
+  else inner(xs)
+  where inner = fn (xs)
+          if xs then head(xs) * inner(tail(xs))
+          else 1
+        end
 end
 
-def reverse = fn (list)
-  if tail(list) != nil then
-    reverse(tail(list)) ++ [head(list)]
-  else
-    list
-  end
+any = fn (pred, xs)
+  if xs then
+    if pred(head(xs)) then true
+    else any(pred, tail(xs))
+  else false
 end
 
-def find = fn (x, list)
-  if head(list) == x then
-    head(list)
-  else
-    if tail(list) != nil then
-      find(x, tail(list))
-    else
-      nil
-    end
-  end
-end
-
-def findByFn = fn (x, f, list)
-  if f(head(list)) == x then
-    head(list)
-  else
-    if tail(list) != nil then
-      findByFn(x, f, tail(list))
-    else
-      nil
-    end
-  end
-end
-
-def replace = fn (x, y, list)
-  if list then  
-    if head(list) == x then
-      [y] ++ replace(x, y, tail(list))
-    else
-      [head(list)] ++ replace(x, y, tail(list))
-    end
-  else
-    []
-  end    
-end
-
-def sum = fn (list)
-  if list != nil then
-    head(list) + sum(tail(list))
-  else
-    0
-  end
-end
-
-def product = fn (l)
-  def inner = fn (l)
-    if l != nil then
-      head(l) * inner(tail(l))
-    else
-      1
-    end
-  end
-  if empty(l) then
-    0
-  else
-    inner(l)
-  end
-end
-
-def any = fn (pred, list)
-  if list != nil then
-    if pred(head(list)) == true then
-      true
-    else
-      any(pred, tail(list))
-    end
-  else
-    false
-  end
-end
-
-def all = fn (pred, l)
+all = fn (pred, xs)
   if l then
-    if pred(head(l)) then
-      all(pred, tail(l))
-    else
-      false
-    end
-  else
-    true
-  end
+    if pred(head(xs)) then
+      all(pred, tail(xs))
+    else false
+  else true
 end
 
-def take = fn (n, list)
-  def inner = fn (x, list)
-    if list != nil and x < n then
-      [head(list)] ++ inner(x + 1, tail(list))
-    else
-      []
-    end
-  end
-  inner(0, list)
+take = fn (n, xs)
+  inner(0, xs)
+  where inner = fn (x, xs)
+          if xs != nil and x < n then
+            [head(xs)] ++ inner(x + 1, tail(xs))
+          else []
+        end
 end
 
-def takewhile = fn (f, list)
-  if list != nil and f(head(list)) == true then
-    [head(list)] ++ takewhile(f, tail(list))
-  else
-    []
-  end
+takewhile = fn (f, xs)
+  if xs != nil and f(head(xs)) == true then
+    [head(xs)] ++ takewhile(f, tail(xs))
+  else []
 end
 
-def drop = fn (n, list)
-  def inner = fn (x, list)
-    if list != nil then
-      if x < n then
-        inner(x + 1, tail(list))
-      else
-        list
-      end
-    else
-      list
-    end
-  end
-  if n >= length(list) then
-    []
-  else
-    inner(0, list)
-  end
+drop = fn (n, xs)
+  if n >= length(xs) then []
+  else inner(0, xs)
+  where inner = fn (x, xs)
+    if xs then
+      if x < n then inner(x + 1, tail(xs))
+      else xs
+    else xs
+  end  
 end
 
-def dropwhile = fn (f, list)
-  if list != nil then
-    if f(head(list)) == true then
-      dropwhile(f, tail(list))
-    else
-      list
-    end
-  else
-    list
-  end
+dropwhile = fn (f, xs)
+  if xs then
+    if f(head(xs)) then dropwhile(f, tail(xs))
+    else xs
+  else xs
 end
 
-def sort = fn (l)
-  if l != [] then
-    def x = head(l)
-    def xs = tail(l)
-    sort(filter(fn (a) a < x end, xs)) ++ [x] ++ sort(filter(fn (a) a >= x end, xs))
-  else
-    []
-  end
+sort = fn (l)
+  if l then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
+  else []
+  where x = head(l)
+        xs = tail(l)
+        lt = fn (a) a < x end
+        gte = fn (a) a >= x end
 end
 
-def min = fn (l)
-  head(sort(l))
-end
-
-def max = fn (l)
-  head(reverse(sort(l)))
-end
-
-def last = fn (l)
-  head(reverse(l))
-end
-
-def odd = fn (z)
-  z mod 2 != 0
-end
-
-def even = fn (z)
-  z mod 2 == 0
-end
-
-def isint = fn (z)
-  type(z) == 1
-end
-
-def isfloat = fn (z)
-  type(z) == 2
-end
-
-def ischar = fn (z)
-  type(z) == 5
-end
-
-def isbool = fn (z)
-  type(z) == 3
-end
-
-def isfn = fn (z)
-  type(z) == 6
-end
-
-def zip = fn (l1, l2)
+zip = fn (l1, l2)
   if l1 != [] and l2 != [] then
     [[head(l1), head(l2)]] ++ zip(tail(l1), tail(l2))
-  else
-    []
-  end
+  else []
 end
 
-def range = fn (from, to)
-  def inner = fn (list, count)
-    if count < from then
-      list
-    else
-      inner([count] ++ list, count - 1)
-    end
-  end
+range = fn (from, to)
   inner([], to)
+  where inner = fn (list, count)
+          if count < from then list
+          else inner([count] ++ list, count - 1)
+        end
 end
 
-def intersperse = fn (sep, l)
-  if length(l) == 1 then
-    [head(l)]
-  else
-    [head(l)] ++ [sep] ++ intersperse(sep, tail(l))
-  end
+intersperse = fn (sep, l)
+  if length(l) == 1 then [head(l)]
+  else [head(l)] ++ [sep] ++ intersperse(sep, tail(l))
 end
+
+min = fn (xs) head(sort(xs)) end
+max = fn (xs) head(reverse(sort(xs))) end
+last = fn (xs) head(reverse(xs)) end
+odd = fn (n) n mod 2 != 0 end
+even = fn (n) n mod 2 == 0 end
+
+isint = fn (a) type(a) == 1 end
+isfloat = fn (a) type(a) == 2 end
+ischar = fn (a) type(a) == 5 end
+isbool = fn (a) type(a) == 3 end
+isfn = fn (a) type(a) == 6 end

@@ -1,0 +1,476 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html> 
+<head> 
+<title>Primer</title> 
+<style>
+html {
+background: #c1c1c1;
+color: #222;
+}
+
+div#content {
+background: white;
+font-family: verdana, "trebuchet ms", "Helvetica Neue", Helvetica, Arial, sans-serif;
+-moz-border-radius: 1.5em;
+-webkit-border-radius: 1.5em;
+border-radius: 1.5em;
+line-height: 140%;
+width: 900px;
+margin: 20px auto;
+padding: 30px;
+}
+
+pre {
+font-family: monospace;
+background: #f1f1f1;
+border-left: 2px solid black;
+margin-right: 10px;
+margin-left: 13px;
+padding: 3px 0 3px 12px;
+}
+
+h2 {
+margin-top: 40px;
+}
+
+p {
+
+}
+
+a {
+text-decoration: none;
+color: blue;
+}
+
+a:hover {
+background: blue;
+color: white;
+}
+</style> 
+</head> 
+<body>
+<div id="content">
+
+<h1>Primer</h1>
+<hr/>
+
+<p>
+Primer is a simple functional programming language. I designed it because
+when I try to introduce people to functional programming, the reaction is
+often that Haskell is "too hard" or that Scheme "looks odd". So the
+guiding principles behind Primer are to be simple and to look normal!
+</p>
+
+<p>
+The language described on this page is mostly finished and a prototype
+interpreter is working but still very incomplete. It will be
+released under an open source license when it's ready. If you have
+any comments or questions in the meantime then please feel free to
+<a href="mailto:philip.armitage@gmail.com">email me</a>.
+</p>
+
+<p>
+The rest of this page is an introductory guide to Primer covering
+the syntax and semantics of the language as well as introducing
+some basic concepts of functional programming. The guide is
+aimed at programmers who are interested in learning functional
+programming using a simple language before they move
+on to something more powerful like Haskell, Clojure or F#.
+</p>
+
+<h2>Definitions</h2>
+  
+<p>
+Everything in Primer is an expression meaning that everything yields a
+value. A program itself consists of a series of definitions which are expressions
+bound to symbols.
+</p>
+
+<pre>
+# definition of a variable
+pi = 3.14159
+
+# definition of a function
+areaOfCircle = fn (r) pi * r * r end
+
+# application of a function
+areaOfCircle(10)
+</pre>
+
+<p>
+You'll notice that a function doesn't have a name but like everything
+else is an expression. The symbol which you bind a function to is what
+allows you to refer to it in your program. This may seem like a
+pedantic distinction but this uniformity of expressions bound to
+symbols is an important concept as will become clear later on.
+</p>
+
+<p>
+The body of a function is also an expression and the value of that expression is
+the return value of the function. There is no explicit need for a return statement
+because functions may only contain one expression and that expression must
+itself yield a value. Functions can not cause side effects.
+</p>
+
+<p>
+To see the output from a program you must
+use <strong>show</strong> which is a built-in function capable of printing any Primer expression.
+</p>
+
+<pre>
+show(areaOfCircle(5))
+</pre>
+
+<p>
+In order to avoid cluttering up the text I'll omit future calls to show but you
+can always add them in if you want to see the result of an evaluation.
+</p>
+
+<h2>Lists and Recursion</h2>
+  
+  <p>
+  Lists are the only composite data structure in Primer. They are
+  heterogeneous and can be nested.
+  </p>
+  
+  <pre>
+xs1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+xs2 = [4, 5.32, pi, true, nil, areaOfCircle, 'a', "aaa"]
+xs3 = [4, [5.32, [pi], [], true], nil, areaOfCircle, 'a', "aaa"]
+</pre>
+  
+  <p>
+  Several functions provide access to list elements (notice that lists are
+  indexed from 0).
+  </p>
+  
+  <pre>
+first(xs)
+last(xs)
+nth(0, xs)  # equivalent to first
+rest(xs)    # returns all but the head of the list
+</pre>
+
+  <p>
+  The first and rest functions are especially useful as they allow you
+  to easily traverse a list recursively. Because Primer is a
+  functional language it isn't possible to use iteration as loops
+  require mutation, either of an index counter or an explicit iterator
+  variable. To see an example of this, we'll write a function that counts the
+  number of elements in a list.
+  </p>
+
+<pre>
+count = fn (xs)
+    if xs then 1 + count(rest(xs))
+    else 0
+end
+</pre>
+
+<p>
+The if statement is fairly standard except that because it's an
+expression, it must return a value which in turn means that it must
+always have an else clause.
+</p>
+
+<p>
+All expressions in Primer evaluate to true apart
+from the explicit value nil and the empty list which both evaluate to
+false. So in the above definition of count, "if xs..." means "if the
+list represented by xs is not the empty list...". Thus the function
+recursively calls itself with the tail of the list, adding one to the
+result until the end of the list is reached where the recursion
+terminates and a zero value is returned.
+</p>
+
+<p>
+Lists can be constructed programatically with the cons function and
+appended with the ++ operator.
+</p>
+
+<pre>
+cons(cons(1, 2), 3) ++ [a, b, c]
+</pre>
+
+<p>
+Several basic functions are provided by the Primer standard library
+for working with lists such as search, sort and reverse.
+</p>
+
+<p>
+Primer provides a simple character datatype and strings are nothing
+more than lists of characters with syntactic sugar for creating them.
+</p>
+
+<pre>
+# the following expression evaluates to true
+"hello" == ['h', 'e', 'l', 'l', 'o']
+</pre>
+
+<p>
+The main advantage of this is that list processing functions and
+operators  can be used on strings.
+</p>
+
+<pre>
+sort("qwertyuiopasdfghjklzxcvbnm") # results in "abcdefghijklmnopqrstuvwxyz"
+</pre>
+
+<h2>Lexical Scope</h2>
+
+<p>
+It's good practice in any language to break the work of a program down
+into small functions which perform only one task.
+Primer goes a step further by only allowing one
+expression per block (a function body or branch of an if
+statement). Of course, it's not always ideal to write everything
+as a long string of nested function calls. Nor is it desirable to
+sprinkle single use functions into the global scope so Primer
+functions can make use of a where clause which introduces local
+definitions.
+</p>
+
+<pre>
+f = fn (x, y) a + b(y)
+    where a = 125
+          b = fn (n) n * a end
+end
+</pre>
+
+<p>
+The symbols a and b are scoped within f. Note also that definitions in
+the where clause may refer to each other. Primer is lexically scoped
+which means that a symbol is visible at a given point if that point is
+textually enclosed by a block in which the symbol is bound.
+</p>
+
+<p>
+A binding may 'overwrite' a more global binding. This is called
+shadowing.
+</p>
+
+<pre>
+a = 1000
+
+b = fn (x, y) x + a(y)
+  where a = fn (x) x * 2 end
+end
+
+c = fn (x) x * a end
+</pre>
+
+<p>
+Here a is defined to be the integer value 1000 at program scope. The
+function c uses this value. The function b however
+sees the local definition of a which shadows the binding at the top
+level. Notice also that within function a there's a second instance
+of shadowing: its parameter x shadows b's parameter x.
+</p>
+
+<p>
+The basic rule is that a function will use the most local definition of a
+symbol that it can find and will search outwards to successively wider scopes in
+order to resolve a symbol. If no symbol is found at the outermost scope then
+the symbol is said to be unbound and an error is raised.
+</p>
+
+<h2>Higher Order Functions</h2>
+
+<p>
+Because functions are first class in Primer they can be passed around
+just like any other value. A function which accepts another
+function as an argument is called a Higher Order Function.
+</p>
+
+<p>
+Let's assume that we want to find the first number in a list which is evenly
+divisible by 3.
+</p>
+
+<pre>
+xs = 10..30   # the range operator creates a list of intergers
+
+findNumberDivisibleBy3 = fn (xs)
+    if head(xs) mod 3 == 0 then
+        return head(xs)
+    else findNumberDivisibleBy3(tail(xs))
+end
+</pre>
+
+<p>
+This works fine but is rather limited. Obviously it's
+trivial to parameterise the function to search for any value of n but we
+can do better than that! Looking at the function defintion
+we can see that there are two aspects to it. The first is searching
+and the second is testing. By turning the searching part into a higher
+order function we can make it far more general.
+</p>
+
+<pre>
+findByFun = fn (xs, f)
+    if f(head(xs)) then
+        return head(xs)
+    else findByFun(tail(xs), f)
+end
+
+# Test if a number is divisible by 3.
+factor3 = fn (x) x mod 3 == 0 end
+
+findByFun(xs, factor3)
+</pre>
+
+<p>
+Admittedly this is more code but by separating out the testing from the
+searching, we can now write different test functions to search our list.
+</p>
+
+<pre>
+# Is a number odd?
+odd = fn (x) x mod2 != 0 end
+
+# Is a number prime?
+prime = fn (p) p > 1 and all(fn (n) p mod n != 0 end, 3..p) end
+
+findByFun(xs, odd)
+findByFun(xs, prime)
+</pre>
+
+<p>
+Not only is our search function
+reusable with different test functions but our test functions could be reused
+with different search functions. For example, we could write a search
+function which returns all of the values which pass a test.
+</p>
+
+<pre>
+findAllByFun = fn (f, xs)
+    if f(head(xs)) then
+        [head(xs)] ++ findAllByFun(f, tail(xs))
+    else
+        if tail(xs) then
+            findAllByFun(f, tail(xs))
+        else nil
+end
+
+findAllByFun(factor3, xs)
+findAllByFun(odd, xs)
+findAllByFun(prime, xs)
+</pre>
+
+<p>
+Now we have two search functions and three test functions which can be
+used interchangeably.
+</p>
+
+<p>
+Sometimes we want to use a higher order function but the function we
+want to pass to it has no use beyond that single call. In
+this case we can pass the function anonymously. That is to say, we use a
+function without previously assigning it to a symbol.
+</p>
+
+<pre>
+findByFun(fn (x) x mod 2 != 0 end, xs)
+</pre>
+
+<p>
+Anonymous functions are useful when you don't want to clutter up your
+program with single-use functions.
+</p>
+
+<h2>Map, reduce, filter...</h2>
+
+<p>
+Map, reduce and filter are the three most common higher order
+functions and every functional programming language (and even
+some imperative ones) provide an implementation of them.
+</p>
+
+<p>
+Map applies a function to every element in a list and returns a new
+list containing the transformed values.
+</p>
+
+<pre>
+double = fn (x) 2 * x end
+map(double, [1,2,3,4,5])      # [2,4,6,8,10]
+</pre>
+
+<p>
+Reduce uses a two parameter function to combine successive list
+elements in some way. In the call below, the extra parameter 0
+is combined with the first element of the list (this is an example
+of a left fold, Primer also includes foldr which does a right fold).
+</p>
+
+<pre>
+add = fn (x, y) x + y end
+reduce(add, 0, [1,2,3,4,5])   # 1+2+3+4+5=15
+</pre>
+
+<p>
+Filter returns a new list which contains only the elements which pass
+the supplied predicate function.
+</p>
+
+<pre>
+filter(odd, [1,2,3,2,4,5,6])  # [1,3,5]
+</pre>
+
+<p>
+There are several other higher order functions supplied with Primer
+such as zip, all, any, takeWhile and dropWhile. You can look at the
+implementation of these by reading through the standard library code.
+</p>
+
+<h2>Closures</h2>
+
+<p>
+A closure is a first-class function which can access the variables in
+its lexical environment for as long as it lives. In the following example,
+the return value of the makeAdder function is another function.
+</p>
+
+<pre>
+makeAdder = fn (y)
+    fn (a) y + a end
+end
+</pre>
+
+<p>
+The function returned performs a simple addition of
+two variables. One of those variables is a parameter to the function
+but the other is a parameter to makeAdder itself. So the returned
+function is able to access a variable outside of its scope. This in
+itself shouldn't be suprising as we've already seen lexical scope.
+What is more interesting is that this function still works outside
+the scope of makeAdder.
+</p>
+
+<p>
+We can think of makeAdder as a function constructor. Here we use
+it to make two new functions; one function which will add 1 to
+a value and another which will add 2 to a value.
+</p>
+
+<pre>
+add1 = makeAdder(1)
+add2 = makeAdder(2)
+</pre>
+
+<p>
+The symbols add1 and add2 now refer to functions which we can
+call in exactly the same way as if we'd defined them
+directly. When makeAdder returned a function, that function
+captured the binding of the variable y. In the case of add1,
+y was bound to 1 and in the case of add2, it was bound to 2.
+</p>
+
+<pre>
+add1(2)   # 3
+add2(2)   # 4
+</pre>
+
+</div>
+</body>
+</html>

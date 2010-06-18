@@ -26,6 +26,7 @@ void yyerror(char *);
 "elif"                                            return ELIF;
 "def"                                             return DEF;
 "fn"                                              return LAMBDA;
+"where"                                           return WHERE;
 "true"                                            return TRUE;
 "false"                                           return FALSE;
 "nil"                                             return NIL;
@@ -35,11 +36,11 @@ void yyerror(char *);
 "cons"                                            return CONS;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
-"use"                                             return USE;
 "length"                                          return LENGTH;
 "nth"                                             return NTH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
+\#.*\n                                            NULL; /* comments */
 [a-zA-Z][a-zA-Z0-9]*                              { yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+                                            { yylval.ival = atoi(yytext); return INTEGER; }
 [0-9]+"."[0-9]+                                   { yylval.fval = atof(yytext); return FLOAT; }

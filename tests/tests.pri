@@ -1,51 +1,51 @@
-def a = 10
-def b = 15
-def l = [1,2,3,4]
-def s = "Hello, world!"
-def z = nil
+a = 10
+b = 15
+l = [1,2,3,4]
+s = "Hello, world!"
+z = nil
 
-def singleStatement = fn (x)
+singleStatement = fn (x)
   x + b + 2
 end
 
-def ifStatement = fn (x)
+ifStatement = fn (x)
   if x < 5 then
-    def z = 4
+    z = 4
     z + x + test(3)
   else
     1
   end
 end
 
-def returnsArgument = fn (x, y)
+returnsArgument = fn (x, y)
   y
 end
 
-def threeArguments = fn (x, y, z)
+threeArguments = fn (x, y, z)
   x * y - z
 end
 
-def innerFunction = fn ()
-  def c = 12
-  def inner = fn ()
+innerFunction = fn ()
+  c = 12
+  inner = fn ()
     c
   end
   inner()
 end
 
-def higherOrderFunction = fn (f)
+higherOrderFunction = fn (f)
   f(2)
 end
 
-def double = fn(x)
+double = fn(x)
   x * 2
 end
 
-def sumWithFun = fn(x, y, f)
+sumWithFun = fn(x, y, f)
   f(x) + f(y)
 end
 
-def factorial = fn(x)
+factorial = fn(x)
   if x == 0 then
     1
   else
@@ -53,11 +53,11 @@ def factorial = fn(x)
   end
 end
 
-def greaterThan3 = fn (x)
+greaterThan3 = fn (x)
   x > 3
 end
 
-def listCountdown = fn (x)
+listCountdown = fn (x)
   if x > 0 then
     [x] ++ listCountdown(x - 1)
   else
@@ -65,12 +65,12 @@ def listCountdown = fn (x)
   end
 end
 
-def makeAdder = fn (y)
+makeAdder = fn (y)
   fn (a) y + a end
 end
 
-def add1 = makeAdder(1)
-def add2 = makeAdder(2)
+add1 = makeAdder(1)
+add2 = makeAdder(2)
 
 assert("Types: int equality", 1, 1)
 assert("Types: float equality", 4.5, 4.5)

@@ -1,11 +1,11 @@
-- remove assign ',' assign (useless and causes one conflict)
-- switch to ML like syntax
-    - reintroduce anonymou lambda syntax
-    - elif or turn if into cond (need syntax for it...)
-    - make if an expression
-    - use : for cons?
-- mechanism to turn operators into functions?
+- tests
+- range operator
+- xs and x < 3 doesn't work (must be xs != nil and x < 3)
+- : for cons?
+- remove the stack?
+- rename interpreter.* to eval.*
 - reimplement every, any, sum, product in terms of reduce
+- overload operator precedence with ( )
 - like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
@@ -14,7 +14,6 @@
 - re-introduce line numbers, respecting file/module name and position
 - parameter checking (arity and type) of all cases in eval() -> use mkerr()
 - re-introduce full funcall support in parser -> e.g. [x]()
-- 3 shift/reduce errors introduced by unary minus
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
 - smarter dispatch of built-in functions (Michael's suggestion)
@@ -22,7 +21,8 @@
 - full pretty printer (not all forms are covered yet)
 - printing lists of strings is broken
 - gc
-- repl
-- currying
-- lazy evaluation
-- pattern matching
+- hand-written parser
+- repl?
+- currying?
+- lazy evaluation?
+- pattern matching?
