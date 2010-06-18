@@ -4,36 +4,14 @@ l = [1,2,3,4]
 s = "Hello, world!"
 z = nil
 
-singleStatement = fn (x)
-  x + b + 2
+f1 = fn (x) x + b + 2 end
+f2 = fn (x, y, z) x * y - z end
+
+f3 = fn ()
+    inner() where inner = fn () 12 end
 end
 
-ifStatement = fn (x)
-  if x < 5 then
-    z = 4
-    z + x + test(3)
-  else
-    1
-  end
-end
-
-returnsArgument = fn (x, y)
-  y
-end
-
-threeArguments = fn (x, y, z)
-  x * y - z
-end
-
-innerFunction = fn ()
-  c = 12
-  inner = fn ()
-    c
-  end
-  inner()
-end
-
-higherOrderFunction = fn (f)
+f4 = fn (f)
   f(2)
 end
 
@@ -46,11 +24,8 @@ sumWithFun = fn(x, y, f)
 end
 
 factorial = fn(x)
-  if x == 0 then
-    1
-  else
-    x * factorial(x - 1)
-  end
+  if x == 0 then 1
+  else x * factorial(x - 1)
 end
 
 greaterThan3 = fn (x)
@@ -60,9 +35,7 @@ end
 listCountdown = fn (x)
   if x > 0 then
     [x] ++ listCountdown(x - 1)
-  else
-    nil
-  end
+  else nil
 end
 
 makeAdder = fn (y)
@@ -141,7 +114,7 @@ assert("Operators: greater than or equal equal", 2 >= 2, true)
 assert("Operators: greater than or equal fails", 2 >= 11, false)
 
 assert("Funcall: simple", factorial(5), 120)
-assert("Funcall: nested", threeArguments(innerFunction(), higherOrderFunction(singleStatement), 12), 216)
+assert("Funcall: nested", f2(f3(), f4(f1), 12), 216)
 assert("Funcall: function returns new list", listCountdown(5), [5,4,3,2,1])
 assert("Funcall: higher order with literals", sumWithFun(2, 3, double), 10)
 assert("Funcall: higher order with variables", sumWithFun(a, b, double), 50)
@@ -179,12 +152,12 @@ assert("Library: length of nested list", length([1,2,[3,4,5,6,7],6]), 4)
 assert("Library: length of list extracted by nth", length(nth([1,2,[3,4,5,6,7],6], 2)), 5)
 assert("Library: length of the empty list", length([]), 0)
 assert("Library: combined list functions 1", sum(map(double, filter(fn (x) 10 mod x == 0 end, cons(cons([1, 2], 3), 4)))), 6)
-assert("Library: foldl with fn", foldl(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
-assert("Library: foldr with fn", foldr(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
+assert("Library: reduce with fn", reduce(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
+assert("Library: reduceRight with fn", reduceRight(fn (x, y) x + y end, 0, [1,2,3,4,5]), 15)
 assert("Library: any with pass in middle of list", any(fn (x) x == 2 end, [1,2,3,4]), true)
 assert("Library: any with pass at start of list", any(fn (x) x == 2 end, [2,1,3,4]), true)
 assert("Library: any with pass at end of list", any(fn (x) x == 2 end, [1,3,4,2]), true)
-assert("Library: all passes", all(fn (x) x * x > 4 end, [3,4,5,6]), true)
+assert("Library: all passes", all(fn (x) (x * x) > 4 end, [3,4,5,6]), true)
 assert("Library: all fails", all(fn (x) x * x > 4 end, [2,3,4,5,6]), false)
 assert("Library: take nothing", take(0, [1,2,3]), [])
 assert("Library: take 1", take(1, [1,2,3]), [1])

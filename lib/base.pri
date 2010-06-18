@@ -87,7 +87,7 @@ any = fn (pred, xs)
 end
 
 all = fn (pred, xs)
-  if l then
+  if xs then
     if pred(head(xs)) then
       all(pred, tail(xs))
     else false

@@ -1,11 +1,10 @@
-- tests
+- remove depth parameter from display_primitive
 - range operator
 - xs and x < 3 doesn't work (must be xs != nil and x < 3)
+- completely rewrite cons because it's broken
 - : for cons?
 - remove the stack?
-- rename interpreter.* to eval.*
 - reimplement every, any, sum, product in terms of reduce
-- overload operator precedence with ( )
 - like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
@@ -21,7 +20,6 @@
 - full pretty printer (not all forms are covered yet)
 - printing lists of strings is broken
 - gc
-- hand-written parser
 - repl?
 - currying?
 - lazy evaluation?

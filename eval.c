@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "interpreter.h"
+#include "eval.h"
 #include "y.tab.h"
 
 int main(int argc, char** argv)
@@ -62,6 +62,12 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               eval(p->opr.op[1], env);
               env = environment_delete(env);
+              break;
+            }
+
+          case PAREN:
+            {
+              eval(p->opr.op[0], env);
               break;
             }
 
@@ -735,11 +741,6 @@ int node_type(node* node)
 
 void display_primitive(node* node, int depth)
 {
-  //printf("%i", depth);
-
-  for (int i = 0; i < depth; ++i)
-    printf(" ");
-
   switch (node->type)
     {
     case t_int:
@@ -777,30 +778,27 @@ void display_primitive(node* node, int depth)
 					
               break;
             }
-				
+		
           case LIST:
             {
-              if (depth == 0)
-                printf("[");
-						
-              display_primitive(node->opr.op[0], depth+2);
-					
-              if (node->opr.nops > 1 && node->opr.op[1] != NULL)
+              printf("[");
+
+              while (node != NULL)
                 {
-                  printf(",");
-                  if (node->opr.op[1]->opr.op[0] != NULL &&
-                      node->opr.op[1]->opr.op[0]->type == t_cons)
-                    printf("[");
-							
-                  display_primitive(node->opr.op[1], depth);
+                  display_primitive(node->opr.op[0], depth);
+                  if (node->opr.nops > 1)
+                    {
+                      printf(",");       
+                      node = node->opr.op[1];
+                    }
+                  else
+                    node = NULL;
                 }
 					
-              if (node->opr.op[1] == NULL)
-                printf("]");
-							
+              printf("]");
               break;
             }
-
+		
           case APPLY:
             {
               display_primitive(node->opr.op[0], depth);

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "interpreter.h"
+#include "eval.h"
 
   void yyerror(char *s);
   extern FILE *yyin;
@@ -27,18 +27,15 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
-%token HEAD TAIL CONS SHOW TYPE LENGTH NTH WHERE
+%token HEAD TAIL CONS SHOW TYPE LENGTH NTH WHERE PAREN
 
-%nonassoc IFX
 %nonassoc ELSE
-
+%left PAREN
 %left NOT
 %left AND OR
 %left GE LE EQ NE APPEND '>' '<'
 %left '+' '-'
 %left '*' '/' MOD
-%left ';'
-
 %nonassoc UMINUS
 
 %type <nPtr> program stmts stmt expr list identifier
@@ -60,7 +57,8 @@ identifier '=' expr                                   { $$ = mkcons(DEF, 2, $1, 
 ;
 
 expr:
-INTEGER                                               { $$ = mkint($1); }
+'(' expr ')'                                          { $$ = mkcons(PAREN, 1, $2); }
+| INTEGER                                             { $$ = mkint($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
 | TRUE                                                { $$ = mkbool(1); }
@@ -79,7 +77,6 @@ INTEGER                                               { $$ = mkint($1); }
 | TYPE '(' expr ')'                                   { $$ = mkcons(TYPE, 1, $3); }
 | LENGTH '(' expr ')'                                 { $$ = mkcons(LENGTH, 1, $3); }
 | NTH '(' expr ',' expr ')'                           { $$ = mkcons(NTH, 2, $3, $5); }
-| expr ';' expr                                       { $$ = mkcons(';', 2, $1, $3); }
 | expr '+' expr                                       { $$ = mkcons('+', 2, $1, $3); }
 | expr '-' expr                                       { $$ = mkcons('-', 2, $1, $3); }
 | expr '*' expr                                       { $$ = mkcons('*', 2, $1, $3); }
