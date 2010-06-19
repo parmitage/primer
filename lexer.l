@@ -19,6 +19,7 @@ void yyerror(char *);
 "and"                                             return AND;
 "or"                                              return OR;
 "++"                                              return APPEND;
+".."                                              return RANGE;
 "mod"                                             return MOD;
 "if"                                              return IF;
 "then"                                            return THEN;
@@ -33,11 +34,10 @@ void yyerror(char *);
 "end"                                             return END;
 "head"                                            return HEAD;
 "tail"                                            return TAIL;
-"cons"                                            return CONS;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
-"nth"                                             return NTH;
+":"                                               return NTH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 \#.*\n                                            NULL; /* comments */

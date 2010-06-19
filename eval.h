@@ -105,11 +105,10 @@ void *environment_print(environment* env);
 /* special forms */
 node* car(node* node);
 node* cdr(node* node);
-node* cons(node* list, node* n);
 int length(node* node);
 int node_type(node* node);
 void display(node* node);
-void display_primitive(node* node, int depth);
+void display_primitive(node* node);
 
 /* operators */
 node* add(node* x, node* y);
@@ -128,7 +127,7 @@ node* or(node* x, node* y);
 node* not(node* node);
 node* mod(node* x, node* y);
 node* append(node* list1, node* list2);
-node* range(node* s, node* e);
+node *range(node *from, node *to);
 
 /* library loading */
 node* library_load(char* name);

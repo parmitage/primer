@@ -127,42 +127,41 @@ can always add them in if you want to see the result of an evaluation.
 </p>
 
 <h2>Lists and Recursion</h2>
-  
-  <p>
-  Lists are the only composite data structure in Primer. They are
-  heterogeneous and can be nested.
-  </p>
-  
-  <pre>
+
+<p>
+Lists are the only composite data structure in Primer. They are
+heterogeneous and can be nested.
+</p>
+
+<pre>
 xs1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 xs2 = [4, 5.32, pi, true, nil, areaOfCircle, 'a', "aaa"]
 xs3 = [4, [5.32, [pi], [], true], nil, areaOfCircle, 'a', "aaa"]
 </pre>
   
-  <p>
-  Several functions provide access to list elements (notice that lists are
-  indexed from 0).
-  </p>
+<p>
+Several functions provide access to list elements (notice that lists are
+indexed from 0).
+</p>
   
-  <pre>
-first(xs)
+<pre>
+head(xs)
 last(xs)
-nth(0, xs)  # equivalent to first
-rest(xs)    # returns all but the head of the list
+tail(xs)    # returns all but the head of the list
 </pre>
 
-  <p>
-  The first and rest functions are especially useful as they allow you
-  to easily traverse a list recursively. Because Primer is a
-  functional language it isn't possible to use iteration as loops
-  require mutation, either of an index counter or an explicit iterator
-  variable. To see an example of this, we'll write a function that counts the
-  number of elements in a list.
-  </p>
+<p>
+The head and tail functions are especially useful as they allow you
+to easily traverse a list recursively. Because Primer is a
+functional language it isn't possible to use iteration as loops
+require mutation, either of an index counter or an explicit iterator
+variable. To see an example of this, we'll write a function that counts the
+number of elements in a list.
+</p>
 
 <pre>
 count = fn (xs)
-    if xs then 1 + count(rest(xs))
+    if xs then 1 + count(tail(xs))
     else 0
 end
 </pre>
@@ -184,17 +183,27 @@ terminates and a zero value is returned.
 </p>
 
 <p>
-Lists can be constructed programatically with the cons function and
-appended with the ++ operator.
+You can access an element from a list by its index with the : operator.
 </p>
 
 <pre>
-cons(cons(1, 2), 3) ++ [a, b, c]
+a = 0
+l = [1,2,3,4,5,6,7]
+l:4
+l:a
 </pre>
 
 <p>
-Several basic functions are provided by the Primer standard library
-for working with lists such as search, sort and reverse.
+Lists can be constructed programatically with the ++ operator.
+</p>
+
+<pre>
+a ++ [a, [b, c], a] ++ 'c' ++ [4, 5, 6]
+</pre>
+
+<p>
+The Primer standard library provides several functions for working
+with lists such as search, sort and reverse.
 </p>
 
 <p>

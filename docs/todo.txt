@@ -1,12 +1,9 @@
-- remove depth parameter from display_primitive
-- range operator
 - xs and x < 3 doesn't work (must be xs != nil and x < 3)
-- completely rewrite cons because it's broken
-- : for cons?
 - remove the stack?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
+- concatenated ranges always start from 0
 - tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
 - concatenating the same string variable onto itself creates an infinite value...
@@ -15,10 +12,10 @@
 - re-introduce full funcall support in parser -> e.g. [x]()
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
+- constructed strings print out as lists: 'a' ++ 'b' ++ 'c'
 - smarter dispatch of built-in functions (Michael's suggestion)
 - should attempted redefinition of a binding in the same scope throw an error?
 - full pretty printer (not all forms are covered yet)
-- printing lists of strings is broken
 - gc
 - repl?
 - currying?

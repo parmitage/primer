@@ -6,7 +6,7 @@ end
 
 map = fn (f, xs)
   if xs then
-    cons(map(f, tail(xs)), f(head(xs)))
+      f(head(xs)) ++ map(f, tail(xs))
   else nil
 end
 
@@ -140,14 +140,6 @@ zip = fn (l1, l2)
   if l1 != [] and l2 != [] then
     [[head(l1), head(l2)]] ++ zip(tail(l1), tail(l2))
   else []
-end
-
-range = fn (from, to)
-  inner([], to)
-  where inner = fn (list, count)
-          if count < from then list
-          else inner([count] ++ list, count - 1)
-        end
 end
 
 intersperse = fn (sep, l)
