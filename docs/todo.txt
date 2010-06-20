@@ -1,14 +1,13 @@
-- xs and x < 3 doesn't work (must be xs != nil and x < 3)
+- merge false and nil into false
 - remove the stack?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
-- concatenated ranges always start from 0
 - tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
 - concatenating the same string variable onto itself creates an infinite value...
 - re-introduce line numbers, respecting file/module name and position
-- parameter checking (arity and type) of all cases in eval() -> use mkerr()
+- parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support in parser -> e.g. [x]()
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying

@@ -141,6 +141,7 @@ assert("replace nothing", replace(0, 3, [1,2,3,2,4,5,2,7,7,4,2,3,4,2]), [1,2,3,2
 assert("length of multiple list concatenations", length([9,10] ++ [11,12] ++ [13,14,15] ++ [16] ++ [17]), 9)
 assert("sum of list of int", sum([1,2,3]), 6)
 assert("simple nth", [44,12,66,87]:2, 66)
+assert("nth with variable", (1..20):a, 11)
 assert("length of nested list", length([1,2,[3,4,5,6,7],6]), 4)
 assert("length of list extracted by nth", length([1,2,[3,4,5,6,7],6]:2), 5)
 assert("length of the empty list", length([]), 0)

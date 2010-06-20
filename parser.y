@@ -32,8 +32,8 @@
 %nonassoc ELSE
 %left PAREN
 %left NOT
-%left AND OR RANGE
-%left GE LE EQ NE APPEND '>' '<'
+%left AND OR APPEND
+%left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
 %left '*' '/' MOD NTH
 %nonassoc UMINUS
@@ -61,8 +61,8 @@ expr:
 | INTEGER                                             { $$ = mkint($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
-| TRUE                                                { $$ = mkbool(1); }
-| FALSE                                               { $$ = mkbool(0); }
+| TRUE                                                { $$ = NODE_BOOL_TRUE; }
+| FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
 | NIL                                                 { $$ = mknil(); }
 | identifier                                          { $$ = $1; }

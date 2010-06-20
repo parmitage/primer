@@ -1099,15 +1099,10 @@ node* neq(node* x, node* y)
 
 node* and(node* x, node* y)
 {
-  if (x->type == t_bool && y->type == t_bool)
-    {
-      return mkbool(x->ival && y->ival);
-    }
+  if (x == NODE_NIL || y == NODE_NIL || x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
+    return NODE_BOOL_FALSE;
   else
-    {
-      // TODO probably should throw error
-      return NODE_BOOL_FALSE;
-    }
+    return NODE_BOOL_TRUE;
 }
 
 node* or(node* x, node* y)
