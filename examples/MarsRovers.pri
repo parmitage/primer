@@ -1,33 +1,21 @@
-heading = fn (r) last(r) end
-latitude = fn (r) head(r) end
-longtitude = fn (r) nth(r, 1) end
+W = 0 S = 1 E = 2 N = 3
+dirs = ['W', 'S', 'E', 'N']
+
 position = fn (x, y, h) [x, y, h] end
+print = fn (r) show([r:0, r:1, dirs:(r:2)]) end
 
 move = fn (r, s)
     reduce(transform, r, s)
     where transform = fn (r, c)
-              if c == 'L' then rotate(r, 'L')
-              else if c == 'R' then rotate(r, 'R')
+              if c == 'L' then [r:0, r:1, (r:2 + 1) mod 4]
+              else if c == 'R' then [r:0, r:1, rotr(r:2) - 1]
               else translate(r, c - '0')
           end
-          rotate = fn (r, c)
-              if heading(r) == 'N' and c == 'L' then [latitude(r), longtitude(r), 'W']
-              else if heading(r) == 'E' and c == 'L' then [latitude(r), longtitude(r), 'N']
-              else if heading(r) == 'S' and c == 'L' then [latitude(r), longtitude(r), 'E']
-              else if heading(r) == 'W' and c == 'L' then [latitude(r), longtitude(r), 'W']
-              else if heading(r) == 'N' and c == 'R' then [latitude(r), longtitude(r), 'E']
-              else if heading(r) == 'E' and c == 'R' then [latitude(r), longtitude(r), 'S']
-              else if heading(r) == 'S' and c == 'R' then [latitude(r), longtitude(r), 'W']
-              else if heading(r) == 'W' and c == 'R' then [latitude(r), longtitude(r), 'N']
-              else "ERROR"
-          end
+          rotr = fn (d) if d == 0 then 4 else d end
           translate = fn (r, c)
-              if heading(r) == 'N' then [latitude(r), longtitude(r) + c, 'N']
-              else if heading(r) == 'S' then [latitude(r), longtitude(r) - c, 'S']
-              else if heading(r) == 'E' then [latitude(r) + c, longtitude(r), 'E']
-              else if heading(r) == 'W' then [latitude(r) - c, longtitude(r), 'W']
-              else "ERROR"
+              if even(r:2) then [r:0 + ((r:2 - 1) * c), r:1, r:2]
+              else [r:0, r:1 + ((r:2 - 2) * c), r:2]
           end
 end
 
-show(move(position(10, 10, 'N'), "R1R3L2L1"))
+print(move(position(10, 10, N), "R1R3L2L1"))

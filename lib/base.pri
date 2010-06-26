@@ -5,27 +5,23 @@ assert = fn (id, act, exp)
 end
 
 map = fn (f, xs)
-  if xs then
-      f(head(xs)) ++ map(f, tail(xs))
+  if xs then f(head(xs)) ++ map(f, tail(xs))
   else nil
 end
 
 reduce = fn (f, init, xs)
-  if xs then
-    reduce(f, f(init, head(xs)), tail(xs))
+  if xs then reduce(f, f(init, head(xs)), tail(xs))
   else init
 end
 
 reduceRight = fn (f, init, xs)
-  if xs then
-    f(head(xs), reduceRight(f, init, tail(xs)))
+  if xs then f(head(xs), reduceRight(f, init, tail(xs)))
   else init
 end
 
 filter = fn (f, xs)
   if xs then
-    if f(head(xs)) then
-      [head(xs)] ++ filter(f, tail(xs))
+    if f(head(xs)) then [head(xs)] ++ filter(f, tail(xs))
     else filter(f, tail(xs))
   else nil
 end

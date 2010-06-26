@@ -64,7 +64,7 @@ expr:
 | TRUE                                                { $$ = NODE_BOOL_TRUE; }
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
-| NIL                                                 { $$ = mknil(); }
+| NIL                                                 { $$ = NODE_NIL; }
 | identifier                                          { $$ = $1; }
 | LAMBDA '(' list ')' expr END                        { $$ = mkcons(LAMBDA, 2, $3, $5); }
 | LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
@@ -75,7 +75,6 @@ expr:
 | SHOW '(' expr ')'                                   { $$ = mkcons(SHOW, 1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkcons(TYPE, 1, $3); }
 | LENGTH '(' expr ')'                                 { $$ = mkcons(LENGTH, 1, $3); }
-//| NTH '(' expr ',' expr ')'                           { $$ = mkcons(NTH, 2, $3, $5); }
 | expr '+' expr                                       { $$ = mkcons('+', 2, $1, $3); }
 | expr '-' expr                                       { $$ = mkcons('-', 2, $1, $3); }
 | expr '*' expr                                       { $$ = mkcons('*', 2, $1, $3); }

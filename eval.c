@@ -148,6 +148,7 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               node* val = pop();
               display(val);
+              push(val);
               break;
             }
 				

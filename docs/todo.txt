@@ -1,4 +1,4 @@
-- merge false and nil into false
+- document operators
 - remove the stack?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
