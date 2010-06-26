@@ -1,13 +1,5 @@
-- proper clone: f(f(x)) doesn't work!
-- elif or cond
-- make cons work as both prepend and append
-- main - needs some thought
-- let
-- update standard library
-- update tests
-- update examples
-- reintroduce package system
-- mechanism to turn operators into functions?
+- document operators
+- remove the stack?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
 - memory corruption - most apparent on Windows
@@ -15,16 +7,16 @@
 - shadowing a previously lifted binding should replace the lifted version
 - concatenating the same string variable onto itself creates an infinite value...
 - re-introduce line numbers, respecting file/module name and position
-- parameter checking (arity and type) of all cases in eval() -> use mkerr()
+- parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support in parser -> e.g. [x]()
 - returning a value and not using it sometimes causes a crash (test case?)
 - list evaluation involves lots of copying
+- constructed strings print out as lists: 'a' ++ 'b' ++ 'c'
 - smarter dispatch of built-in functions (Michael's suggestion)
 - should attempted redefinition of a binding in the same scope throw an error?
 - full pretty printer (not all forms are covered yet)
-- printing lists of strings is broken
 - gc
-- repl
-- currying
-- lazy evaluation
-- pattern matching
+- repl?
+- currying?
+- lazy evaluation?
+- pattern matching?

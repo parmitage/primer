@@ -11,7 +11,6 @@ void yyerror(char *);
 
 %%
 
-"main"                                            return MAIN;
 "not"                                             return NOT;
 ">="                                              return GE;
 "<="                                              return LE;
@@ -20,12 +19,14 @@ void yyerror(char *);
 "and"                                             return AND;
 "or"                                              return OR;
 "++"                                              return APPEND;
+".."                                              return RANGE;
 "mod"                                             return MOD;
 "if"                                              return IF;
 "then"                                            return THEN;
 "else"                                            return ELSE;
 "elif"                                            return ELIF;
-"lambda"                                          return LAMBDA;
+"def"                                             return DEF;
+"fn"                                              return LAMBDA;
 "where"                                           return WHERE;
 "true"                                            return TRUE;
 "false"                                           return FALSE;
@@ -33,14 +34,13 @@ void yyerror(char *);
 "end"                                             return END;
 "head"                                            return HEAD;
 "tail"                                            return TAIL;
-"cons"                                            return CONS;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
-"nth"                                             return NTH;
+":"                                               return NTH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
-\#[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\n        NULL;
+\#.*\n                                            NULL; /* comments */
 [a-zA-Z][a-zA-Z0-9]*                              { yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+                                            { yylval.ival = atoi(yytext); return INTEGER; }
 [0-9]+"."[0-9]+                                   { yylval.fval = atof(yytext); return FLOAT; }

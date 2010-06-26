@@ -58,16 +58,16 @@ void eval(node *p, environment* env)
           case PROG:
             {
               env = environment_new(NULL);
-              //eval(library_load("base"), env);
+              eval(library_load("base"), env);
               eval(p->opr.op[0], env);
+              eval(p->opr.op[1], env);
               env = environment_delete(env);
               break;
             }
 
-          case MAIN:
+          case PAREN:
             {
               eval(p->opr.op[0], env);
-              display(pop());
               break;
             }
 
@@ -81,9 +81,16 @@ void eval(node *p, environment* env)
 				
           case LAMBDA:
             {
-              /* TODO clone the environment to avoid overwrite it in f(f(x)) */
-              p->env = environment_new(env);
-              push(p);
+	      /* clone environment so that f(f(x)) works */
+	      node *clone;
+
+              if (p->opr.nops == 2)
+                clone = mkcons(LAMBDA, 2, p->opr.op[0], p->opr.op[1]);
+              else
+                clone = mkcons(LAMBDA, 3, p->opr.op[0], p->opr.op[1], p->opr.op[2]);
+
+	      clone->env = environment_new(env);
+	      push(clone);
               break;
             }
 				
@@ -96,14 +103,15 @@ void eval(node *p, environment* env)
               node *params = p->opr.op[1];
               bind(fn->opr.op[0], params, fn->env, env);
 
-              /* evaluate inner definitions */
+               /* evaluate inner definitions */
               if (fn->opr.nops == 3)
                 eval(fn->opr.op[2], fn->env);
 
-              /* eliminate tail call */
+              /* evaluate the function body */
               p = fn->opr.op[1];
               env = fn->env;
               goto eval_start;
+              break;
             }
 
            case LIST:
@@ -140,6 +148,7 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               node* val = pop();
               display(val);
+              push(val);
               break;
             }
 				
@@ -156,14 +165,6 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               node* list = pop();
               push(cdr(list));
-              break;
-            }
-				
-          case CONS:
-            {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(cons(pop(), pop()));
               break;
             }
 				
@@ -186,7 +187,7 @@ void eval(node *p, environment* env)
                   env = ext;
                   goto eval_start;
                 }
-              else if (p->opr.nops > 3)
+              else
                 {
                   environment *ext = environment_new(env);
                   p = p->opr.op[2];
@@ -353,6 +354,14 @@ void eval(node *p, environment* env)
               eval(p->opr.op[0], env);
               eval(p->opr.op[1], env);
               push(append(pop(), pop()));
+              break;
+            }
+
+          case RANGE:
+            {
+              eval(p->opr.op[0], env);
+              eval(p->opr.op[1], env);
+              push(range(pop(), pop()));
               break;
             }
 				
@@ -694,16 +703,6 @@ node* cdr(node* node)
     return mknil();
 }
 
-node* cons(node* list, node* n)
-{
-  if (list->type == t_nil)
-    return mkcons(LIST, 1, n, NULL);
-  else if (n->type == t_nil)
-    return mkcons(LIST, 1, list, NULL);
-  else
-    return mkcons(LIST, 2, n, list);
-}
-
 node* append(node* list1, node* list2)
 {
   if (list2 == NULL || list2->type == t_nil)
@@ -711,6 +710,12 @@ node* append(node* list1, node* list2)
 
   if (list1 == NULL || list1->type == t_nil)
     return list2;
+
+  if (list1->type != t_cons)
+    list1 = mkcons(LIST, 1, list1);
+
+  if (list2->type != t_cons)
+    list2 = mkcons(LIST, 1, list2);
 
   node* r = list1;
   node* n = list1;
@@ -726,18 +731,25 @@ node* append(node* list1, node* list2)
   return r;
 }
 
+node *range(node *s, node *e)
+{
+  int from = s->ival;
+  int to = e->ival;
+  node *list = NODE_NIL;
+
+  for (int i = to; i >= from; --i)
+    list = append(mkint(i), list);
+
+  return list;
+}
+
 int node_type(node* node)
 {
   return node->type;
 }
 
-void display_primitive(node* node, int depth)
+void display_primitive(node* node)
 {
-  //printf("%i", depth);
-
-  for (int i = 0; i < depth; ++i)
-    printf(" ");
-
   switch (node->type)
     {
     case t_int:
@@ -775,35 +787,32 @@ void display_primitive(node* node, int depth)
 					
               break;
             }
-				
+		
           case LIST:
             {
-              if (depth == 0)
-                printf("[");
-						
-              display_primitive(node->opr.op[0], depth+2);
-					
-              if (node->opr.nops > 1 && node->opr.op[1] != NULL)
+              printf("[");
+
+              while (node != NULL)
                 {
-                  printf(",");
-                  if (node->opr.op[1]->opr.op[0] != NULL &&
-                      node->opr.op[1]->opr.op[0]->type == t_cons)
-                    printf("[");
-							
-                  display_primitive(node->opr.op[1], depth);
+                  display_primitive(node->opr.op[0]);
+                  if (node->opr.nops > 1)
+                    {
+                      printf(",");       
+                      node = node->opr.op[1];
+                    }
+                  else
+                    node = NULL;
                 }
 					
-              if (node->opr.op[1] == NULL)
-                printf("]");
-							
+              printf("]");
               break;
             }
-
+		
           case APPLY:
             {
-              display_primitive(node->opr.op[0], depth);
+              display_primitive(node->opr.op[0]);
               printf("(");
-              display_primitive(node->opr.op[1], 0);
+              display_primitive(node->opr.op[1]);
               printf(")");
               break;
             }
@@ -811,18 +820,18 @@ void display_primitive(node* node, int depth)
           case LAMBDA:
             {
               printf("fn (");
-              display_primitive(node->opr.op[0], depth);
+              display_primitive(node->opr.op[0]);
               printf(")\n");
-              display_primitive(node->opr.op[1], depth+2);
+              display_primitive(node->opr.op[1]);
               printf("end\n");
               break;
             }
 
           case ';':
             {
-              display_primitive(node->opr.op[0], 0);
+              display_primitive(node->opr.op[0]);
               printf("\n");
-              display_primitive(node->opr.op[1], depth);
+              display_primitive(node->opr.op[1]);
               break;
             }
 
@@ -834,7 +843,7 @@ void display_primitive(node* node, int depth)
                 {
                   if (params->opr.nops > 0)
                     {
-                      display_primitive(params->opr.op[0], 0);
+                      display_primitive(params->opr.op[0]);
                       params = params->opr.op[1];
                       if (params != NULL)
                         printf(", ");
@@ -846,20 +855,20 @@ void display_primitive(node* node, int depth)
               break;
             }
 
-          case ASSIGN:
+          case DEF:
             {
-              display_primitive(node->opr.op[0], depth);
+              display_primitive(node->opr.op[0]);
               printf(" = ");
-              display_primitive(node->opr.op[1], 0);
+              display_primitive(node->opr.op[1]);
               break;
             }
 
           case IF:
             {
               printf("if ");
-              display_primitive(node->opr.op[0], 0);
+              display_primitive(node->opr.op[0]);
               printf(" then\n");
-              display_primitive(node->opr.op[1], depth+2);
+              display_primitive(node->opr.op[1]);
               printf("\nend\n");
               break;
             }
@@ -878,7 +887,7 @@ void display_primitive(node* node, int depth)
           case EQ:
           case NE:
             {
-              display_primitive(node->opr.op[0], depth);
+              display_primitive(node->opr.op[0]);
               
               switch (node->opr.oper)
                 {
@@ -897,7 +906,7 @@ void display_primitive(node* node, int depth)
                 case NE: printf(" != "); break;
                 }
 
-              display_primitive(node->opr.op[1], 0);
+              display_primitive(node->opr.op[1]);
               break;
             }
           }
@@ -916,7 +925,7 @@ void display(node* node)
   if (node == NULL)
     return;
 		
-  display_primitive(node, 0);
+  display_primitive(node);
 		
   printf("\n");
 }
@@ -1091,15 +1100,10 @@ node* neq(node* x, node* y)
 
 node* and(node* x, node* y)
 {
-  if (x->type == t_bool && y->type == t_bool)
-    {
-      return mkbool(x->ival && y->ival);
-    }
+  if (x == NODE_NIL || y == NODE_NIL || x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
+    return NODE_BOOL_FALSE;
   else
-    {
-      // TODO probably should throw error
-      return NODE_BOOL_FALSE;
-    }
+    return NODE_BOOL_TRUE;
 }
 
 node* or(node* x, node* y)

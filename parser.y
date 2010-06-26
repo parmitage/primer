@@ -25,22 +25,20 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG MAIN DEF ASSIGN LAMBDA IF THEN ELSE ELIF COND APPLY
-%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST WHERE
-%token HEAD TAIL CONS SHOW TYPE LENGTH NTH
+%token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
+%token HEAD TAIL SHOW TYPE LENGTH NTH WHERE PAREN RANGE
 
-%nonassoc IFX
 %nonassoc ELSE
-
+%left PAREN
 %left NOT
-%left AND OR
-%left GE LE EQ NE APPEND '>' '<'
+%left AND OR APPEND
+%left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
-%left '*' '/' MOD
-
+%left '*' '/' MOD NTH
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt exprs expr list symbol
+%type <nPtr> program stmts stmt expr list identifier
 
 %%
 
@@ -53,44 +51,30 @@ stmt                                                  { $$ = $1; }
 | stmts stmt                                          { $$ = mkcons(';', 2, $1, $2); }
 ;
 
-exprs:
-expr                                                  { $$ = mkcons(';', 1, $1); }
-| expr ',' exprs                                      { $$ = mkcons(';', 2, $1, $3); }
-| /* empty */                                         { $$ = mkcons(';', 0); }
-;
-
 stmt:
-symbol '=' expr                                       { $$ = mkcons(DEF, 2, $1, $3); }
+identifier '=' expr                                   { $$ = mkcons(DEF, 2, $1, $3); }
 | expr                                                { $$ = $1; }
 ;
 
-list:
-expr                                                  { $$ = mkcons(LIST, 1, $1); }
-| expr ',' list                                       { $$ = mkcons(LIST, 2, $1, $3); }
-| /* empty list */                                    { $$ = mkcons(LIST, 0); }
-;
-
 expr:
-INTEGER                                               { $$ = mkint($1); }
+'(' expr ')'                                          { $$ = mkcons(PAREN, 1, $2); }
+| INTEGER                                             { $$ = mkint($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
-| TRUE                                                { $$ = mkbool(1); }
-| FALSE                                               { $$ = mkbool(0); }
+| TRUE                                                { $$ = NODE_BOOL_TRUE; }
+| FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
-| NIL                                                 { $$ = mknil(); }
-| symbol                                              { $$ = $1; }
-| symbol '(' exprs ')'                                { $$ = mkcons(APPLY, 2, $1, $3); }
-| LAMBDA '(' exprs ')' exprs END                      { $$ = mkcons(LAMBDA, 2, $3, $5); }
-| LAMBDA '(' exprs ')' exprs WHERE stmts END          { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
-| IF expr THEN exprs %prec IFX END                    { $$ = mkcons(IF, 2, $2, $4); }
-| IF expr THEN exprs ELSE exprs END                   { $$ = mkcons(IF, 3, $2, $4, $6); }
+| NIL                                                 { $$ = NODE_NIL; }
+| identifier                                          { $$ = $1; }
+| LAMBDA '(' list ')' expr END                        { $$ = mkcons(LAMBDA, 2, $3, $5); }
+| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
+| identifier '(' list ')'                             { $$ = mkcons(APPLY, 2, $1, $3); }
+| IF expr THEN expr ELSE expr                         { $$ = mkcons(IF, 3, $2, $4, $6); }
 | HEAD '(' expr ')'                                   { $$ = mkcons(HEAD, 1, $3); }
 | TAIL '(' expr ')'                                   { $$ = mkcons(TAIL, 1, $3); }
-| CONS '(' expr ',' expr ')'                          { $$ = mkcons(CONS, 2, $3, $5); }
 | SHOW '(' expr ')'                                   { $$ = mkcons(SHOW, 1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkcons(TYPE, 1, $3); }
 | LENGTH '(' expr ')'                                 { $$ = mkcons(LENGTH, 1, $3); }
-| NTH '(' expr ',' expr ')'                           { $$ = mkcons(NTH, 2, $3, $5); }
 | expr '+' expr                                       { $$ = mkcons('+', 2, $1, $3); }
 | expr '-' expr                                       { $$ = mkcons('-', 2, $1, $3); }
 | expr '*' expr                                       { $$ = mkcons('*', 2, $1, $3); }
@@ -105,13 +89,21 @@ INTEGER                                               { $$ = mkint($1); }
 | expr OR expr                                        { $$ = mkcons(OR, 2, $1, $3); }
 | expr MOD expr                                       { $$ = mkcons(MOD, 2, $1, $3); }
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
+| expr RANGE expr                                     { $$ = mkcons(RANGE, 2, $1, $3); }
+| expr NTH expr                                       { $$ = mkcons(NTH, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }
 ;
 
-symbol:
+identifier:
 SYMBOL                                                { $$ = mksym($1); }
+;
+
+list:
+expr                                                  { $$ = mkcons(LIST, 1, $1); }
+| expr ',' list                                       { $$ = mkcons(LIST, 2, $1, $3); }
+| /* empty list */                                    { $$ = mkcons(LIST, 0); }
 ;
 
 %%
