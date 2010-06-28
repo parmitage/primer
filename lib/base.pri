@@ -1,3 +1,6 @@
+head = fn (x:_) x end
+tail = fn (_:xs) xs end
+
 assert = fn (id, act, exp)
   if act != exp then
     show(id)
@@ -123,12 +126,10 @@ dropwhile = fn (f, xs)
   else xs
 end
 
-sort = fn (l)
-  if l then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
+sort = fn (x:xs)
+  if x then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
   else []
-  where x = head(l)
-        xs = tail(l)
-        lt = fn (a) a < x end
+  where lt = fn (a) a < x end
         gte = fn (a) a >= x end
 end
 

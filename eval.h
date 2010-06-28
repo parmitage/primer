@@ -94,7 +94,8 @@ node* pop();
 void eval(node *p, environment* env);
 
 /* environment related functions */
-node* bind(node *args, node *params, environment *fnenv, environment *argenv);
+void bind(node *args, node *params, environment *fnenv, environment *argenv);
+void bindp(node *args, node *list, environment *fnenv);
 binding* binding_new(char* name, node* node);
 environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);

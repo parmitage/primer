@@ -2,19 +2,19 @@ W = 0 S = 1 E = 2 N = 3
 dirs = ['W', 'S', 'E', 'N']
 
 position = fn (x, y, h) [x, y, h] end
-print = fn (r) show([r:0, r:1, dirs:(r:2)]) end
+print = fn (x:y:h:_) show([x, y, dirs!(h)]) end
 
 move = fn (r, s)
     reduce(transform, r, s)
-    where transform = fn (r, c)
-              if c == 'L' then [r:0, r:1, (r:2 + 1) mod 4]
-              else if c == 'R' then [r:0, r:1, rotr(r:2) - 1]
-              else translate(r, c - '0')
+    where transform = fn (x:y:h:_, c)
+              if c == 'L' then [x, y, (h + 1) mod 4]
+              else if c == 'R' then [x, y, rotr(h) - 1]
+              else translate(x, y, h, c - '0')
           end
-          rotr = fn (d) if d == 0 then 4 else d end
-          translate = fn (r, c)
-              if even(r:2) then [r:0 + ((r:2 - 1) * c), r:1, r:2]
-              else [r:0, r:1 + ((r:2 - 2) * c), r:2]
+          rotr = fn (h) if h == 0 then 4 else h end
+          translate = fn (x, y, h, c)
+              if even(h) then [x + ((h - 1) * c), y, h]
+              else [x, y + ((h - 2) * c), h]
           end
 end
 

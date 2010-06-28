@@ -188,15 +188,15 @@ tail(xs)    # returns all but the head of the list
 </pre>
 
 <p>
-You can access a list by index with the : operator. Note that lists
+You can access a list by index with the ! operator. Note that lists
 are indexed from 0.
 </p>
 
 <pre>
 a = 0
 l = [1,2,3,4,5,6,7]
-l:4
-l:a
+l!4
+l!a
 </pre>
 
 <p>
@@ -223,7 +223,7 @@ more than lists of characters with syntactic sugar for creating them.
 
 # list processing functions and operators can be used on strings
 head("hello")
-"hello":3
+"hello"!3
 </pre>
 
 <h2>Recursion</h2>
@@ -620,7 +620,60 @@ add1(2)   # 3
 add2(2)   # 4
 </pre>
 
-<a name="tco"></a>
+<h2>Pattern Matching</h2>
+
+<p>
+Many functional programming languages allow you to match symbols to
+data using patterns. The support for <strong>pattern matching</strong>
+varies from language to language with ML derived languages and Haskell
+providing many advanced features. Primer supports only <strong>list
+destructuring</strong> which is a limited form of pattern
+matching. Here's an example of the standard head and tail functions
+written using pattern matching.
+</p>
+
+<pre>
+head = fn (x:xs) x end
+tail = fn (x:xs) xs end
+</pre>
+
+<p>
+The single parameter to each function is broken down into two parts
+representing the head of the list and the tail. Each is treated as a
+symbol and is bound to the respective part of the list when the
+function is applied. You can match deeper into a list.
+</p>
+
+<pre>
+third = fn (x:y:z:xs) z end
+</pre>
+
+<p>
+If you're only interested in part of the destructured list, you can
+use a wildcard which binds against any value but doesn't create a
+binding.
+</p>
+
+<pre>
+head = fn (x:_) x end
+tail = fn (_:xs) xs end
+</pre>
+
+<p>
+Pattern matching is a useful way of reducing the amount of code you
+have to write. For example, we can slightly simplify our qsort
+function.
+</p>
+
+<pre>
+qsort = fn (x:xs)
+    if x then qsort(filter(lt, xs)) ++ [x] ++ qsort(filter(gte, xs))
+    else []
+    where lt = fn (a) a < x end
+          gte = fn (a) a >= x end
+end
+</pre>
+
 <h2>Tail Recursion</h2>
 
 <p>
@@ -721,23 +774,23 @@ I encourage you to write your own solution but here's my attempt.
 </p>
 
 <pre>
-W=0 S=1 E=2 N=3
+W = 0 S = 1 E = 2 N = 3
 dirs = ['W', 'S', 'E', 'N']
 
 position = fn (x, y, h) [x, y, h] end
-print = fn (r) show([r:0, r:1, dirs:(r:2)]) end
+print = fn (x:y:h:_) show([x, y, dirs!(h)]) end
 
 move = fn (r, s)
     reduce(transform, r, s)
-    where transform = fn (r, c)
-              if c == 'L' then [r:0, r:1, (r:2 + 1) mod 4]
-              else if c == 'R' then [r:0, r:1, rotr(r:2) - 1]
-              else translate(r, c - '0')
+    where transform = fn (x:y:h:_, c)
+              if c == 'L' then [x, y, (h + 1) mod 4]
+              else if c == 'R' then [x, y, rotr(h) - 1]
+              else translate(x, y, h, c - '0')
           end
-          rotr = fn (d) if d == 0 then 4 else d end
-          translate = fn (r, c)
-              if even(r:2) then [r:0 + ((r:2 - 1) * c), r:1, r:2]
-              else [r:0, r:1 + ((r:2 - 2) * c), r:2]
+          rotr = fn (h) if h == 0 then 4 else h end
+          translate = fn (x, y, h, c)
+              if even(h) then [x + ((h - 1) * c), y, h]
+              else [x, y + ((h - 2) * c), h]
           end
 end
 

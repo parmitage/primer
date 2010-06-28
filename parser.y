@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
-%token HEAD TAIL SHOW TYPE LENGTH NTH WHERE PAREN RANGE
+%token SHOW TYPE LENGTH NTH MATCH WHERE PAREN RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -36,6 +36,7 @@
 %left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
 %left '*' '/' MOD NTH
+%right MATCH
 %nonassoc UMINUS
 
 %type <nPtr> program stmts stmt expr list identifier
@@ -70,8 +71,6 @@ expr:
 | LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
 | identifier '(' list ')'                             { $$ = mkcons(APPLY, 2, $1, $3); }
 | IF expr THEN expr ELSE expr                         { $$ = mkcons(IF, 3, $2, $4, $6); }
-| HEAD '(' expr ')'                                   { $$ = mkcons(HEAD, 1, $3); }
-| TAIL '(' expr ')'                                   { $$ = mkcons(TAIL, 1, $3); }
 | SHOW '(' expr ')'                                   { $$ = mkcons(SHOW, 1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkcons(TYPE, 1, $3); }
 | LENGTH '(' expr ')'                                 { $$ = mkcons(LENGTH, 1, $3); }
@@ -91,6 +90,7 @@ expr:
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
 | expr RANGE expr                                     { $$ = mkcons(RANGE, 2, $1, $3); }
 | expr NTH expr                                       { $$ = mkcons(NTH, 2, $1, $3); }
+| expr MATCH expr                                     { $$ = mkcons(MATCH, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }

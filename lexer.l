@@ -32,16 +32,15 @@ void yyerror(char *);
 "false"                                           return FALSE;
 "nil"                                             return NIL;
 "end"                                             return END;
-"head"                                            return HEAD;
-"tail"                                            return TAIL;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
-":"                                               return NTH;
+"!"                                               return NTH;
+":"                                               return MATCH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 \#.*\n                                            NULL; /* comments */
-[a-zA-Z][a-zA-Z0-9]*                              { yylval.sval = strdup(yytext); return SYMBOL; }
+[a-zA-Z\_][a-zA-Z0-9]*                            { yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+                                            { yylval.ival = atoi(yytext); return INTEGER; }
 [0-9]+"."[0-9]+                                   { yylval.fval = atof(yytext); return FLOAT; }
 \n                                                lineno++;

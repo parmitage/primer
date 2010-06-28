@@ -93,7 +93,7 @@ void eval(node *p, environment* env)
 	      push(clone);
               break;
             }
-				
+
           case APPLY:
             {
               eval(p->opr.op[0], env);
@@ -149,22 +149,6 @@ void eval(node *p, environment* env)
               node* val = pop();
               display(val);
               push(val);
-              break;
-            }
-				
-          case HEAD:
-            {
-              eval(p->opr.op[0], env);
-              node* list = pop();
-              push(car(list));
-              break;	
-            }
-				
-          case TAIL:
-            {
-              eval(p->opr.op[0], env);
-              node* list = pop();
-              push(cdr(list));
               break;
             }
 				
@@ -412,7 +396,7 @@ int length(node* node)
     return 1;
 }
 
-node* bind(node *args, node *params, environment *fnenv, environment *argenv)
+void bind(node *args, node *params, environment *fnenv, environment *argenv)
 {
   if (params != NULL)
     {		
@@ -424,9 +408,40 @@ node* bind(node *args, node *params, environment *fnenv, environment *argenv)
       if (params->opr.nops > 0)
         {
           eval(params->opr.op[0], argenv);
-          binding* binding = binding_new(args->opr.op[0]->sval, pop());
-          environment_extend(fnenv, binding);
+          
+          if (args->opr.op[0]->type == t_symbol)
+            {
+              binding* binding = binding_new(args->opr.op[0]->sval, pop());
+              environment_extend(fnenv, binding);
+            }
+          else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == MATCH)
+            bindp(args->opr.op[0], pop(), fnenv);
         }
+    }
+}
+
+void bindp(node *args, node *list, environment *fnenv)
+{
+  node *head = car(list);
+  node *rest = cdr(list);
+
+  if (strcmp(args->opr.op[0]->sval, "_") != 0)
+    {
+      binding *headb = binding_new(args->opr.op[0]->sval, head);
+      environment_extend(fnenv, headb);
+    }
+
+  if (args->opr.op[1]->type == t_symbol)
+    {
+      if (strcmp(args->opr.op[1]->sval, "_") != 0)
+        {
+          binding *restb = binding_new(args->opr.op[1]->sval, rest);
+          environment_extend(fnenv, restb);
+        }
+    }
+  else
+    {
+      bindp(args->opr.op[1], rest, fnenv);
     }
 }
 
