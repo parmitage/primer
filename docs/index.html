@@ -31,18 +31,18 @@ margin-left: 13px;
 padding: 3px 0 3px 12px;
 }
 
-h1, h2 {
+h1 {
 font-size: 18pt;
 }
 
 h2 {
+font-size: 14pt;
 margin-top: 40px;
 }
 
 div.quote {
-margin: 20px 50px 20px 30px;
 padding: 5px 20px 5px 20px;
-border: 1px solid black;
+border: 1px dashed black;
 font-style: italic;
 text-align: justify;
 }
@@ -65,24 +65,16 @@ color: white;
 <hr/>
 
 <p>
-Primer is both a simple functional programming language and a
-  tutorial on functional programming. I designed it because
-when I try to introduce people to functional programming, the reaction is
-often that Haskell is "too hard" or that Scheme "looks odd". So the
-guiding principles behind Primer are to be simple and to look normal!
-</p>
-
-<p>
-  The tutorial is aimed at programmers who are interested in learning
-  the basics of functional programming using a simple language before
-  they move on to something more powerful like Haskell, Clojure or F#.
+  Primer is a simple language designed to introduce the basics of
+  functional programming. It can be learnt in an afternoon and the
+  knowledge you'll gain is transferable to other functional languages.
 </p>
 
 <h2>Download</h2>
   
 <p>
-The language described on this page is mostly finished and a prototype
-interpreter is working but still very incomplete. It will be
+The language described on this page is mostly complete and a prototype
+interpreter is under development. It will be
 released under an open source license when it's ready. If you have
 any comments or questions in the meantime then please feel free to
 <a href="mailto:philip.armitage@gmail.com">email me</a>.
@@ -99,12 +91,11 @@ any comments or questions in the meantime then please feel free to
 </p>
 
 <p>
-  In his famous paper
-  <a href="http://portal.acm.org/citation.cfm?id=63411">Why Functional
-  Programming Matters</a>, John Hughes said that trying to sell
-  functional programming by telling programmers what they couldn't do was a
-  bad idea. It's hard to argue with that but I believe that removing mutable
-  bindings is in fact an advantage rather than a restriction.
+  John Hughes 
+  <a href="http://portal.acm.org/citation.cfm?id=63411">argued</a>
+  that trying to sell functional programming by saying what it couldn't do
+  was not very appealing. However I believe that removing mutable
+  bindings is a selling point!
 </p>
 <p>
   As programs grow larger,
@@ -113,44 +104,22 @@ any comments or questions in the meantime then please feel free to
   state then becomes the conduit through which functions interact -
   some reading, some writing and some doing both. Inevitably bugs will
   surface and very often they arise because the programmer has lost
-  track of where and when variables are being updated.
+  track of where and when these updates occur.
 </p>
 
 <p>
-Because we can't update variables in Primer, our functions tend to be more like
-those from mathematics in that they act upon their inputs and
-return a value but have no side effects as they're applied. This
-brings with it other benefits. Our functions
-tend to be shorter and simpler so are easier to understand because they
-do only one thing. As a result, they're often more general and
-therefore, more reusable.
-</p>
-
-<p>
-Of course, we can try to program in this style in an imperative language
-and one of the advantages of learning functional programming is that
-it makes you a better programmer in any language. However it's
-difficult to write all of your code functionally in an imperative
-language as most are not designed to work that way. Moreover, much of
-the library code supplied with the system tends to rely upon mutation.
-</p>
-
-<p>
-In reality, most languages offer a compromise. Even highly functional
-programming languages like Haskell permit side-effects in carefully
-controlled ways and imperative languages like C# provide excellent
-functional programming through facilities like LINQ. Most
-people agree that the future of functional programming is somewhere in
-this middle ground but it will do you no harm to learn the basics in a
-language that has no mutation whatsoever!
+  In functional programming, we write functions that act upon their
+  inputs and return values but which don't alter any state. As a
+  result, they tend to be simpler and more reusable so the programs
+  that we create with them are shorter and easier to understand.
 </p>
 
 <h2>Definitions</h2>
   
 <p>
-  A program consists of a series of definitions. Each definition
-  consists of an expression bound to a symbol which yields a
-  value when evaluated.
+A program is composed of a series of definitions. Each definition
+consists of an expression bound to a symbol which yields a
+value when evaluated.
 </p>
 
 <pre>
@@ -164,20 +133,14 @@ areaOfCircle = fn (r) pi * r * r end
 areaOfCircle(10)
 </pre>
   
-  <p>
-  You'll notice that a function doesn't have a name but like everything
-  else is an expression. The symbol which you bind a function to is the
-  means by which you to refer to it in your program. This may seem like a
-  pedantic distinction but this uniformity of expressions bound to
-  symbols is an important concept as will become clear later on.
-  </p>
-  
-  <p>
-  The body of a function is also an expression and the value of that expression is
-  the return value of the function. There is no explicit need for a return statement
-  because functions may only contain one expression and that expression must
-itself yield a value. Because Primer is a functional language,
-bindings are immutable so existing definitions cannot be rebound.
+<p>
+A function is an expression and doesn't have a name. If
+you need to refer to a function in your program then you bind it to a
+symbol as we do above. The body of a function is also an expression
+and the value of that expression is the return value of the
+function. Because functions may only contain one expression and that
+expression must yield a value, there's no need for a return statement
+in Primer.
 </p>
 
 <p>
@@ -192,36 +155,30 @@ show(areaOfCircle(5))
 
 <p>
 In order to avoid cluttering up the text I'll omit future calls to show but you
-can always add them in if you want to see the result of an
-evaluation. Note also that show returns its argument meaning that you
-can add calls to show into your program for debugging purposes without
-disrupting the flow.
+can always add them if you want to see the result of an
+evaluation. Because show is an expression and returns its argument, you
+can easily output debugging information in the middle of your expressions.
 </p>
 
-<h2>Lists and Recursion</h2>
+<pre>
+show(areaOfCircle(show(5)))
+</pre>
+
+<h2>Lists and Strings</h2>
 
 <p>
-Lists are the only composite data structure in Primer. They are
-heterogeneous and can be nested.
+Lists are the bread and butter data structure of functional
+programming. They can be nested and in Primer are heterogeneous.
 </p>
 
 <pre>
 xs1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-xs2 = [4, 5.32, pi, true, nil, areaOfCircle, 'a', "aaa"]
+xs2 = [4, 5.32, pi, true, nil, areaOfCircle, areaOfCircle(5), 'a', "aaa"]
 xs3 = [4, [5.32, [pi], [], true], nil, areaOfCircle, 'a', "aaa"]
 </pre>
 
 <p>
-Lists may also contain expressions that are evaluated.
-</p>
-
-<pre>
-xs4 = [0, areaOfCircle(5), pi]
-</pre>
-
-<p>
-Several functions provide access to list elements (note that lists are
-indexed from 0).
+Several functions provide access to list elements.
 </p>
   
 <pre>
@@ -231,61 +188,8 @@ tail(xs)    # returns all but the head of the list
 </pre>
 
 <p>
-The head and tail functions are especially useful as they allow you
-to easily traverse a list recursively. Because Primer is a
-functional language it isn't possible to use iteration as loops
-require mutation, either of an index counter or an explicit iterator
-variable. Instead we use recursive functions as in this example which
-counts the number of elements in a list (note that this isn't how the
-length function in the Primer standard library is written because it's
-not as efficient as it could be - see the section on
-<a href="#tco">tail recursion</a> for an explanation and a more
-efficient version of this function).
-</p>
-
-<pre>
-count = fn (xs)
-    if xs then 1 + count(tail(xs))
-    else 0
-end
-</pre>
-
-<p>
-As the if statement is an expression, it must return a value which
-means that it must always have an else clause.
-All expressions in Primer evaluate to true apart
-from the explicit value nil and the empty list which both evaluate to
-false. So in the above definition of count, "if xs..." means "if the
-list represented by xs is not the empty list...". Thus the function
-recursively calls itself with the tail of the list, adding one to the
-result until the end of the list is reached where the recursion
-terminates and a zero value is returned.
-</p>
-
-<p>
-An expression isn't evaluated until it's applied to arguments so a
-definition can refer to a symbol which hasn't yet been defined. For
-example, the following sequence of definitions is legal.
-</p>
-
-<pre>
-addPi = fn (x) x + pi end
-pi = 3.14159
-addPi(10)
-</pre>
-
-<p>
-More usefully, this allows us to define mutually recursive functions.
-</p>
-
-<pre>
-mr0 = fn (x) if x < 5 then mr1(x) else show(x) end
-mr1 = fn (x) mr0(x + 1) end
-mr1(0)
-</pre>
-
-<p>
-You can access an element from a list by its index with the : operator.
+You can access a list by index with the : operator. Note that lists
+are indexed from 0.
 </p>
 
 <pre>
@@ -304,12 +208,12 @@ a ++ [a, [b, c], a] ++ 'c' ++ [4, 5, 6]
 </pre>
 
 <p>
-The Primer standard library provides several functions for working
-with lists such as search, sort and reverse.
+The Primer standard library (found in base.pri) provides several
+functions for working with lists such as search, sort and reverse.
 </p>
 
 <p>
-Primer provides a simple character datatype and strings are nothing
+Primer provides a simple character type and strings are nothing
 more than lists of characters with syntactic sugar for creating them.
 </p>
 
@@ -322,56 +226,60 @@ head("hello")
 "hello":3
 </pre>
 
+<h2>Recursion</h2>
+
+<p>
+Because we can't mutate a variable, it's not possible to use iteration
+in a functional programming language. Instead we use recursive
+functions as in this example which counts the number of elements in a list.
+</p>
+
+<pre>
+count = fn (xs)
+    if xs then 1 + count(tail(xs))
+    else 0
+end
+</pre>
+
+<p>
+As the if statement is an expression, it must return a value which
+means that it must always have an else branch.
+All expressions in Primer evaluate to true apart
+from the explicit value nil and the empty list which both evaluate to
+false. So in the above definition of count, <i>if xs then</i> means <i>if the
+list represented by xs is not the empty list then</i>. Thus the function
+recursively calls itself with the tail of the list, adding one to the
+result until the end of the list is reached at which point the recursion
+terminates and zero is returned.
+</p>
+
+<p>
+An expression isn't evaluated until it's applied to arguments so a
+definition can refer to a symbol which hasn't yet been defined. This
+allows us to define mutually recursive functions.
+</p>
+
+<pre>
+mr0 = fn (x) if x < 5 then mr1(x) else "finished!" end
+mr1 = fn (x) mr0(x + 1) end
+mr1(0)
+</pre>
+
 <h2>Declarative Programming</h2>
 
 <p>
 Functional programs are often said to be declarative as they describe
-what a program does rather than how it does it. This is the opposite
-of many imperative programs where an algorithm corresponds more
-closely with how the machine works - array references, branches and
-loops. The classic example of this is Quicksort and I
-take the example in C below from the
-<a href="http://haskell.org/haskellwiki/Introduction#Quicksort_in_C">Haskell documentation</a>.
+what a program does rather than how it does it. For example, an
+imperative implementation of Quicksort tends to be defined in terms of
+memory lookups, loops and shuffling data into temporary variables.
+A simple functional implementation on the other hand reads more like a
+statement:  <i>a sorted list is a list where the smaller
+values can be found to the left of the larger values</i>.
 </p>
 
 <pre>
-void qsort(int a[], int lo, int hi) {
-{
-  int h, l, p, t;
-
-  if (lo < hi) {
-    l = lo; h = hi; p = a[hi];
-
-    do {
-      while ((l < h) && (a[l] <= p)) 
-          l = l+1;
-      while ((h > l) && (a[h] >= p))
-          h = h-1;
-      if (l < h) {
-          t = a[l];
-          a[l] = a[h];
-          a[h] = t;
-      }
-    } while (l < h);
-
-    a[hi] = a[l]; a[l] = p;
-
-    qsort( a, lo, l-1 );
-    qsort( a, l+1, hi );
-  }
-}
-</pre>
-
-<p>
-It must be said that the C version is very efficient but it does
-demonstrate the point rather well - you could imagine this is how a
-machine would sort a list! The functional version on the other hand is
-rather easier for a human to understand.
-</p>
-
-<pre>
-sort = fn (l)
-  if l then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
+qsort = fn (l)
+  if l then qsort(filter(lt, xs)) ++ [x] ++ qsort(filter(gte, xs))
   else []
   where x = head(l)
         xs = tail(l)
@@ -381,33 +289,23 @@ end
 </pre>
 
 <p>
-This code can be read as
-<br/><br/>
-<i>a sorted list is a list where the smaller values can be found to
-the left of the larger values</i>.
-<br/><br/>
 We take the head of the list as our 'pivot' value and then we
 recursively sort both the values that are smaller and the values that
 are larger than the pivot and concatenate the results together.
 </p>
 
 <pre>
-sort([9,3,1,7,6])                  # results in [1,3,6,7,9]
-sort("qwertyuiopasdfghjklzxcvbnm") # results in "abcdefghijklmnopqrstuvwxyz"
+qsort([9,3,1,7,6])                  # results in [1,3,6,7,9]
+qsort("qwertyuiopasdfghjklzxcvbnm") # results in "abcdefghijklmnopqrstuvwxyz"
 </pre>
 
 <h2>Lexical Scope</h2>
 
 <p>
-It's good practice in any language to break the work of a program down
-into small functions which perform only one task.
-Primer goes a step further by only allowing one
-expression per block (a function body or branch of an if
-statement). Of course, it's not always ideal to write everything
-as a long string of nested function calls. Nor is it desirable to
-sprinkle single use functions into the global scope so Primer
-functions can make use of a where clause which introduces local
-definitions.
+Because functions may only contain one expression, programs tend to be
+made up of many small functions. While this is good for modularity and
+code reuse, there are times when a function is only needed in one
+place. The <strong>where</strong> clause introduces local definitions.
 </p>
 
 <pre>
@@ -418,49 +316,54 @@ end
 </pre>
 
 <p>
-The symbols a and b are scoped within f. Note also that definitions in
-the where clause may refer to each other. Primer is lexically scoped
-which means that a symbol is bound at a given point if and only if
-that point is textually enclosed by a block in which the symbol is
-defined, or if the symbol is globally defined.
+The symbols a and b are scoped within f - they can refer to each
+other, to the parameters of f and to definitions in the global scope
+but they can not be accessed from outside of f.
+</p>
+
+<p>
+Primer is said to be <strong>lexically scoped</strong> which means that a symbol is
+bound at a given point if and only if that point is textually enclosed
+by a block in which the symbol is defined, or if the symbol is
+globally defined.
 </p>
 
 <p>
 A binding may temporarily 'overwrite' a more global binding. This is
-called shadowing.
+called <strong>shadowing</strong>.
 </p>
 
 <pre>
 a = 1000
 
-b = fn (x, y) x + a(y)
+b = fn (x) x * a end
+
+c = fn (x, y) x + a(y)
   where a = fn (x) x * 2 end
 end
-
-c = fn (x) x * a end
 </pre>
 
 <p>
-Here a is defined to be the integer value 1000 at program scope. The
-function c uses this value. The function b however
-sees the local definition of a which shadows the binding at the top
-level. Notice also that within function a there's a second instance
-of shadowing: its parameter x shadows b's parameter x.
+Here a is defined to be the integer value 1000 at global scope. The
+function b references this value. The function c however has a local
+binding of a which shadows the global binding. Notice also that within
+the local function a, there's a second instance of shadowing: its
+parameter x shadows c's parameter x.
 </p>
 
 <p>
 The basic rule is that a function will use the most local definition of a
 symbol that it can find and will search outwards to successively wider scopes in
-order to resolve a symbol. If no symbol is found at the outermost scope then
-the symbol is said to be unbound and an error is raised.
+order to resolve a symbol. If no symbol is found even at the global scope then
+the symbol is said to be <strong>unbound</strong> and an error is raised.
 </p>
 
 <h2>Higher Order Functions</h2>
 
 <p>
-Because functions are first class in Primer they can be passed around
-just like any other value. A function which accepts another
-function as an argument is called a Higher Order Function.
+Because functions are expressions they can be passed around
+like any other value. A function which accepts another
+function as an argument is called a <strong>higher order function</strong>.
 </p>
 
 <p>
@@ -482,12 +385,11 @@ show(findNumberDivisibleBy3(xs))
 </pre>
 
 <p>
-This works fine but is rather limited. Obviously it's
-trivial to parameterise the function to search for any value of n but we
-can do better than that! Looking at the function definition
-we can see that there are two aspects to it. The first is searching
-and the second is testing. By turning the searching part into a higher
-order function we can make it far more general.
+This works fine but is rather limited. We could parameterise the
+function to search for any value of n but we can do better! Looking at
+the function we can see that there are two aspects to
+it: search and test. By turning search into a higher
+order function we can make it more general.
 </p>
 
 <pre>
@@ -498,31 +400,31 @@ findByFun = fn (xs, f)
     else nil
 end
 
-# Test if a number is divisible by 3.
+# is a number is divisible by 3
 factor3 = fn (x) x mod 3 == 0 end
 findByFun(xs, factor3)
 </pre>
 
 <p>
-Admittedly this is more code but by separating out the testing from the
-searching, we can now write different test functions to search our list.
+Admittedly this is more code but we can now write different test
+functions to search our list.
 </p>
 
 <pre>
-# Test if a number is divisible by 3 and 5.
+# is a number divisible by 3 and 5
 factor3and5 = fn (x) x mod 3 == 0 and x mod 5 == 0 end
 findByFun(xs, factor3and5)
 
-# Is a number odd?
+# is a number odd
 odd = fn (x) x mod2 != 0 end
 findByFun(xs, odd)
 </pre>
 
 <p>
-Not only is our search function reusable with different test functions
-but our test functions can be reused with different search
-functions. For example, we could write a search function which returns
-all of the values which pass a test.
+Not only is our search function reusable with different tests but our
+tests can be reused with different search functions. For example, we
+could write a search function which returns all of the values which
+pass a test.
 </p>
 
 <pre>
@@ -540,12 +442,11 @@ findAllByFun(odd, xs)
 </pre>
 
 <p>
-Of course, we can continue down this path as far as we like. For
-example, we can write a new test function to check if a number is
-prime in terms of findAllByFun.
+We can even write a test function which uses our new search function.
 </p>
 
 <pre>
+# is a number prime
 prime = fn (p) p > 1 and length(findAllByFun(fn (n) p mod n == 0 end, 1..p)) == 2 end
 </pre>
 
@@ -558,33 +459,18 @@ findByFun(prime, xs)
 findAllByFun(prime, xs)
 </pre>
 
-<p>
-Now we have a selection of search functions and test functions which
-can be used interchangeably and which can be used to write new search
-and test functions as needed.
-</p>
+<h2>Anonymous functions</h2>
 
 <p>
-Note that Primer comes with the higher order functions all and any
-which do much the same job as findByFun and findAllByFun except that
-they are predicate functions.
-</p>
-
-<p>
-One final thing to note is that we can use functions anonymously. That
-is to say, we use a function without previously assigning it to a
-symbol. This is useful when the function we want to pass to a higher
-order function has no use beyond that single call.
+We can use a function without previously assigning it to a
+symbol. These so called <strong>anonymous functions</strong> are
+useful when you don't want to clutter up your
+program with single-use functions.
 </p>
 
 <pre>
 findByFun(fn (x) x mod 2 != 0 end, xs)
 </pre>
-
-<p>
-Anonymous functions are useful when you don't want to clutter up your
-program with single-use functions.
-</p>
 
 <h2>Map, reduce, filter...</h2>
 
@@ -632,11 +518,10 @@ This is an example of a <strong>left fold</strong> but Primer also
 includes reduceRight which is an example of a <strong>right
 fold</strong>. A left fold recursively combines the results of combining
 all but the last element from a list with the last one. The initial
-value, 0 in the example above, is used to combine with the first
+value, 0 in the example above, is combined with the first
 element in the list. A right fold on the other hand recursively
 combines the first element with the results of combining the rest. The
-initial value is therefore used to combine with the last element in
-the list.
+initial value is therefore combined with the last element in the list.
 </p>
 
 <p>
@@ -750,32 +635,28 @@ end
 </pre>
 
 <p>
-At the time I commented that the length function supplied with Primer
-was not written in exactly this way as it was inefficient. The
-inefficiency is in fact due to the self-recursive call. In most
-imperative programming languages, every time a function is called, a
-frame is pushed onto the stack which contains the details of the
-function including its parameters and where it should return its value
-to. The stack is of a fixed size, normally specified when the
-operating system or runtime is compiled or configured. This fixed size
-means that unbounded recursion can lead to a <strong>stack overflow</strong>.
+However, this function is not efficient and will crash on a
+sufficiently long list! In most programming languages, every time a
+function is called, information is pushed onto the stack which contains
+the details of the function including its parameters and where it
+should return its value to. The stack is usually of a fixed size
+meaning that unbounded recursion can lead to a <strong>stack overflow</strong>.
 </p>
 
 <p>
-Functional programming languages (and some imperative programming
-languages) require that their runtimes eliminate some of the recursive
+Most functional programming languages require that their runtimes
+eliminate some of the recursive 
 calls in a users program. Typically this can only be done if the
 recursive call is the last thing that the function does. In practice,
-these so called <strong>tail calls</strong> are very common so
-<strong>tail call optimisation</strong> is a useful facility for an
-interpreter or compiler to provide. However, not all functions are
+<strong>tail calls</strong> are common so this <strong>tail call
+optimisation</strong> is beneficial. However, not all functions are
 naturally tail recursive and our count function is one which needs to
 be adjusted to take advantage of the optimisation.
 </p>
 
 <p>
-The problem with count is that the last operation it performs is a
-call to the addition operator. We can rewrite count to use an
+The problem with count is that the last thing it does is to call the
+addition operator. We can rewrite count to use an
 <strong>accumulator function</strong>.
 </p>
 
@@ -789,21 +670,16 @@ end
 
 <p>
 Accumulators are a common technique used to make this type of summing
-function tail recursive. They move the summing operation from the tail
-call into the parameter allowing the optimisation to take place.
+function tail recursive by moving the summing operation away from the
+tail call.
 </p>
 
-<h2>A simple program: Mars Rovers</h2>
+<h2>Problem: Mars Rovers</h2>
 
 <p>
-Because Primer is a pedagogical language we can avoid all those
-messy real world things like IO, concurrency and angry users. But it's
-nice to see a slightly larger program that solves a 'real'
-problem. The following problem is based on a test which
+The following is a slightly modified version of a problem which
 <a href="http://www.thoughtworks.com/">ThoughtWorks</a>
-famously gave to programmers during interviews. I've modified the
-problem slightly in case people stumble upon this page during their
-interview!
+give to interview candidates.
 </p>
 
 <div class="quote">
@@ -816,7 +692,7 @@ from Earth. The plateau is divided into a grid to simplify navigation.
 <p>
 A rover's position is represented by a combination of an x and y
 co-ordinate and a letter representing one of the four cardinal compass
-points. An example position on the grid might be [0 0 N] which means
+points. An example position on the grid might be [0,0,N] which means
 the rover is in the bottom left corner and facing North. Assume that
 the square directly North from (x, y) is (x, y+1).
 <p>
@@ -824,7 +700,7 @@ the square directly North from (x, y) is (x, y+1).
 <p>
 The input to the rover is via two functions:
 <br/><br/>
-1. position(x, y, h) deploys the rover to an initial grid location [x y h].
+1. position(x, y, h) deploys the rover to an initial grid location [x,y,h].
 <br/><br/>
 2. move(s) accepts a command string of the form "L1R2". L spins the
 rover 90 degrees left, R spins the rover 90 degrees right and a number
@@ -834,18 +710,14 @@ reasonable length.
 </p>
 
 <p>
-Test your program by starting in an initial position [10 10 N] and
+Test your program by starting in an initial position [10,10,N] and
 then issuing the command "R1R3L2L1". The output from the program should
-be the final grid location and heading of the rover in the format [x y h].
+be the final grid location and heading of the rover.
 </p>
 </div>
 
 <p>
-There are several ways of solving this problem. A brute force approach
-is to use a sequence of nested if statements testing each instruction
-against the rovers current vector. A more elegant solution is to
-realise that we can rotate around the compass by expressing the points
-as numbers.
+I encourage you to write your own solution but here's my attempt.
 </p>
 
 <pre>
@@ -872,10 +744,28 @@ end
 print(move(position(10, 10, N), "R1R3L2L1"))
 </pre>
 
+<h2>Where next?</h2>
+
+<p>
+You've now learnt the foundations of functional programming and are
+ready to move on to something more powerful. There are many options to
+choose from including <a href="http://haskell.org/">Haskell</a>,
+<a href="http://clojure.org/">Clojure</a>,
+<a href="http://msdn.microsoft.com/en-gb/fsharp/default.aspx">F#</a>
+and <a href="http://caml.inria.fr/">OCaml</a>. I urge you
+to look at each of them!
+</p>
+
+<p>
+Whichever language you choose I hope Primer has proved to
+be a useful introduction to functional programming and I'd like to
+hear your comments and suggestions for improvements.
+</p>
+
 <h2>Thanks...</h2>
 
 <p>
-I'm extremely grateful to my friend Michael Ben-Yosef for his
+I'm extremely grateful to Michael Ben-Yosef for his
 invaluable input into the design of both the language and the
 tutorial. His ability to debug Primer code without a working copy of the
 interpreter is quite extraordinary!

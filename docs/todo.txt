@@ -1,4 +1,5 @@
-- document operators
+- reduce -> fold ?
+- document Primers operators
 - remove the stack?
 - reimplement every, any, sum, product in terms of reduce
 - like named parameters in function calls cause conflict
@@ -15,6 +16,7 @@
 - smarter dispatch of built-in functions (Michael's suggestion)
 - should attempted redefinition of a binding in the same scope throw an error?
 - full pretty printer (not all forms are covered yet)
+- math functions (sin, cos, tan, abs, etc)
 - gc
 - repl?
 - currying?
