@@ -62,8 +62,6 @@ node* NODE_BOOL_TRUE;
 node* NODE_BOOL_FALSE;
 node* NODE_INT_ZERO;
 
-node* stack[50000];
-int stack_ptr;
 node *temp, *ast;
 int lineno;
 
@@ -86,12 +84,8 @@ node* node_from_string(char* value);
 void memory_alloc_error();
 void nodefree(node *p);
 
-/* stack operations */
-void push(node* node);
-node* pop();
-
 /* the evaluator */
-void eval(node *p, environment* env);
+node *eval(node *p, environment* env);
 
 /* environment related functions */
 void bind(node *args, node *params, environment *fnenv, environment *argenv);

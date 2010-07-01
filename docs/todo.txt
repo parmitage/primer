@@ -1,8 +1,8 @@
+- like named parameters in function calls cause conflict
 - reduce -> fold ?
 - document Primers operators
-- remove the stack?
 - reimplement every, any, sum, product in terms of reduce
-- like named parameters in function calls cause conflict
+- use list destructuring in standard library
 - memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
 - shadowing a previously lifted binding should replace the lifted version
@@ -20,4 +20,3 @@
 - gc
 - repl?
 - currying?
-- lazy evaluation?

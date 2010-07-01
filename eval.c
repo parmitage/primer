@@ -24,10 +24,10 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void eval(node *p, environment* env)
+node *eval(node *p, environment* env)
 {
   if (!p)
-    return;
+    return NODE_NIL;
 
  eval_start:
 
@@ -38,15 +38,14 @@ void eval(node *p, environment* env)
     case t_bool:
     case t_char:
     case t_nil:
-      push(p);
-      break;
+      return p;
 
     case t_symbol:
       {
         binding *b = environment_lookup(env, p->sval);
 			
         if (b != NULL)
-          eval(b->node, env);
+          return eval(b->node, env);
         else
           error_log("unbound symbol", p);
       }
@@ -67,8 +66,7 @@ void eval(node *p, environment* env)
 
           case PAREN:
             {
-              eval(p->opr.op[0], env);
-              break;
+              return eval(p->opr.op[0], env);
             }
 
           case DEF:
@@ -90,14 +88,12 @@ void eval(node *p, environment* env)
                 clone = mkcons(LAMBDA, 3, p->opr.op[0], p->opr.op[1], p->opr.op[2]);
 
 	      clone->env = environment_new(env);
-	      push(clone);
-              break;
+	      return clone;
             }
 
           case APPLY:
             {
-              eval(p->opr.op[0], env);
-              node* fn = pop();
+              node* fn = eval(p->opr.op[0], env);
 
               /* bind parameters */
               node *params = p->opr.op[1];
@@ -121,34 +117,24 @@ void eval(node *p, environment* env)
               switch (p->opr.nops)
                 {
                 case 0:
-                  push(mkcons(LIST, 0));
-                  break;
+                  return mkcons(LIST, 0);
                 case 1:
-                  eval(p->opr.op[0], env);
-                  push(mkcons(LIST, 1, pop()));
-                 break;
+                  return mkcons(LIST, 1, eval(p->opr.op[0], env));
                 case 2:
-                  eval(p->opr.op[0], env);
-                  eval(p->opr.op[1], env);
-                  push(mkcons(LIST, 2, pop(), pop()));
-                  break;
+                  return mkcons(LIST, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
                 }
-              break;
              }
 				
           case STRING:
             {
-              push(p);
-              break;
+              return p;
             }
 				
           case SHOW:
             {
-              eval(p->opr.op[0], env);
-              node* val = pop();
+              node* val = eval(p->opr.op[0], env);
               display(val);
-              push(val);
-              break;
+              return val;
             }
 				
           case ';':
@@ -160,8 +146,8 @@ void eval(node *p, environment* env)
 
             case IF:
             {
-              eval(p->opr.op[0], env);					
-              node *pred = pop();
+              			
+              node *pred = eval(p->opr.op[0], env);
 					
               if (pred->ival > 0)
                 p = p->opr.op[1];
@@ -173,30 +159,26 @@ void eval(node *p, environment* env)
 
           case LENGTH:
             {
-              eval(p->opr.op[0], env);
-              node* val = pop();
-              push(mkint(length(val)));
-              break;
+              node* val = eval(p->opr.op[0], env);
+              return mkint(length(val));
             }
 
           case NTH:
             {
-              eval(p->opr.op[0], env);
-              node *list = pop();
-              eval(p->opr.op[1], env);
-              int index = pop()->ival, n = 0;
+              node *list = eval(p->opr.op[0], env);
+              int index = eval(p->opr.op[1], env)->ival, n = 0;
               bool found = false;
 
               while (!found)
                 {
                   if (list == NULL || index < 0)
                     {
-                      push(NODE_NIL);
+                      return NODE_NIL;
                       found = true;
                     }
                   else if (index == n)
                     {
-                      push(car(list));
+                      return car(list);
                       found = true;
                     }
                   else
@@ -211,138 +193,85 @@ void eval(node *p, environment* env)
 				
           case '+':
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(add(pop(), pop()));
-              break;
+              return add(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case '-':
             {
               if (p->opr.nops == 1)
-                {
-                  eval(p->opr.op[0], env);
-                  push(sub(mkint(0), pop()));
-                }
+                return sub(mkint(0), eval(p->opr.op[0], env));
               else if (p->opr.nops == 2)
-                {
-                  eval(p->opr.op[0], env);
-                  eval(p->opr.op[1], env);
-                  push(sub(pop(), pop()));
-                }
-
-              break;
+                return sub(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case '*':
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(mul(pop(), pop()));
-              break;
+              return mul(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case '/':
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(dvd(pop(), pop()));
-              break;
+              return dvd(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case '<':
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(lt(pop(), pop()));
-              break;
+              return lt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case '>':
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(gt(pop(), pop()));
-              break;
+              return gt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case GE:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(gte(pop(), pop()));
-              break;
+              return gte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case LE:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(lte(pop(), pop()));
-              break;
+              return lte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case NE:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(neq(pop(), pop()));
-              break;	
+              return neq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case EQ:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(eq(pop(), pop()));
-              break;
+              return eq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case AND:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(and(pop(), pop()));
-              break;
+              return and(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case OR:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(or(pop(), pop()));
-              break;
+              return or(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case MOD:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(mod(pop(), pop()));
-              break;
+              return mod(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case APPEND:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(append(pop(), pop()));
-              break;
+              return append(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 
           case RANGE:
             {
-              eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
-              push(range(pop(), pop()));
-              break;
+              return range(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
             }
 				
           case NOT:
             {
-              eval(p->opr.op[0], env);
-              push(not(pop()));
-              break;
+              return not(eval(p->opr.op[0], env));
             }
 				
           case TYPE:
@@ -359,8 +288,7 @@ void eval(node *p, environment* env)
                     t = -1;
                 }
 
-              push(mkint(t));
-              break;
+              return mkint(t);
             }
           }
       }
@@ -396,15 +324,15 @@ void bind(node *args, node *params, environment *fnenv, environment *argenv)
 		
       if (params->opr.nops > 0)
         {
-          eval(params->opr.op[0], argenv);
+          node *n = eval(params->opr.op[0], argenv);
           
           if (args->opr.op[0]->type == t_symbol)
             {
-              binding* binding = binding_new(args->opr.op[0]->sval, pop());
+              binding* binding = binding_new(args->opr.op[0]->sval, n);
               environment_extend(fnenv, binding);
             }
           else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == MATCH)
-            bindp(args->opr.op[0], pop(), fnenv);
+            bindp(args->opr.op[0], n, fnenv);
         }
     }
 }
@@ -670,19 +598,6 @@ void nodefree(node *p)
     }
 	
   free(p);
-}
-
-void push(node* node)
-{
-  stack[stack_ptr++] = node;
-}
-
-node* pop()
-{
-  if (stack_ptr > 0)
-    return stack[--stack_ptr];
-  else
-    return mknil();
 }
 
 node* car(node* node)
