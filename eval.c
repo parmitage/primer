@@ -111,7 +111,6 @@ void eval(node *p, environment* env)
               p = fn->opr.op[1];
               env = fn->env;
               goto eval_start;
-              break;
             }
 
            case LIST:
@@ -165,21 +164,11 @@ void eval(node *p, environment* env)
               node *pred = pop();
 					
               if (pred->ival > 0)
-                {
-                  environment *ext = environment_new(env);
-                  p = p->opr.op[1];
-                  env = ext;
-                  goto eval_start;
-                }
+                p = p->opr.op[1];
               else
-                {
-                  environment *ext = environment_new(env);
-                  p = p->opr.op[2];
-                  env = ext;
-                  goto eval_start;
-                }
-					
-              break;
+                p = p->opr.op[2];
+
+              goto eval_start;
             }
 
           case LENGTH:
