@@ -1,5 +1,5 @@
-- like named parameters in function calls cause conflict
 - reduce -> fold ?
+- merge nil and [] (and false?)
 - document Primers operators
 - reimplement every, any, sum, product in terms of reduce
 - use list destructuring in standard library
@@ -11,7 +11,6 @@
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support in parser -> e.g. [x]()
 - returning a value and not using it sometimes causes a crash (test case?)
-- list evaluation involves lots of copying
 - constructed strings print out as lists: 'a' ++ 'b' ++ 'c'
 - smarter dispatch of built-in functions (Michael's suggestion)
 - should attempted redefinition of a binding in the same scope throw an error?

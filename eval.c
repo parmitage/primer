@@ -24,6 +24,14 @@ int main(int argc, char** argv)
   return 0;
 }
 
+node *evlis(node *list, environment *env)
+{
+  if (list == NULL || list->type == t_nil)
+    return NODE_NIL;
+  else
+    return mkcons(LIST, 2, eval(car(list), env), evlis(cdr(list), env));
+}
+
 node *eval(node *p, environment* env)
 {
   if (!p)
@@ -65,14 +73,35 @@ node *eval(node *p, environment* env)
             }
 
           case PAREN:
-            {
-              return eval(p->opr.op[0], env);
-            }
+            return eval(p->opr.op[0], env);
 
           case DEF:
             {
               char* name = p->opr.op[0]->sval;
-              binding* binding = binding_new(name, p->opr.op[1]);
+              binding* binding;
+
+              /* evalaute the RHS unless it's a closure */
+              if (p->opr.op[1]->type == t_cons &&
+                  p->opr.op[1]->opr.oper == APPLY)
+                {
+                  char *symbol = p->opr.op[1]->opr.op[0]->sval;
+                  struct binding *b = environment_lookup(env, symbol);
+                  
+                  if (b != NULL)
+                    {
+                      node *n = b->node;
+                    
+                      if (n->type == t_cons && n->opr.oper == LAMBDA
+                          && n->opr.op[1]->type == t_cons
+                          && n->opr.op[1]->opr.oper == LAMBDA)
+                        binding = binding_new(name, p->opr.op[1]);
+                      else
+                        binding = binding_new(name, eval(p->opr.op[1], env));
+                    }
+                }
+              else
+                binding = binding_new(name, eval(p->opr.op[1], env));
+
               environment_extend(env, binding);
               break;
             }
@@ -97,13 +126,15 @@ node *eval(node *p, environment* env)
 
               /* bind parameters */
               node *params = p->opr.op[1];
+              params = evlis(params, env);
+              //display(params);
               bind(fn->opr.op[0], params, fn->env, env);
 
-               /* evaluate inner definitions */
+               /* evaluate where clause */
               if (fn->opr.nops == 3)
                 eval(fn->opr.op[2], fn->env);
 
-              /* evaluate the function body */
+              /* evaluate function body */
               p = fn->opr.op[1];
               env = fn->env;
               goto eval_start;
@@ -145,8 +176,7 @@ node *eval(node *p, environment* env)
             }
 
             case IF:
-            {
-              			
+            {              			
               node *pred = eval(p->opr.op[0], env);
 					
               if (pred->ival > 0)
@@ -615,9 +645,7 @@ node* cdr(node* node)
   if (node == NULL)
     return mknil();
   else if (node->opr.nops > 0 && node->opr.op[1] != NULL)
-    {
-      return node->opr.op[1];
-    }
+    return node->opr.op[1];
   else
     return mknil();
 }
