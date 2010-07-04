@@ -1,19 +1,19 @@
-- reduce -> fold ?
 - merge nil and [] (and false?)
-- document Primers operators
+- docs: operators
+- docs: use Michael's any definition
+- cons operator (:) and make ++ non-generic
 - reimplement every, any, sum, product in terms of reduce
 - use list destructuring in standard library
 - memory corruption - most apparent on Windows
 - tests for nested calls (map, filter, reverse, etc)
+- improved test coverage
 - shadowing a previously lifted binding should replace the lifted version
 - concatenating the same string variable onto itself creates an infinite value...
-- re-introduce line numbers, respecting file/module name and position
+- better error messages throughout (description + line number)
 - parameter checking (arity and type) of all cases in eval()
 - re-introduce full funcall support in parser -> e.g. [x]()
-- returning a value and not using it sometimes causes a crash (test case?)
 - constructed strings print out as lists: 'a' ++ 'b' ++ 'c'
 - smarter dispatch of built-in functions (Michael's suggestion)
-- should attempted redefinition of a binding in the same scope throw an error?
 - full pretty printer (not all forms are covered yet)
 - math functions (sin, cos, tan, abs, etc)
 - gc

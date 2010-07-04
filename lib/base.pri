@@ -12,13 +12,13 @@ map = fn (f, xs)
   else nil
 end
 
-reduce = fn (f, init, xs)
-  if xs then reduce(f, f(init, head(xs)), tail(xs))
+foldl = fn (f, init, xs)
+  if xs then foldl(f, f(init, head(xs)), tail(xs))
   else init
 end
 
-reduceRight = fn (f, init, xs)
-  if xs then f(head(xs), reduceRight(f, init, tail(xs)))
+foldr = fn (f, init, xs)
+  if xs then f(head(xs), foldr(f, init, tail(xs)))
   else init
 end
 

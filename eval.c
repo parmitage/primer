@@ -429,12 +429,26 @@ environment *environment_delete(environment* env)
 
 void environment_extend(environment* env, binding *binding)
 {
+  char *sym = binding->name;
+
+  for (int i = 0; i < env->count; ++i)
+    {
+      if (strcmp(sym, env->bindings[i]->name) == 0)
+        {
+          /* binding exists in this environment so replace it */
+          env->bindings[i] = binding;
+          return;
+        }
+    }
+
+  /* binding wasn't found so create a new one */
   env->bindings[env->count++] = binding;
 }
 
 binding* environment_lookup(environment* env, char* name)
 {
-  environment* top = env;
+  environment *top = env;
+  bool depth = false;
 
   while (env != NULL)
     {
@@ -442,12 +456,16 @@ binding* environment_lookup(environment* env, char* name)
 	{
 	  if (strcmp(env->bindings[i]->name, name) == 0)
 	    {
-	      environment_extend(top, env->bindings[i]);
+              /* lift a binding into this environment */
+              if (depth)
+                environment_extend(top, env->bindings[i]);
+
 	      return env->bindings[i];
 	    }
 	}
 
       env = env->enclosing;
+      depth = true;
     }
   
   return NULL;
