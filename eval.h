@@ -8,7 +8,6 @@ typedef enum { false = 0, true = 1 } bool;
 
 /* supported types */ 
 typedef enum {
-  t_nil,
   t_int,
   t_float,
   t_bool,
@@ -51,16 +50,10 @@ typedef struct environment {
   binding *bindings[MAX_BINDINGS_PER_FRAME];
 } environment;
 
-/* error message with source line number */
-typedef struct error_tag {
-  int line;
-  char* msg;
-} error;
-
-node* NODE_NIL;
-node* NODE_BOOL_TRUE;
-node* NODE_BOOL_FALSE;
-node* NODE_INT_ZERO;
+node *NODE_EMPTY;
+node *NODE_BOOL_TRUE;
+node *NODE_BOOL_FALSE;
+node *NODE_INT_ZERO;
 
 node *temp, *ast;
 int lineno;
@@ -77,7 +70,6 @@ node* mkfloat(float value);
 node* mkbool(int value);
 node* mkchar(char value);
 node* mkstr(char* value);
-node* mknil();
 node* node_from_string(char* value);
 
 /* allocator */
@@ -89,7 +81,8 @@ node *eval(node *p, environment* env);
 
 /* environment related functions */
 void bind(node *args, node *params, environment *fnenv, environment *argenv);
-void bindp(node *args, node *list, environment *fnenv);
+void bindp(node *args, node *list, environment *fnenv
+);
 binding* binding_new(char* name, node* node);
 environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
@@ -121,6 +114,7 @@ node* and(node* x, node* y);
 node* or(node* x, node* y);
 node* not(node* node);
 node* mod(node* x, node* y);
+node *cons(node *atom, node *list);
 node* append(node* list1, node* list2);
 node *range(node *from, node *to);
 
@@ -128,7 +122,7 @@ node *range(node *from, node *to);
 node* library_load(char* name);
 
 /* error handling */
-void error_log(char *msg, node *node);
+void error(char *msg);
 
 /* utils */
 bool file_exists(const char * filename);

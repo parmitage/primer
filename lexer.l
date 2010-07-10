@@ -30,13 +30,12 @@ void yyerror(char *);
 "where"                                           return WHERE;
 "true"                                            return TRUE;
 "false"                                           return FALSE;
-"nil"                                             return NIL;
 "end"                                             return END;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
 "!"                                               return NTH;
-":"                                               return MATCH;
+":"                                               return CONS;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 \#.*\n                                            NULL; /* comments */

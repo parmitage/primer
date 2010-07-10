@@ -26,8 +26,8 @@
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
-%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE NIL END LIST
-%token SHOW TYPE LENGTH NTH MATCH WHERE PAREN RANGE
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
+%token SHOW TYPE LENGTH NTH CONS WHERE PAREN RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -36,7 +36,7 @@
 %left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
 %left '*' '/' MOD NTH
-%right MATCH
+%right CONS
 %nonassoc UMINUS
 
 %type <nPtr> program stmts stmt expr list identifier
@@ -65,7 +65,6 @@ expr:
 | TRUE                                                { $$ = NODE_BOOL_TRUE; }
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
-| NIL                                                 { $$ = NODE_NIL; }
 | identifier                                          { $$ = $1; }
 | LAMBDA '(' list ')' expr END                        { $$ = mkcons(LAMBDA, 2, $3, $5); }
 | LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkcons(LAMBDA, 3, $3, $5, $7); }
@@ -90,7 +89,7 @@ expr:
 | expr APPEND expr                                    { $$ = mkcons(APPEND, 2, $1, $3); }
 | expr RANGE expr                                     { $$ = mkcons(RANGE, 2, $1, $3); }
 | expr NTH expr                                       { $$ = mkcons(NTH, 2, $1, $3); }
-| expr MATCH expr                                     { $$ = mkcons(MATCH, 2, $1, $3); }
+| expr CONS expr                                      { $$ = mkcons(CONS, 2, $1, $3); }
 | NOT expr                                            { $$ = mkcons(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkcons('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }
@@ -112,7 +111,7 @@ void yyerror(char *s)
 {
   char* errmsg = malloc(200);
   errmsg[0] = '\0';
-  error_log(s, NULL);
+  error(s);
 }
 
 void parse(char* filename)

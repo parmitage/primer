@@ -13,7 +13,7 @@ int main(int argc, char** argv)
       return -1;
     }
 
-  NODE_NIL = mknil();
+  NODE_EMPTY = mkcons(LIST, 0);
   NODE_BOOL_TRUE = mkbool(true);
   NODE_BOOL_FALSE = mkbool(false);
   NODE_INT_ZERO = mkint(0);
@@ -24,18 +24,10 @@ int main(int argc, char** argv)
   return 0;
 }
 
-node *evlis(node *list, environment *env)
-{
-  if (list == NULL || list->type == t_nil)
-    return NODE_NIL;
-  else
-    return mkcons(LIST, 2, eval(car(list), env), evlis(cdr(list), env));
-}
-
 node *eval(node *p, environment* env)
 {
   if (!p)
-    return NODE_NIL;
+    return NODE_BOOL_FALSE;
 
  eval_start:
 
@@ -45,7 +37,6 @@ node *eval(node *p, environment* env)
     case t_float:
     case t_bool:
     case t_char:
-    case t_nil:
       return p;
 
     case t_symbol:
@@ -55,7 +46,7 @@ node *eval(node *p, environment* env)
         if (b != NULL)
           return eval(b->node, env);
         else
-          error_log("unbound symbol", p);
+          error("unbound symbol");
       }
 
     case t_cons:
@@ -126,8 +117,6 @@ node *eval(node *p, environment* env)
 
               /* bind parameters */
               node *params = p->opr.op[1];
-              params = evlis(params, env);
-              //display(params);
               bind(fn->opr.op[0], params, fn->env, env);
 
                /* evaluate where clause */
@@ -140,11 +129,9 @@ node *eval(node *p, environment* env)
               goto eval_start;
             }
 
-           case LIST:
-             {
-              /* Because we can store symbols in lists we evaluate the
-                 list contents. Probably could make this significantly
-                 more efficient! */
+          case LIST:
+            {
+              /* because we can store symbols in lists we evaluate the contents */
               switch (p->opr.nops)
                 {
                 case 0:
@@ -154,11 +141,19 @@ node *eval(node *p, environment* env)
                 case 2:
                   return mkcons(LIST, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
                 }
-             }
-				
+            }
+            
           case STRING:
             {
-              return p;
+              switch (p->opr.nops)
+                {
+                case 0:
+                  return mkcons(STRING, 0);
+                case 1:
+                  return mkcons(STRING, 1, eval(p->opr.op[0], env));
+                case 2:
+                  return mkcons(STRING, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                }
             }
 				
           case SHOW:
@@ -203,7 +198,7 @@ node *eval(node *p, environment* env)
                 {
                   if (list == NULL || index < 0)
                     {
-                      return NODE_NIL;
+                      return NODE_EMPTY;
                       found = true;
                     }
                   else if (index == n)
@@ -222,9 +217,7 @@ node *eval(node *p, environment* env)
             }
 				
           case '+':
-            {
-              return add(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return add(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case '-':
             {
@@ -235,74 +228,46 @@ node *eval(node *p, environment* env)
             }
 				
           case '*':
-            {
-              return mul(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return mul(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case '/':
-            {
-              return dvd(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return dvd(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case '<':
-            {
-              return lt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return lt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case '>':
-            {
-              return gt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return gt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case GE:
-            {
-              return gte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return gte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case LE:
-            {
-              return lte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return lte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case NE:
-            {
-              return neq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return neq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case EQ:
-            {
-              return eq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return eq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case AND:
-            {
-              return and(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return and(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case OR:
-            {
-              return or(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return or(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case MOD:
-            {
-              return mod(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
-				
+            return mod(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+
           case APPEND:
-            {
-              return append(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return append(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 
           case RANGE:
-            {
-              return range(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
-            }
+            return range(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
 				
           case NOT:
-            {
-              return not(eval(p->opr.op[0], env));
-            }
+            return not(eval(p->opr.op[0], env));
 				
           case TYPE:
             {
@@ -327,9 +292,6 @@ node *eval(node *p, environment* env)
 
 int length(node* node)
 {
-  if (node == NULL)
-    return -1;
-
   if (node->type == t_cons)
     {
       if (node->opr.nops > 1 && node->opr.op[1] != NULL)
@@ -337,8 +299,6 @@ int length(node* node)
       else
         return node->opr.nops;
     }
-  else if (node->type == t_nil)
-    return 0;
   else
     return 1;
 }
@@ -361,7 +321,7 @@ void bind(node *args, node *params, environment *fnenv, environment *argenv)
               binding* binding = binding_new(args->opr.op[0]->sval, n);
               environment_extend(fnenv, binding);
             }
-          else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == MATCH)
+          else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == CONS)
             bindp(args->opr.op[0], n, fnenv);
         }
     }
@@ -565,20 +525,6 @@ node* node_from_string(char* value)
     return mkcons(STRING, 1, mkchar(value[0]));
 }
 
-node* mknil()
-{
-  node *p;
-  size_t size = sizeof(struct nodeTag) + sizeof(int);
-	
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
-    memory_alloc_error();
-	
-  p->type = t_nil;
-  p->lineno = lineno;
-	
-  return p;
-}
-
 node *mksym(char* s)
 {
   node *p;
@@ -596,9 +542,6 @@ node *mksym(char* s)
 
 node *mkcons(int oper, int nops, ...)
 {
-  if (nops == 0)
-    return mknil();
-
   node *p;  
   size_t size = sizeof(struct nodeTag) + sizeof(struct oprNodeType);
 
@@ -650,42 +593,47 @@ void nodefree(node *p)
 
 node* car(node* node)
 {
-  if (node == NULL)
-    return mknil();
-  else if (node->type == t_nil)
-    return node;
-  else
+  if (node->opr.nops > 0)
     return node->opr.op[0];
+  else
+    return NODE_EMPTY;
 }
 
 node* cdr(node* node)
 {
-  if (node == NULL)
-    return mknil();
-  else if (node->opr.nops > 0 && node->opr.op[1] != NULL)
-    return node->opr.op[1];
-  else
-    return mknil();
+  switch (node->opr.nops)
+    {
+    case 0:
+    case 1:
+      return NODE_EMPTY;
+    case 2:
+      return node->opr.op[1];
+    }
+}
+
+bool empty(node *list)
+{
+  return list->type == t_cons && list->opr.nops == 0;
 }
 
 node* append(node* list1, node* list2)
 {
-  if (list2 == NULL || list2->type == t_nil)
-    return list1;
-
-  if (list1 == NULL || list1->type == t_nil)
-    return list2;
-
   if (list1->type != t_cons)
     list1 = mkcons(LIST, 1, list1);
 
   if (list2->type != t_cons)
     list2 = mkcons(LIST, 1, list2);
 
+  if (empty(list2))
+    return list1;
+
+  if (empty(list1))
+    return list2;
+
   node* r = list1;
   node* n = list1;
 	
-  while (n != NULL && n->type != t_nil && n->opr.op[1] != NULL)
+  while(n->opr.op[1] != NULL && !empty(n->opr.op[1]))
     {
       n = n->opr.op[1];
     }
@@ -700,7 +648,7 @@ node *range(node *s, node *e)
 {
   int from = s->ival;
   int to = e->ival;
-  node *list = NODE_NIL;
+  node *list = NODE_EMPTY;
 
   for (int i = to; i >= from; --i)
     list = append(mkint(i), list);
@@ -723,9 +671,6 @@ void display_primitive(node* node)
     case t_float:
       printf("%g", node->fval);
       break;
-    case t_nil:
-      printf("nil");
-      break;
     case t_bool:
       printf("%s", node->ival > 0 ? "true" : "false");
       break;
@@ -739,6 +684,8 @@ void display_primitive(node* node)
           {
           case STRING:
             {
+              printf("\"");
+
               while (node != NULL)
                 {
                   if (node->opr.nops > 0)
@@ -749,24 +696,32 @@ void display_primitive(node* node)
                   else
                     node = NULL;
                 }
-					
+
+              printf("\"");
               break;
             }
 		
           case LIST:
             {
               printf("[");
-
+              
               while (node != NULL)
                 {
-                  display_primitive(node->opr.op[0]);
-                  if (node->opr.nops > 1)
+                  switch (node->opr.nops)
                     {
+                    case 0:
+                      node = NULL;
+                      break;
+                    case 1:
+                      display_primitive(node->opr.op[0]);
+                      node = NULL;
+                      break;
+                    case 2:
+                      display_primitive(node->opr.op[0]);
                       printf(",");       
                       node = node->opr.op[1];
+                      break;
                     }
-                  else
-                    node = NULL;
                 }
 					
               printf("]");
@@ -895,94 +850,72 @@ void display(node* node)
   printf("\n");
 }
 
+#define IS_NUMERIC_TYPE(x) (x->type == t_int || x->type == t_float || x->type == t_char ? true : false)
+#define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
+#define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
+
 node* add(node* x, node* y)
 {
-  if (x->type == t_float)
+  if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
+    error("operands to operator + must be of a numeric type");
+
+  switch (NUMERIC_RETURN_TYPE(x, y))
     {
-      if (y->type == t_float)
-        return mkfloat(x->fval + y->fval);
-      else
-        return mkfloat(x->fval + y->ival);
+    case t_int:
+      return mkint(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
+    case t_float:
+      return mkfloat(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
     }
-  else
-    {
-      if (y->type == t_float)
-        return mkfloat(x->ival + y->fval);
-      else
-        return mkint(x->ival + y->ival);
-    }		
 }
 
 node* sub(node* x, node* y)
 {
-  if (x->type == t_float)
+  if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
+    error("operands to operator - must be of a numeric type");
+
+  switch (NUMERIC_RETURN_TYPE(x, y))
     {
-      if (y->type == t_float)
-        return mkfloat(x->fval - y->fval);
-      else
-        return mkfloat(x->fval - y->ival);
-    }
-  else
-    {
-      if (y->type == t_float)
-        return mkfloat(x->ival - y->fval);
-      else
-        return mkint(x->ival - y->ival);
+    case t_int:
+      return mkint(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
+    case t_float:
+      return mkfloat(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
     }
 }
 
 node* mul(node* x, node* y)
 {
-  if (x->type == t_float)
+  if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
+    error("operands to operator * must be of a numeric type");
+
+  switch (NUMERIC_RETURN_TYPE(x, y))
     {
-      if (y->type == t_float)
-        return mkfloat(x->fval * y->fval);
-      else
-        return mkfloat(x->fval * y->ival);
+    case t_int:
+      return mkint(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
+    case t_float:
+      return mkfloat(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
     }
-  else
-    {
-      if (y->type == t_float)
-        return mkfloat(x->ival * y->fval);
-      else
-        return mkint(x->ival * y->ival);
-    }		
 }
 
 node* dvd(node* x, node* y)
 {
-  if (x->type == t_float)
+  if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
+    error("operands to operator / must be of a numeric type");
+
+  switch (NUMERIC_RETURN_TYPE(x, y))
     {
-      if (y->type == t_float)
-        return mkfloat(x->fval / y->fval);
-      else
-        return mkfloat(x->fval / y->ival);
+    case t_int:
+      return mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
+    case t_float:
+      return mkfloat(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
     }
-  else
-    {
-      if (y->type == t_float)
-        return mkfloat(x->ival / y->fval);
-      else
-        return mkint(x->ival / y->ival);
-    }		
 }
 
 node* lt(node* x, node* y)
 {
-  if (x->type == t_float)
-    {
-      if (y->type == t_float)
-        return x->fval < y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-      else
-        return x->fval < y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-    }
-  else
-    {
-      if (y->type == t_float)
-        return x->ival < y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-      else
-        return x->ival < y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-    }		
+  //if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
+  //  error("operands to operator < must be of a numeric type");
+
+  return EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node* gt(node* x, node* y)
@@ -992,20 +925,7 @@ node* gt(node* x, node* y)
 
 node* lte(node* x, node* y)
 {
-  if (x->type == t_float)
-    {
-      if (y->type == t_float)
-        return x->fval <= y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-      else
-        return x->fval <= y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-    }
-  else
-    {
-      if (y->type == t_float)
-        return x->ival <= y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-      else
-        return x->ival <= y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-    }		
+  return EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node* gte(node* x, node* y)
@@ -1015,10 +935,7 @@ node* gte(node* x, node* y)
 
 node* list_eq(node* l1, node* l2)
 {
-  if (l1 == NULL && l2 == NULL)
-    return NODE_BOOL_TRUE;
-	
-  if (l1->type == t_nil && l2->type == t_nil)
+  if (l1->opr.nops == 0 && l2->opr.nops == 0)
     return NODE_BOOL_TRUE;
 
   if (l1->opr.nops != l2->opr.nops)
@@ -1031,7 +948,7 @@ node* list_eq(node* l1, node* l2)
       else
         return NODE_BOOL_TRUE;
     }
-  else
+
     return NODE_BOOL_FALSE;
 }
 
@@ -1049,9 +966,6 @@ node* eq(node* x, node* y)
   if (x->type == t_char)
     return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 	
-  if (x->type == t_nil)
-    return NODE_BOOL_TRUE;
-	
   if (x->type == t_cons)
     return list_eq(x, y);
 		
@@ -1065,7 +979,7 @@ node* neq(node* x, node* y)
 
 node* and(node* x, node* y)
 {
-  if (x == NODE_NIL || y == NODE_NIL || x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
+  if (x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
     return NODE_BOOL_FALSE;
   else
     return NODE_BOOL_TRUE;
@@ -1122,16 +1036,10 @@ node* library_load(char* name)
   return parsel(libpath);
 }
 
-void error_log(char *msg, node *node)
+void error(char *msg)
 {
-  printf("error: %s\ndetails: ", msg);
-  if (node != NULL)
-    display(node);
-}
-
-void dbg(char* msg)
-{
-  printf("%s\n", msg);
+  printf("error: %s\n", msg);
+  exit(0);
 }
 
 bool file_exists(const char * path)
@@ -1148,4 +1056,3 @@ bool file_exists(const char * path)
       return true;
     }
 }
-

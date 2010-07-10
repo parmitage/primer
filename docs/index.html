@@ -69,7 +69,7 @@ text-align: justify;
   
 <p>
 The language described on this page is mostly complete and a prototype
-interpreter is under development. It will be
+interpreter is in development. It will be
 released under an open source license when it's ready. If you have
 any comments or questions in the meantime then please feel free to
 <a href="mailto:philip.armitage@gmail.com">email me</a>.
@@ -177,7 +177,7 @@ can easily output debugging information in the middle of your expressions.
 </p>
 
 <pre>
-show(areaOfCircle(show(5)))
+show(areaOfCircle(show(x)))
 </pre>
 
 <p>
@@ -193,8 +193,8 @@ programming. They can be nested and in Primer are heterogeneous.
 
 <pre>
 xs1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-xs2 = [4, 5.32, pi, true, nil, areaOfCircle, areaOfCircle(5), 'a', "aaa"]
-xs3 = [4, [5.32, [pi], [], true], nil, areaOfCircle, 'a', "aaa"]
+xs2 = [4, 5.32, pi, true, areaOfCircle, areaOfCircle(5), 'a', "aaa"]
+xs3 = [4, [5.32, [pi], [], true], areaOfCircle, 'a', "aaa"]
 </pre>
 
 <p>
@@ -255,21 +255,17 @@ functions as in this example which counts the number of elements in a list.
 
 <pre>
 count = fn (xs)
-    if xs then 1 + count(tail(xs))
+    if xs != [] then 1 + count(tail(xs))
     else 0
 end
 </pre>
 
 <p>
 As the if statement is an expression, it must return a value which
-means that it must always have an else branch.
-All expressions in Primer evaluate to true apart
-from the explicit value nil and the empty list which both evaluate to
-false. So in the above definition of count, <i>if xs</i> means <i>if the
-list represented by xs is not the empty list</i>. Thus the function
-recursively calls itself with the tail of the list, adding one to the
-result until the end of the list is reached at which point the recursion
-terminates and zero is returned.
+means that it must always have an else branch. Count recursively calls
+itself with the tail of the list, adding one to the result until the
+end of the list is reached at which point the recursion terminates and
+zero is returned.
 </p>
 
 <p>
@@ -368,10 +364,10 @@ find the first number in a list which is evenly divisible by 3.
 xs = 10..30   # the range operator creates a list of integers
 
 findNumberDivisibleBy3 = fn (xs)
-    if xs then
+    if xs != [] then
        if head(xs) mod 3 == 0 then head(xs)
        else findNumberDivisibleBy3(tail(xs))
-    else nil
+    else []
 end
 
 show(findNumberDivisibleBy3(xs))
@@ -387,13 +383,13 @@ order function we can make it more general.
 
 <pre>
 findByFun = fn (xs, f)
-    if xs then
+    if xs != [] then
        if f(head(xs)) then head(xs)
        else findByFun(tail(xs), f)
-    else nil
+    else false
 end
 
-# is a number is divisible by 3
+# is a number divisible by 3
 factor3 = fn (x) x mod 3 == 0 end
 findByFun(xs, factor3)
 </pre>
@@ -415,17 +411,18 @@ findByFun(xs, odd)
 
 <p>
 Not only is our search function reusable with different tests but our
-tests can be reused with different search functions. For example, we
-could write a search function which returns all of the values which
-pass a test.
+tests can be reused with different search functions. For example,
+rather than just finding the first value in a list which passes a
+test, we can write a search function which returns all of the values
+which pass.
 </p>
 
 <pre>
 findAllByFun = fn (f, xs)
-    if xs then
+    if xs != [] then
        if f(head(xs)) then [head(xs)] ++ findAllByFun(f, tail(xs))
        else findAllByFun(f, tail(xs))
-    else nil
+    else []
 end
 
 findAllByFun(factor3, xs)
@@ -464,6 +461,52 @@ program with single-use functions.
 findByFun(fn (x) x mod 2 != 0 end, xs)
 </pre>
 
+<h2>Pattern Matching</h2>
+
+<p>
+Many functional programming languages allow you to bind symbols to
+data using patterns. The support for <strong>pattern matching</strong>
+varies greatly from language to language and Primer supports only
+<strong>list de-structuring</strong>. Here's an example of the
+standard head and tail functions which use pattern matching.
+</p>
+
+<pre>
+head = fn (x:xs) x end
+tail = fn (x:xs) xs end
+</pre>
+
+<p>
+Both functions take only a single parameter, which must be a list. The
+list is automatically de-structured into the head, which is bound to
+x, and the tail, which is bound to xs, when the function is applied.
+</p>
+
+<p>
+You can match as far into a list as you need. Each part of the
+pattern matches one element in the list except for the last which
+matches the rest.
+</p>
+
+<pre>
+third = fn (x:y:z:xs) z end
+</pre>
+
+<p>
+If you're only interested in part of the de-structured list, you can
+use a wildcard which binds against any value but doesn't create a
+binding.
+</p>
+
+<pre>
+head = fn (x:_) x end
+tail = fn (_:xs) xs end
+</pre>
+
+<p>
+De-structuring is a useful way of simplifying your function definitions.
+</p>
+
 <h2>Mapping, folding and filtering</h2>
 
 <p>
@@ -483,9 +526,9 @@ The implementation of map in the standard library is quite straightforward.
 </p>
 
 <pre>
-map = fn (f, xs)
-    if xs then f(head(xs)) ++ map(f, tail(xs))
-    else nil
+map = fn (f, x:xs)
+   if x != [] then f(x) ++ map(f, xs)
+   else []
 end
 </pre>
 
@@ -518,14 +561,14 @@ self-explanatory.
 </p>
 
 <pre>
-foldl = fn (f, init, xs)
-    if xs then foldl(f, f(init, head(xs)), tail(xs))
-    else init
+foldl = fn (f, init, x:xs)
+   if x != [] then foldl(f, f(init, x), xs)
+   else init
 end
 
-foldr = fn (f, init, xs)
-    if xs then f(head(xs), foldr(f, init, tail(xs)))
-    else init
+foldr = fn (f, init, x:xs)
+   if x != [] then f(x, foldr(f, init, xs))
+   else init
 end
 </pre>
 
@@ -543,11 +586,11 @@ The implementation of filter should look familiar to you from earlier!
 </p>
 
 <pre>
-filter = fn (f, xs)
-    if xs then
-       if f(head(xs)) then [head(xs)] ++ filter(f, tail(xs))
-       else filter(f, tail(xs))
-    else nil
+filter = fn (f, y:ys)
+   if y != [] then
+      if f(y) then [y] ++ filter(f, ys)
+      else filter(f, ys)
+   else []
 end
 </pre>
 
@@ -606,52 +649,6 @@ y was bound to 1 and in the case of add2, it was bound to 2.
 add1(2)   # 3
 add2(2)   # 4
 </pre>
-
-<h2>Pattern Matching</h2>
-
-<p>
-Many functional programming languages allow you to bind symbols to
-data using patterns. The support for <strong>pattern matching</strong>
-varies greatly from language to language and Primer supports only
-<strong>list de-structuring</strong>. Here's an example of the
-standard head and tail functions which use pattern matching.
-</p>
-
-<pre>
-head = fn (x:xs) x end
-tail = fn (x:xs) xs end
-</pre>
-
-<p>
-Both functions take only a single parameter, which must be a list. The
-list is automatically de-structured into the head, which is bound to
-x, and the tail, which is bound to xs, when the function is applied.
-</p>
-
-<p>
-You can match as far into a list as you need. Each part of the
-pattern matches one element in the list except for the last which
-matches the rest.
-</p>
-
-<pre>
-third = fn (x:y:z:xs) z end
-</pre>
-
-<p>
-If you're only interested in part of the de-structured list, you can
-use a wildcard which binds against any value but doesn't create a
-binding.
-</p>
-
-<pre>
-head = fn (x:_) x end
-tail = fn (_:xs) xs end
-</pre>
-
-<p>
-De-structuring is a useful way of simplifying your function definitions.
-</p>
 
 <h2>Tail Recursion</h2>
 

@@ -1,147 +1,136 @@
 head = fn (x:_) x end
 tail = fn (_:xs) xs end
+empty = fn (x:_) x == [] end
 
 assert = fn (id, act, exp)
-  if act != exp then
-    show(id)
-  else nil
+   if act != exp then show(id)
+   else true
 end
 
-map = fn (f, xs)
-  if xs then f(head(xs)) ++ map(f, tail(xs))
-  else nil
+map = fn (f, x:xs)
+   if x != [] then f(x) ++ map(f, xs)
+   else []
 end
 
-foldl = fn (f, init, xs)
-  if xs then foldl(f, f(init, head(xs)), tail(xs))
-  else init
+foldl = fn (f, init, x:xs)
+   if x != [] then foldl(f, f(init, x), xs)
+   else init
 end
 
-foldr = fn (f, init, xs)
-  if xs then f(head(xs), foldr(f, init, tail(xs)))
-  else init
+foldr = fn (f, init, x:xs)
+   if x != [] then f(x, foldr(f, init, xs))
+   else init
 end
 
-filter = fn (f, xs)
-  if xs then
-    if f(head(xs)) then [head(xs)] ++ filter(f, tail(xs))
-    else filter(f, tail(xs))
-  else nil
+filter = fn (f, y:ys)
+   if y != [] then
+      if f(y) then [y] ++ filter(f, ys)
+      else filter(f, ys)
+   else []
 end
 
-empty = fn (xs) length(xs) == 0 end
-
-reverse = fn (xs)
-  if tail(xs) then
-    reverse(tail(xs)) ++ [head(xs)]
-  else xs
+reverse = fn (x:xs)
+   if x != [] then reverse(xs) ++ [x]
+   else xs
 end
 
-find = fn (a, xs)
-  if head(xs) == a then
-    head(xs)
-  else
-    if tail(xs) then
-      find(a, tail(xs))
-    else nil
+find = fn (a, x:xs)
+   if x == a then x
+   else if xs != [] then find(a, xs)
+   else false
 end
 
-findByFn = fn (a, f, xs)
-  if f(head(xs)) == a then
-    head(xs)
-  else
-    if tail(xs) then
-      findByFn(a, f, tail(xs))
-    else nil
+findByFn = fn (a, f, x:xs)
+   if f(x) == a then x
+   else if xs then findByFn(a, f, xs)
+   else false
 end
 
-replace = fn (a, b, xs)
-  if xs then  
-    if head(xs) == a then
-      [b] ++ replace(a, b, tail(xs))
-    else [head(xs)] ++ replace(a, b, tail(xs))
-  else []
+replace = fn (a, b, x:xs)
+   if x != [] then  
+      if x == a then [b] ++ replace(a, b, xs)
+      else [x] ++ replace(a, b, xs)
+   else []
 end
 
-sum = fn (xs)
-  if xs then
-    head(xs) + sum(tail(xs))
+sum = fn (x:xs)
+  if x != [] then x + sum(xs)
   else 0
 end
 
 product = fn (xs)
   if empty(xs) then 0
   else inner(xs)
-  where inner = fn (xs)
-          if xs then head(xs) * inner(tail(xs))
-          else 1
+  where inner = fn (x:xs)
+           if x != [] then x * inner(xs)
+           else 1
         end
 end
 
-any = fn (pred, xs)
-  if xs then
-    if pred(head(xs)) then true
-    else any(pred, tail(xs))
-  else false
+any = fn (pred, x:xs)
+   if x != [] then
+      if pred(x) then true
+      else any(pred, xs)
+   else false
 end
 
-all = fn (pred, xs)
-  if xs then
-    if pred(head(xs)) then
-      all(pred, tail(xs))
-    else false
-  else true
+all = fn (pred, x:xs)
+   if x != [] then
+      if pred(x) then all(pred, xs)
+      else false
+   else true
 end
 
 take = fn (n, xs)
-  inner(0, xs)
-  where inner = fn (x, xs)
-          if xs != nil and x < n then
-            [head(xs)] ++ inner(x + 1, tail(xs))
-          else []
+   inner(0, xs)
+   where inner = fn (a, x:xs)
+            if x != [] and a < n then
+               [x] ++ inner(a + 1, xs)
+            else []
         end
 end
 
-takewhile = fn (f, xs)
-  if xs != nil and f(head(xs)) == true then
-    [head(xs)] ++ takewhile(f, tail(xs))
-  else []
+takewhile = fn (f, x:xs)
+   if x != [] and f(x) then
+      [x] ++ takewhile(f, xs)
+   else []
 end
 
 drop = fn (n, xs)
-  if n >= length(xs) then []
-  else inner(0, xs)
-  where inner = fn (x, xs)
-    if xs then
-      if x < n then inner(x + 1, tail(xs))
-      else xs
-    else xs
-  end  
+   if n >= length(xs) then []
+   else inner(0, xs)
+   where inner = fn (a, x:xs)
+            if x != [] then
+               if a < n then inner(a + 1, xs)
+               else x ++ xs
+            else x ++ xs
+         end  
 end
 
-dropwhile = fn (f, xs)
-  if xs then
-    if f(head(xs)) then dropwhile(f, tail(xs))
-    else xs
-  else xs
+dropwhile = fn (f, x:xs)
+  if x != [] then
+    if f(x) then dropwhile(f, xs)
+    else x ++ xs
+  else x ++ xs
 end
 
 sort = fn (x:xs)
-  if x then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
+  if x != [] then sort(filter(lt, xs)) ++ [x] ++ sort(filter(gte, xs))
   else []
   where lt = fn (a) a < x end
         gte = fn (a) a >= x end
 end
 
-zip = fn (l1, l2)
-  if l1 != [] and l2 != [] then
-    [[head(l1), head(l2)]] ++ zip(tail(l1), tail(l2))
-  else []
+zip = fn (x:xs, y:ys)
+   if x != [] and y != [] then
+      [[x, y]] ++ zip(xs, ys)
+   else []
 end
 
-intersperse = fn (sep, l)
-  if length(l) == 1 then [head(l)]
-  else [head(l)] ++ [sep] ++ intersperse(sep, tail(l))
+intersperse = fn (sep, x:xs)
+   if x == [] then []
+   else if empty(xs) then [x]
+   else x ++ sep ++ intersperse(sep, xs)
 end
 
 min = fn (xs) head(sort(xs)) end
@@ -150,8 +139,9 @@ last = fn (xs) head(reverse(xs)) end
 odd = fn (n) n mod 2 != 0 end
 even = fn (n) n mod 2 == 0 end
 
-isint = fn (a) type(a) == 1 end
-isfloat = fn (a) type(a) == 2 end
-ischar = fn (a) type(a) == 5 end
-isbool = fn (a) type(a) == 3 end
-isfn = fn (a) type(a) == 6 end
+isint = fn (a) type(a) == 0 end
+isfloat = fn (a) type(a) == 1 end
+isbool = fn (a) type(a) == 2 end
+ischar = fn (a) type(a) == 4 end
+islist = fn (a) type(a) == 5 end
+isstring = fn (a) islist(a) and all(fn (c) ischar(c) end, a) end
