@@ -56,7 +56,7 @@ node *eval(node *p, environment* env)
           case PROG:
             {
               env = environment_new(NULL);
-              eval(library_load("base"), env);
+              eval(library_load("Library"), env);
               eval(p->opr.op[0], env);
               eval(p->opr.op[1], env);
               env = environment_delete(env);
@@ -173,6 +173,9 @@ node *eval(node *p, environment* env)
             case IF:
             {              			
               node *pred = eval(p->opr.op[0], env);
+
+              if (pred->type != t_bool)
+                error("type of predicate is not boolean");
 					
               if (pred->ival > 0)
                 p = p->opr.op[1];

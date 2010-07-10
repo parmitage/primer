@@ -42,7 +42,7 @@ end
 
 findByFn = fn (a, f, x:xs)
    if f(x) == a then x
-   else if xs then findByFn(a, f, xs)
+   else if xs != [] then findByFn(a, f, xs)
    else false
 end
 

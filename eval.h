@@ -81,8 +81,7 @@ node *eval(node *p, environment* env);
 
 /* environment related functions */
 void bind(node *args, node *params, environment *fnenv, environment *argenv);
-void bindp(node *args, node *list, environment *fnenv
-);
+void bindp(node *args, node *list, environment *fnenv);
 binding* binding_new(char* name, node* node);
 environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
@@ -90,13 +89,14 @@ void environment_extend(environment* env, binding *binding);
 binding* environment_lookup(environment* env, char* ident);
 void *environment_print(environment* env);
 
-/* special forms */
+/* primitives */
 node* car(node* node);
 node* cdr(node* node);
 int length(node* node);
 int node_type(node* node);
 void display(node* node);
 void display_primitive(node* node);
+bool empty(node *list);
 
 /* operators */
 node* add(node* x, node* y);

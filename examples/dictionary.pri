@@ -1,49 +1,39 @@
-def dictAdd = fn (dict, key, val)
-  cons(dict, [key, val])
+add = fn (d, key, val) d ++ [[key, val]] end
+
+get = fn (d, key)
+   if v != [] then head(tail(v))
+   else false
+   where v = findByFn(key, fn (x) x!0 end, d)
 end
 
-def dictGet = fn (dict, key)
-  def v = findByFn(key, fn (x) nth(x, 0) end, dict)
-  if v then
-    head(tail(v))
-  end
+update = fn (d:ds, key, val)
+   if d != [] then
+      if head(d) == key then
+         add(ds, key, val)
+      else [d] ++ update(ds, key, val)
+   else d
 end
 
-def dictUpdate = fn (dict, key, val)
-  if head(dict) then
-    if head(head(dict)) == key then
-      dictAdd(tail(dict), key, val)
-    else
-      [head(dict)] ++ dictUpdate(tail(dict), key, val)
-    end
-  end
+remove = fn (d:ds, key)
+   if d != [] then
+      if head(d) == key then ds
+      else [d] ++ remove(ds, key)
+   else d
 end
 
-def dictRemove = fn (dict, key)
-  if head(dict) then
-    if head(head(dict)) == key then
-      tail(dict)
-    else
-      [head(dict)] ++ dictRemove(tail(dict), key)
-    end
-  end
-end
-
-def d = []
-def d1 = dictAdd(d, "one", 1)
-def d2 = dictAdd(d1, "two", 2)
-def d3 = dictAdd(d2, "three", 3)
+d = []
+d1 = add(d, "one", 1)
+d2 = add(d1, "two", 2)
+d3 = add(d2, "three", 3)
 
 show(d3)
-
-show(dictGet(d3, "one"))
-
-show(dictUpdate(d3, "one", 5))
-show(dictUpdate(d3, "two", 5))
-show(dictUpdate(d3, "three", 5))
-show(dictUpdate(d3, "four", 5))
-
-show(dictRemove(d3, "one"))
-show(dictRemove(d3, "two"))
-show(dictRemove(d3, "three"))
-show(dictRemove(d3, "four"))
+show(get(d3, "one"))
+show(get(d3, "four"))
+show(update(d3, "one", 5))
+show(update(d3, "two", 5))
+show(update(d3, "three", 5))
+show(update(d3, "four", 5))
+show(remove(d3, "one"))
+show(remove(d3, "two"))
+show(remove(d3, "three"))
+show(remove(d3, "four"))
