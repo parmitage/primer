@@ -1,9 +1,0 @@
-Primer was designed and implemented by Phil Armitage.
-
-Michael Ben-Yosef provided invaluable input into the design of both the
-language and the tutorial. His ability to debug Primer code without a
-working copy of the interpreter is quite extraordinary.
-
-Damon Dolby tested several releases of the code and tolerated numerous
-incompatible changes to the syntax of the language which broke his
-programs.
