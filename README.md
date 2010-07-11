@@ -1,22 +1,20 @@
 # An introduction to Functional Programming with Primer
 
-Primer is a simple language designed to introduce the basics of
-functional programming. It can be learnt in an afternoon and the
-knowledge you'll gain is transferable to other functional
-languages. The assumption is that you're a programmer
-who would like to learn the basics of functional programming as
-quickly as possible and then move on to a more practical language like
-Haskell, Clojure or Erlang.
+Primer is a simple language designed to introduce the basics of functional
+programming in an afternoon. The knowledge you'll gain is transferable to
+other functional languages such as Haskell, Clojure or Erlang.
 
 ## Getting Started
 
-Primer has been tested on Linux, MacOS X and Windows. You need to
-have GNU make, gcc, flex and bison installed. Primer relies upon the
-environment variable `PRIMER_LIBRARY_PATH` being set on your
-system. This should point to the path containing the file
-Library.pri and should be terminated with a '/' e.g. with bash
+The Primer interpreter is still under development and lacks many important
+features, including GC. Until the interpreter reaches a stable state you
+must build it from source.
+
+Primer is tested on Linux, MacOS X and Windows. You need to have GNU make,
+gcc, flex and bison installed. Primer requires that the environment variable
+`PRIMER_LIBRARY_PATH` points to the path containing the file Library.pri, e.g.
   
-    export PRIMER_LIBRARY_PATH=/Users/phil/Primer/
+    export PRIMER_LIBRARY_PATH=/path/to/primer/
 
 ## What is functional programming?
 
@@ -80,7 +78,7 @@ function. Because functions may only contain one expression and that
 expression must yield a value, there's no need for a return statement
 in Primer.
 
-To see the output from a program you must use show which is a built-in
+To see the output from a program you must use __show__ which is a built-in
 function capable of printing any Primer expression. 
 
     show(areaOfCircle(5))
@@ -121,8 +119,8 @@ Lists can be constructed programatically with the ++ operator.
 
     a ++ [a, [b, c], a] ++ 'c' ++ [4, 5, 6]
 
-The Primer standard library (found in base.pri) provides several
-functions for working with lists such as search, sort and reverse.
+The Primer standard library (found in Library.pri) provides several
+functions for working with lists such as __search__, __sort__ and __reverse__.
 
 Primer provides a simple character type and strings are nothing
 more than lists of characters with syntactic sugar for creating
@@ -130,8 +128,8 @@ them. This means that operators designed for use with lists can often
 be used with strings.
 
     "hello" == ['h', 'e', 'l', 'l', 'o']    # ==> true
-    head("hello")
-    "hello"!3
+    head("hello")                           # ==> 'h'
+    "hello"!3                               # ==> 'l'
 
 ## Recursion
 
@@ -144,8 +142,8 @@ functions as in this example which counts the number of elements in a list.
        else 0
     end
 
-As the if statement is an expression, it must return a value which
-means that it must always have an else branch. Count recursively calls
+As the __if__ statement is an expression, it must return a value which
+means that it must always have an __else__ branch. Count recursively calls
 itself with the tail of the list, adding one to the result until the
 end of the list is reached at which point the recursion terminates and
 zero is returned.
@@ -163,7 +161,7 @@ been defined. This allows us to define mutually recursive functions.
 Because functions may only contain one expression, programs tend to be
 made up of many small functions. While this is good for modularity and
 code reuse, there are times when a function is only needed in one
-place. The where clause introduces local definitions.
+place. The __where__ clause introduces local definitions.
 
     f = fn (x, y) a + b(y)
         where a = 125
@@ -326,7 +324,7 @@ every element in a list and returns a new list containing the
 transformed values.
 
     double = fn (x) 2 * x end
-    map(double, [1,2,3,4,5])      # [2,4,6,8,10]
+    map(double, [1,2,3,4,5])      # ==> [2,4,6,8,10]
 
 The implementation of map in the standard library is quite straightforward.
 
@@ -368,7 +366,7 @@ self-explanatory.
 Filter returns a new list which contains only the elements which pass
 a predicate function.
 
-    filter(odd, [1,2,3,2,4,5,6])  # [1,3,5]
+    filter(odd, [1,2,3,2,4,5,6])  # ==> [1,3,5]
 
 The implementation of filter should look familiar to you from earlier!
 
@@ -382,7 +380,6 @@ The implementation of filter should look familiar to you from earlier!
 There are several other higher order functions supplied with Primer
 such as zip, all, any, takeWhile and dropWhile. You can look at the
 implementation of these by reading through the standard library code.
-
 
 ## Closures
 
@@ -417,8 +414,8 @@ directly. When makeAdder returned a function, that function
 captured the binding of the variable y. In the case of add1,
 y was bound to 1 and in the case of add2, it was bound to 2.
 
-    add1(2)   # 3
-    add2(2)   # 4
+    add1(2)   # ==> 3
+    add2(2)   # ==> 4
 
 ## Tail Recursion
 
@@ -513,15 +510,4 @@ I encourage you to write your own solution but here's my attempt.
     
     print(move(position(10, 10, N), "R1R3L2L1"))
 
-## Where next?
-
-You've now learnt many of the foundations of functional
-programming. The next step is to learn to "think functionally" and a
-good way of doing this is to pick simple programs and try to write
-them without side effects. You can of course continue to use Primer
-for this but you'll soon want to move on to something more powerful
-such as Haskell, Clojure or Erlang.  
-
-Whichever language you choose I hope Primer has proved to
-be a useful introduction to functional programming and I'd like to
-hear your comments and suggestions for improvements.
+The examples directory contains several other simple programs.
