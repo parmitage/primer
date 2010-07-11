@@ -15,3 +15,5 @@
   '(".pri\\'")
   nil
   "Major mode for editing Primer code.")
+
+(provide 'primer-mode)
