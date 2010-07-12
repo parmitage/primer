@@ -58,7 +58,6 @@ node *eval(node *p, environment* env)
               env = environment_new(NULL);
               eval(library_load("Library"), env);
               eval(p->opr.op[0], env);
-              eval(p->opr.op[1], env);
               env = environment_delete(env);
               break;
             }
@@ -746,7 +745,7 @@ void display_primitive(node* node)
               display_primitive(node->opr.op[0]);
               printf(")\n");
               display_primitive(node->opr.op[1]);
-              printf("end\n");
+              printf("\nend\n");
               break;
             }
 
@@ -790,9 +789,26 @@ void display_primitive(node* node)
             {
               printf("if ");
               display_primitive(node->opr.op[0]);
-              printf(" then\n");
+              printf(" then ");
               display_primitive(node->opr.op[1]);
-              printf("\nend\n");
+              printf("\nelse ");
+              display_primitive(node->opr.op[2]);
+              break;
+            }
+
+          case CONS:
+            {
+              display_primitive(node->opr.op[0]);
+              printf(":");
+              display_primitive(node->opr.op[1]);
+              break;
+            }
+
+          case SHOW:
+            {
+              printf("show(");
+              display_primitive(node->opr.op[0]);
+              printf(")");
               break;
             }
 
@@ -809,6 +825,7 @@ void display_primitive(node* node)
           case OR:
           case EQ:
           case NE:
+          case APPEND:
             {
               display_primitive(node->opr.op[0]);
               
@@ -827,6 +844,7 @@ void display_primitive(node* node)
                 case OR: printf(" or "); break;
                 case EQ: printf(" == "); break;
                 case NE: printf(" != "); break;
+                case APPEND: printf(" ++ "); break;
                 }
 
               display_primitive(node->opr.op[1]);
