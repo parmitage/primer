@@ -1000,6 +1000,12 @@ node* neq(node* x, node* y)
 
 node* and(node* x, node* y)
 {
+  if (x->type != t_bool)
+    error("left operand to operator and must be boolean");
+
+  if (y->type != t_bool)
+    error("right operand to operator and must be boolean");
+
   if (x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
     return NODE_BOOL_FALSE;
   else
@@ -1008,20 +1014,24 @@ node* and(node* x, node* y)
 
 node* or(node* x, node* y)
 {
-  if (x->type == t_bool && y->type == t_bool)
-    {
-      return mkbool(x->ival || y->ival);
-    }
+  if (x->type != t_bool)
+    error("left operand to operator or must be boolean");
+
+  if (y->type != t_bool)
+    error("right operand to operator or must be boolean");
+  
+  if (x->ival || y->ival)
+    return NODE_BOOL_TRUE;
   else
-    {
-      // TODO probably should throw error
-      return NODE_BOOL_FALSE;
-    }
+    return NODE_BOOL_FALSE;
 }
 
-node* not(node* node)
+node* not(node* x)
 {
-  if (node->ival == true)
+  if (x->type != t_bool)
+    error("operand to operator not must be boolean");
+
+  if (x->ival == true)
     return NODE_BOOL_FALSE;
   else
     return NODE_BOOL_TRUE;
