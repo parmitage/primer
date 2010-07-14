@@ -294,15 +294,18 @@ node *eval(node *p, environment* env)
 
 int length(node* node)
 {
-  if (node->type == t_cons)
+  if (node->type != t_cons)
+    error("argument to length must be a list");
+
+  int len = 0;
+
+  while (node != NULL && node->opr.nops > 0)
     {
-      if (node->opr.nops > 1 && node->opr.op[1] != NULL)
-        return 1 + length(node->opr.op[1]);
-      else
-        return node->opr.nops;
+      len += 1;
+      node = node->opr.op[1];
     }
-  else
-    return 1;
+
+  return len;
 }
 
 void bind(node *args, node *params, environment *fnenv, environment *argenv)
