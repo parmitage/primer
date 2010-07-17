@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include "eval.h"
 #include "y.tab.h"
+#include "gc.h"
 
 int main(int argc, char** argv)
 {
@@ -12,6 +13,8 @@ int main(int argc, char** argv)
       printf("usage: primer <filename>\n");
       return -1;
     }
+
+  gcinit();
 
   NODE_EMPTY = mkcons(LIST, 0);
   NODE_BOOL_TRUE = mkbool(true);
@@ -360,7 +363,7 @@ void bindp(node *args, node *list, environment *fnenv)
 binding* binding_new(char* name, node* node)
 {
   size_t size = sizeof(binding) + (strlen(name) * sizeof(char)) + sizeof(node);
-  binding* bind = (binding*)malloc(size);
+  binding* bind = (binding*)gcalloc(size);
 	
   bind->name = strdup(name);
   bind->node = node;
@@ -370,7 +373,7 @@ binding* binding_new(char* name, node* node)
 environment* environment_new(environment* enclosing)
 {
   size_t size = sizeof(environment) + MAX_BINDINGS_PER_FRAME * sizeof(binding*);
-  environment* env = (environment*)malloc(size);
+  environment* env = (environment*)gcalloc(size);
 	
   /* enclosing environment will be NULL for global environment */
   env->enclosing = enclosing;
@@ -454,7 +457,7 @@ node *mkint(int value)
   node *p;
   int size = sizeof(struct nodeTag) + sizeof(int);
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_int;
@@ -469,7 +472,7 @@ node *mkfloat(float value)
   node *p;
   size_t size = sizeof(struct nodeTag) + sizeof(float);
 	
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_float;
@@ -484,7 +487,7 @@ node *mkbool(int value)
   node *p;
   size_t size = sizeof(struct nodeTag) + sizeof(int);
 	
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_bool;
@@ -499,7 +502,7 @@ node* mkchar(char c)
   node* p;
   size_t size = sizeof(struct nodeTag) + sizeof(char);
 		
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
 
   p->type = t_char;
@@ -514,7 +517,7 @@ node* mkstr(char* value)
   int srclen = strlen(value);
   int destlen = srclen - 1;
   int copylen = srclen - 2;
-  char* temp = (char*)malloc(destlen + 1);
+  char* temp = (char*)gcalloc(destlen + 1);
   strncpy(temp, value + 1, copylen);
   temp[copylen] = '\0';
   return node_from_string(temp);
@@ -535,7 +538,7 @@ node *mksym(char* s)
   node *p;
   size_t size = sizeof(struct nodeTag) + strlen(s) + 1;
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_symbol;
@@ -550,7 +553,7 @@ node *mkcons(int oper, int nops, ...)
   node *p;  
   size_t size = sizeof(struct nodeTag) + sizeof(struct oprNodeType);
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct nodeTag *)gcalloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_cons;
@@ -565,7 +568,7 @@ node *mkcons(int oper, int nops, ...)
   for (int i = 0; i < nops; i++)
     {
       node *arg = va_arg(ap, node*);
-      p->opr.op[i] = (struct nodeTag *)malloc(sizeof(arg));
+      p->opr.op[i] = (struct nodeTag *)gcalloc(sizeof(arg));
       p->opr.op[i] = arg;
     }
 	
