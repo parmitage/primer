@@ -32,8 +32,6 @@ void gcrealloc()
   else
     {
       printf("out of memory\n");
-      printf("%c%c%c%c%c\n", ((char*)allocbuf)[0], ((char*)allocbuf)[1],
-             ((char*)allocbuf)[2], ((char*)allocbuf)[3], ((char*)allocbuf)[4]);
       exit(1);
     }
 }
