@@ -5,15 +5,12 @@ BIN	= primer
 CC	= gcc
 CFLAGS	= -std=gnu99
 
-main: parser lexer gc eval
+main: parser lexer eval
 	$(CC) $(DBG) $(CFLAGS) -c y.tab.c lex.yy.c
 	$(CC) $(DBG) *.o -o $(BINDIR)$(BIN)
 
 eval: eval.c eval.h
 	$(CC) $(DBG) $(CFLAGS) -c eval.c
-
-gc: gc.c gc.h
-	$(CC) $(DBG) $(CFLAGS) -c gc.c
 
 lexer: parser
 	flex lexer.l
