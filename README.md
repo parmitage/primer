@@ -1,14 +1,16 @@
-# An introduction to Functional Programming with Primer
+An introduction to Functional Programming with Primer
+=====================================================
+Primer is a functional programming language that can be learnt in an afternoon.
+The knowledge you'll gain is transferable to other functional languages such as
+Haskell, Clojure or Erlang.
 
-Primer is a simple language designed to introduce the basics of functional
-programming in an afternoon. The knowledge you'll gain is transferable to
-other functional languages such as Haskell, Clojure or Erlang.
-
-## Getting Started
-
+Getting Started
+---------------
 The Primer interpreter is still under development and lacks many important
 features, including GC. Until the interpreter reaches a stable state you
-must build it from source.
+must build it from source. The code is available from GitHub:
+
+     git clone http://github.com/parmitage/primer.git
 
 Primer is tested on Linux, MacOS X and Windows. You need to have GNU make,
 gcc, flex and bison installed. Primer requires that the environment variable
@@ -16,8 +18,8 @@ gcc, flex and bison installed. Primer requires that the environment variable
   
     export PRIMER_LIBRARY_PATH=/path/to/primer/
 
-## What is functional programming?
-
+What is functional programming?
+-------------------------------
 Functional programming is a way of writing programs without relying
 on the mutation of state. The result is that a functional
 program can be thought of as a single transformation from some input
@@ -40,13 +42,12 @@ inputs and return values but which don't alter any state. As a result,
 they tend to be simpler and more reusable so the programs that we
 create with them are shorter and easier to understand.
 
-## Conventions used in this tutorial
-
+Conventions used in this tutorial
+---------------------------------
 Code can be taken from this tutorial and pasted into a text file
 without modification. Some expressions may depend upon
 definitions which were previously introduced but for brevity I won't
-repeat them. Note that Primer allows definitions to be redefined in the order
-that they appear in the source code.
+repeat them.
 
 Comments are introduced with the # character and extend to the end of
 the line. I will sometimes place comments above or to the side of an
@@ -55,8 +56,8 @@ has no special meaning in Primer.
 
     2 + 3    # ==> 5
 
-## Definitions
-
+Definitions
+-----------
 A program is composed of a series of definitions. Each definition
 consists of an expression bound to a symbol which yields a
 value when evaluated.
@@ -92,8 +93,8 @@ can easily output debugging information in the middle of your expressions.
 
 Parameters are evaluated from right to left.
 
-## Lists and Strings
-
+Lists and Strings
+-----------------
 Lists are the bread and butter data structure of functional
 programming. They can be nested and in Primer are heterogeneous.
 
@@ -131,8 +132,8 @@ be used with strings.
     head("hello")                           # ==> 'h'
     "hello"!3                               # ==> 'l'
 
-## Recursion
-
+Recursion
+---------
 Because we can't mutate a variable, it's not possible to use iteration
 in a functional programming language. Instead we use recursive
 functions as in this example which counts the number of elements in a list.
@@ -156,8 +157,8 @@ been defined. This allows us to define mutually recursive functions.
     mr1 = fn (x) mr0(x + 1) end
     mr1(0)
 
-## Lexical Scope
-
+Lexical Scope
+-------------
 Because functions may only contain one expression, programs tend to be
 made up of many small functions. While this is good for modularity and
 code reuse, there are times when a function is only needed in one
@@ -199,8 +200,8 @@ symbol that it can find and will search outwards to successively wider scopes in
 order to resolve a symbol. If no symbol is found even at the global scope then
 the symbol is said to be unbound and an error is raised.
 
-## Higher Order Functions
-
+Higher Order Functions
+----------------------
 Because functions are values they can be passed around like any other
 value. More precisely, an expression of the form
 
@@ -278,16 +279,16 @@ And then we can use that with either of our search functions.
     findByFun(prime, xs)
     findAllByFun(prime, xs)
 
-## Anonymous functions
-
+Anonymous functions
+-------------------
 We can use a function without previously assigning it to a
 symbol. These anonymous functions are useful when you don't want to
 clutter up your program with single-use functions. 
 
     findByFun(fn (x) x mod 2 != 0 end, xs)
 
-## Pattern Matching
-
+Pattern Matching
+----------------
 Many functional programming languages allow you to bind symbols to
 data using patterns. The support for pattern matching
 varies greatly from language to language and Primer supports only
@@ -316,8 +317,8 @@ binding.
 
 De-structuring is a useful way of simplifying your function definitions.
 
-## Mapping, folding and filtering
-
+Mapping, folding and filtering
+------------------------------
 These three operations are so fundamental that all functional
 languages provide an implementation of them. Map applies a function to
 every element in a list and returns a new list containing the
@@ -381,8 +382,8 @@ There are several other higher order functions supplied with Primer
 such as zip, all, any, takeWhile and dropWhile. You can look at the
 implementation of these by reading through the standard library code.
 
-## Closures
-
+Closures
+--------
 A closure is a first-class function which can access the variables in
 its lexical environment for as long as it lives. The function is said
 to "close" over its lexical environment, retaining it for future
@@ -417,8 +418,8 @@ y was bound to 1 and in the case of add2, it was bound to 2.
     add1(2)   # ==> 3
     add2(2)   # ==> 4
 
-## Tail Recursion
-
+Tail Recursion
+--------------
 Earlier we wrote a function to count the number of elements in a list.
 
     count = fn (xs)
@@ -457,8 +458,8 @@ Accumulators are a common technique used to make this type of summing
 function tail recursive by moving the summing operation away from the
 tail call.
 
-## Problem: Mars Rovers
-
+Problem: Mars Rovers
+--------------------
 The following is a slightly modified version of a problem which
 ThoughtWorks give to interview candidates.
 

@@ -382,13 +382,9 @@ environment* environment_new(environment* enclosing)
 environment *environment_delete(environment* env)
 {
   environment *enclosing = env->enclosing;
-	
-  /* note that we free the string allocated to hold the binding name and
-     the pointer itself but we DO NOT free the node that the binding
-     points to as this is a reference into the AST */
-	
-  //free(env);
-	
+
+  /* this currently does no cleanup */
+
   return enclosing;
 }
 
@@ -399,11 +395,7 @@ void environment_extend(environment* env, binding *binding)
   for (int i = 0; i < env->count; ++i)
     {
       if (strcmp(sym, env->bindings[i]->name) == 0)
-        {
-          /* binding exists in this environment so replace it */
-          env->bindings[i] = binding;
-          return;
-        }
+        error("symbol already bound in this environment");
     }
 
   /* binding wasn't found so create a new one */
