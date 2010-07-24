@@ -10,7 +10,23 @@ void *gcinit()
 
 void *gcfree()
 {
+  // initialise SS1 to one memory page
 
+  // get the current environment
+
+  // walk the current environment up to the root and for each environment:
+  // 1. mark it as locked
+  // 2. for each symbol in the environment, copy it to SS1 (extending pages as required)
+  // 3. 
+
+  // iterate over all environments from the env_list and for each:
+  // if the environment isn't locked, free it
+  // else, unlock it and copy it to live_env_list
+  // copy live_env_list head pointer to env_list
+
+  // set current_semi_space to SS1
+  
+  // free memory in SS0 and set SS0 pointers to start of block
 }
 
 void gcrealloc()
