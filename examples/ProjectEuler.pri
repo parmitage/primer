@@ -9,4 +9,4 @@ pe1 = fn (limit)
          end
 end
 
-show(pe1(1000))
+show(pe1(10000))
