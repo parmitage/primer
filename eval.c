@@ -106,7 +106,7 @@ node *eval(node *p, environment* env)
               else
                 clone = mkcons(LAMBDA, 3, p->opr.op[0], p->opr.op[1], p->opr.op[2]);
 
-	      clone->env = environment_new(env);
+	      clone->opr.env = environment_new(env);
 	      return clone;
             }
 
@@ -116,15 +116,15 @@ node *eval(node *p, environment* env)
 
               /* bind parameters */
               node *params = p->opr.op[1];
-              bind(fn->opr.op[0], params, fn->env, env);
+              bind(fn->opr.op[0], params, fn->opr.env, env);
 
                /* evaluate where clause */
               if (fn->opr.nops == 3)
-                eval(fn->opr.op[2], fn->env);
+                eval(fn->opr.op[2], fn->opr.env);
 
               /* evaluate function body */
               p = fn->opr.op[1];
-              env = fn->env;
+              env = fn->opr.env;
               goto eval_start;
             }
 
@@ -444,9 +444,9 @@ void *environment_print(environment* env)
 node *mkint(int value)
 {
   node *p;
-  int size = sizeof(struct nodeTag) + sizeof(int);
+  int size = sizeof(struct node) + sizeof(int);
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_int;
@@ -459,9 +459,9 @@ node *mkint(int value)
 node *mkfloat(float value)
 {
   node *p;
-  size_t size = sizeof(struct nodeTag) + sizeof(float);
+  size_t size = sizeof(struct node) + sizeof(float);
 	
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_float;
@@ -474,9 +474,9 @@ node *mkfloat(float value)
 node *mkbool(int value)
 {
   node *p;
-  size_t size = sizeof(struct nodeTag) + sizeof(int);
+  size_t size = sizeof(struct node) + sizeof(int);
 	
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_bool;
@@ -489,9 +489,9 @@ node *mkbool(int value)
 node* mkchar(char c)
 {
   node* p;
-  size_t size = sizeof(struct nodeTag) + sizeof(char);
+  size_t size = sizeof(struct node) + sizeof(char);
 		
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
 
   p->type = t_char;
@@ -525,9 +525,9 @@ node* node_from_string(char* value)
 node *mksym(char* s)
 {
   node *p;
-  size_t size = sizeof(struct nodeTag) + strlen(s) + 1;
+  size_t size = sizeof(struct node) + strlen(s) + 1;
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_symbol;
@@ -540,16 +540,16 @@ node *mksym(char* s)
 node *mkcons(int oper, int nops, ...)
 {
   node *p;  
-  size_t size = sizeof(struct nodeTag) + sizeof(struct oprNodeType);
+  size_t size = sizeof(struct node) + sizeof(struct cons);
 
-  if ((p = (struct nodeTag *)malloc(size)) == NULL)
+  if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
 	
   p->type = t_cons;
   p->lineno = lineno;
   p->opr.oper = oper;
   p->opr.nops = nops;
-  p->env = NULL;
+  p->opr.env = NULL;
 
   va_list ap;
   va_start(ap, nops);
@@ -557,7 +557,7 @@ node *mkcons(int oper, int nops, ...)
   for (int i = 0; i < nops; i++)
     {
       node *arg = va_arg(ap, node*);
-      p->opr.op[i] = (struct nodeTag *)malloc(sizeof(arg));
+      p->opr.op[i] = (struct node*)malloc(sizeof(arg));
       p->opr.op[i] = arg;
     }
 	
@@ -754,7 +754,7 @@ void display_primitive(node* node)
 
           case ',':
             {
-              struct nodeTag *params = node;
+              struct node *params = node;
 
               while (params != NULL)
                 {

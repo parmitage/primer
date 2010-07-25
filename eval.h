@@ -18,29 +18,29 @@ typedef enum {
 } t_type;
 
 /* represents a composite operator in the AST */
-typedef struct oprNodeType {
-  int oper;					/* ident */
-  int nops;					/* arity */
-  struct nodeTag *op[1];		/* operands */
-} oprNodeType;
+typedef struct cons {
+  int oper;                  /* ident */
+  int nops;                  /* arity */
+  struct environment *env;
+  struct node *op[1];        /* operands */
+} cons;
 
 /* represents a typed node in the AST */
-typedef struct nodeTag {
+typedef struct node {
   t_type type;
   int lineno;
-  struct environment *env;
   union {
-    int ival;			/* int, bool and char */
+    int ival;                /* int, bool and char */
     float fval;
     char* sval;
-    oprNodeType opr;	/* composite */
+    cons opr;                /* composite */
   };
 } node;
 
-/* a symbolic name bound to a value in a lexical environment */
+/* a symbolic name bound to a value */
 typedef struct binding {
   char* name;
-  struct nodeTag *node;
+  struct node *node;
 } binding;
 
 /* a lexical environment as described in SICP ch.3.2 */
@@ -114,7 +114,6 @@ node* and(node* x, node* y);
 node* or(node* x, node* y);
 node* not(node* node);
 node* mod(node* x, node* y);
-node *cons(node *atom, node *list);
 node* append(node* list1, node* list2);
 node *range(node *from, node *to);
 
