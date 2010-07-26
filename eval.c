@@ -851,7 +851,7 @@ void display_primitive(node* node)
       }
 		
     case t_symbol:
-      printf("%s", node->sval);
+      printf("%s", symbol_name(node->ival));
       break;
     }		
 }
