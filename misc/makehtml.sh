@@ -1,0 +1,1 @@
+pandoc ../README.md -o index.html -c doc.css
