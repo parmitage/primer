@@ -49,7 +49,7 @@ stmts                                                 { temp = mkcons(PROG, 1, $
 
 stmts:
 stmt                                                  { $$ = $1; }
-| stmts stmt                                          { $$ = mkcons(';', 2, $1, $2); }
+| stmt stmts                                          { $$ = mkcons(';', 2, $1, $2); }
 ;
 
 stmt:
