@@ -3,6 +3,7 @@
 
 #define MAX_DEFS 100
 #define MAX_BINDINGS_PER_FRAME 1000
+#define MAX_SYMBOLS 1000
 
 typedef enum { false = 0, true = 1 } bool;
 
@@ -37,9 +38,12 @@ typedef struct node {
   };
 } node;
 
-/* a symbolic name bound to a value */
+typedef int symbol;
+char *symbol_table[MAX_SYMBOLS];
+
+/* a symbol bound to a value */
 typedef struct binding {
-  char* name;
+  symbol sym;
   struct node *node;
 } binding;
 
@@ -57,6 +61,7 @@ node *NODE_INT_ZERO;
 
 node *temp, *ast;
 int lineno;
+int wildcard;
 
 /* driver for yacc */
 void parse(char* filename);
@@ -82,12 +87,16 @@ node *eval(node *p, environment* env);
 /* environment related functions */
 void bind(node *args, node *params, environment *fnenv, environment *argenv);
 void bindp(node *args, node *list, environment *fnenv);
-binding* binding_new(char* name, node* node);
+binding* binding_new(symbol name, node* node);
 environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
 void environment_extend(environment* env, binding *binding);
-binding* environment_lookup(environment* env, char* ident);
+binding* environment_lookup(environment* env, symbol sym);
 void *environment_print(environment* env);
+
+/* symbol table */
+symbol intern(char *string);
+char *symbol_name(symbol s);
 
 /* primitives */
 node* car(node* node);

@@ -186,7 +186,7 @@ called shadowing.
     b = fn (x) x * a end
     
     c = fn (x, y) x + a(y)
-      where a = fn (x) x * 2 end
+       where a = fn (x) x * 2 end
     end
 
 Here a is defined to be the integer value 1000 at global scope. The
@@ -423,7 +423,7 @@ Tail Recursion
 Earlier we wrote a function to count the number of elements in a list.
 
     count = fn (xs)
-        if xs then 1 + count(tail(xs))
+        if xs != [] then 1 + count(tail(xs))
         else 0
     end
 
@@ -448,10 +448,10 @@ recursive call but rather a call to the addition operator. We can
 rewrite count to use an accumulator function.
 
     count = fn (xs) counter(0, xs)
-        where counter = fn (a, xs)
-                  if xs then counter(a + 1, rest(xs))
-                  else a
-              end
+       where counter = fn (a, xs)
+                if xs != [] then counter(a + 1, tail(xs))
+                else a
+             end
     end
 
 Accumulators are a common technique used to make this type of summing

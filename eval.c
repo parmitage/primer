@@ -20,6 +20,7 @@ int main(int argc, char** argv)
 	
   lineno = 1;
   parse(argv[1]);
+  wildcard = intern("_");
   eval(ast, NULL);
   return 0;
 }
@@ -41,7 +42,7 @@ node *eval(node *p, environment* env)
 
     case t_symbol:
       {
-        binding *b = environment_lookup(env, p->sval);
+        binding *b = environment_lookup(env, p->ival);
 			
         if (b != NULL)
           return eval(b->node, env);
@@ -67,15 +68,15 @@ node *eval(node *p, environment* env)
 
           case DEF:
             {
-              char* name = p->opr.op[0]->sval;
+              symbol name = p->opr.op[0]->ival;
               binding* binding;
 
               /* evalaute the RHS unless it's a closure */
               if (p->opr.op[1]->type == t_cons &&
                   p->opr.op[1]->opr.oper == APPLY)
                 {
-                  char *symbol = p->opr.op[1]->opr.op[0]->sval;
-                  struct binding *b = environment_lookup(env, symbol);
+                  symbol s = p->opr.op[1]->opr.op[0]->ival;
+                  struct binding *b = environment_lookup(env, s);
                   
                   if (b != NULL)
                     {
@@ -277,7 +278,7 @@ node *eval(node *p, environment* env)
 					
               if (t == t_symbol)
                 {
-                  binding *b = environment_lookup(env, p->opr.op[0]->sval);
+                  binding *b = environment_lookup(env, p->opr.op[0]->ival);
 						
                   if (b != NULL)
                     t = b->node->type;
@@ -323,7 +324,7 @@ void bind(node *args, node *params, environment *fnenv, environment *argenv)
           
           if (args->opr.op[0]->type == t_symbol)
             {
-              binding* binding = binding_new(args->opr.op[0]->sval, n);
+              binding* binding = binding_new(args->opr.op[0]->ival, n);
               environment_extend(fnenv, binding);
             }
           else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == CONS)
@@ -337,17 +338,17 @@ void bindp(node *args, node *list, environment *fnenv)
   node *head = car(list);
   node *rest = cdr(list);
 
-  if (strcmp(args->opr.op[0]->sval, "_") != 0)
+  if (args->opr.op[0]->ival != wildcard)
     {
-      binding *headb = binding_new(args->opr.op[0]->sval, head);
+      binding *headb = binding_new(args->opr.op[0]->ival, head);
       environment_extend(fnenv, headb);
     }
 
   if (args->opr.op[1]->type == t_symbol)
     {
-      if (strcmp(args->opr.op[1]->sval, "_") != 0)
+      if (args->opr.op[1]->ival != wildcard)
         {
-          binding *restb = binding_new(args->opr.op[1]->sval, rest);
+          binding *restb = binding_new(args->opr.op[1]->ival, rest);
           environment_extend(fnenv, restb);
         }
     }
@@ -357,12 +358,11 @@ void bindp(node *args, node *list, environment *fnenv)
     }
 }
 
-binding* binding_new(char* name, node* node)
+binding* binding_new(symbol name, node* node)
 {
-  size_t size = sizeof(binding) + (strlen(name) * sizeof(char)) + sizeof(node);
-  binding* bind = (binding*)malloc(size);
-	
-  bind->name = strdup(name);
+  size_t size = sizeof(binding) + sizeof(int) + sizeof(node);
+  binding* bind = (binding*)malloc(size);	
+  bind->sym = name;
   bind->node = node;
   return bind;
 }
@@ -390,11 +390,11 @@ environment *environment_delete(environment* env)
 
 void environment_extend(environment* env, binding *binding)
 {
-  char *sym = binding->name;
+  symbol s = binding->sym;
 
   for (int i = 0; i < env->count; ++i)
     {
-      if (strcmp(sym, env->bindings[i]->name) == 0)
+      if (s == env->bindings[i]->sym)
         error("symbol already bound in this environment");
     }
 
@@ -402,7 +402,7 @@ void environment_extend(environment* env, binding *binding)
   env->bindings[env->count++] = binding;
 }
 
-binding* environment_lookup(environment* env, char* name)
+binding* environment_lookup(environment* env, symbol sym)
 {
   environment *top = env;
   bool depth = false;
@@ -411,7 +411,7 @@ binding* environment_lookup(environment* env, char* name)
     {
       for (int i = 0; i < env->count; ++i)
 	{
-	  if (strcmp(env->bindings[i]->name, name) == 0)
+	  if (env->bindings[i]->sym == sym)
 	    {
               /* lift a binding into this environment */
               if (depth)
@@ -434,7 +434,7 @@ void *environment_print(environment* env)
     {
       for (int i = 0; i < env->count; ++i)
 	{
-          printf("%s\n", env->bindings[i]->name);
+          printf("%s\n", symbol_name(env->bindings[i]->sym));
 	}
       printf("^^^^\n");
       env = env->enclosing;
@@ -525,13 +525,13 @@ node* node_from_string(char* value)
 node *mksym(char* s)
 {
   node *p;
-  size_t size = sizeof(struct node) + strlen(s) + 1;
+  size_t size = sizeof(struct node) + sizeof(int);
 
   if ((p = (struct node*)malloc(size)) == NULL)
     memory_alloc_error();
   
   p->type = t_symbol;
-  p->sval = strdup(s);
+  p->ival = intern(s);
   p->lineno = lineno;
 	
   return p;
@@ -851,7 +851,7 @@ void display_primitive(node* node)
       }
 		
     case t_symbol:
-      printf("%s", node->sval);
+      printf("%s", symbol_name(node->ival));
       break;
     }		
 }
@@ -1081,4 +1081,23 @@ bool file_exists(const char * path)
       fclose(istream);
       return true;
     }
+}
+
+symbol intern(char *string)
+{
+  static int new_symbol_index = 0;
+
+  for (int i = 0; i < new_symbol_index; i++)
+    {
+      if (strcmp(string, symbol_table[i]) == 0)
+        return i;
+    }
+  
+  symbol_table[new_symbol_index] = string;
+  return new_symbol_index++;
+}
+
+char *symbol_name(symbol s)
+{
+  return symbol_table[s];
 }
