@@ -15,7 +15,7 @@ typedef enum {
   t_symbol,
   t_char,
   t_cons,
-  t_error
+  t_closure
 } t_type;
 
 /* represents a composite operator in the AST */
@@ -70,6 +70,7 @@ node* parsel(char* filename);
 /* constructors for AST nodes */
 node* mkcons(int oper, int nops, ...);
 node* mksym(char* s);
+node *mklambda(node *params, node *body, node *where, environment *e);
 node* mkint(int value);
 node* mkfloat(float value);
 node* mkbool(int value);
@@ -83,6 +84,7 @@ void nodefree(node *p);
 
 /* the evaluator */
 node *eval(node *p, environment* env);
+bool function_is_tail_recursive(node *expr, symbol s);
 
 /* environment related functions */
 void bind(node *args, node *params, environment *fnenv, environment *argenv);
@@ -128,11 +130,9 @@ node *range(node *from, node *to);
 
 /* library loading */
 node* library_load(char* name);
+bool file_exists(const char * filename);
 
 /* error handling */
 void error(char *msg);
-
-/* utils */
-bool file_exists(const char * filename);
 
 #endif

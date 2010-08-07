@@ -144,4 +144,5 @@ isfloat = fn (a) type(a) == 1 end
 isbool = fn (a) type(a) == 2 end
 ischar = fn (a) type(a) == 4 end
 islist = fn (a) type(a) == 5 end
+isfn = fn (a) type(a) == 6 end
 isstring = fn (a) islist(a) and all(fn (c) ischar(c) end, a) end
