@@ -25,6 +25,30 @@ int main(int argc, char** argv)
   return 0;
 }
 
+bool function_is_tail_recursive(node *expr, symbol s)
+{
+  switch (expr->type) {
+  case t_int:
+  case t_float:
+  case t_bool:
+  case t_char:
+  case t_symbol:
+    return true;
+  case t_cons:
+    switch(expr->opr.oper) {
+    case APPLY:
+      return expr->opr.op[0]->ival == s;
+    case IF:
+      return function_is_tail_recursive(expr->opr.op[1], s) &&
+        function_is_tail_recursive(expr->opr.op[2], s);
+    default:
+      return false;
+    }
+  default:
+    return false;
+  }
+}
+
 node *eval(node *p, environment* env)
 {
   if (!p)
@@ -59,7 +83,7 @@ node *eval(node *p, environment* env)
               env = environment_new(NULL);
               eval(library_load("Library"), env);
               eval(p->opr.op[0], env);
-              env = environment_delete(env);
+              //env = environment_delete(env);
               break;
             }
 
@@ -113,6 +137,7 @@ node *eval(node *p, environment* env)
 
           case APPLY:
             {
+              symbol fsym = p->opr.op[0]->ival;
               node* fn = eval(p->opr.op[0], env);
 
               /* bind parameters */
@@ -123,10 +148,19 @@ node *eval(node *p, environment* env)
               if (fn->opr.nops == 3)
                 eval(fn->opr.op[2], fn->opr.env);
 
+              printf("%s: %i\n", symbol_name(fsym), function_is_tail_recursive(fn->opr.op[1], fsym));
+
               /* evaluate function body */
-              p = fn->opr.op[1];
-              env = fn->opr.env;
-              goto eval_start;
+              if (function_is_tail_recursive(fn->opr.op[1], fsym)) {
+                //environment_delete(env);
+                p = fn->opr.op[1];
+                env = fn->opr.env;
+                goto eval_start;
+              } else {
+                node *ret = eval(fn->opr.op[1], fn->opr.env);
+                environment_delete(fn->opr.env);
+                return ret;
+              }
             }
 
           case LIST:
@@ -383,7 +417,13 @@ environment *environment_delete(environment* env)
 {
   environment *enclosing = env->enclosing;
 
-  /* this currently does no cleanup */
+  if (env->enclosing != NULL) {
+    for (int i = 0; i < env->count; ++i) {
+      
+    }
+    
+    free(env);
+  }
 
   return enclosing;
 }
