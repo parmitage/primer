@@ -2,19 +2,22 @@ An introduction to Functional Programming with Primer
 =====================================================
 Primer is a functional programming language that can be learnt in an afternoon.
 The knowledge you'll gain is transferable to other functional languages such as
-Haskell, Clojure or Erlang.
+[Haskell](http://www.haskell.org/), [Clojure](http://www.clojure.org/) or
+[Erlang](http://www.erlang.org/).
 
 Getting Started
 ---------------
 The Primer interpreter is still under development and lacks many important
-features, including GC. Until the interpreter reaches a stable state you
-must build it from source. The code is available from GitHub:
+features, including memory management. Until the interpreter reaches a stable
+state you must build it from source. The code is available from
+[github](http://github.com/parmitage/primer) and can be pulled with the
+following command:
 
      git clone http://github.com/parmitage/primer.git
 
 Primer is tested on Linux, MacOS X and Windows. You need to have GNU make,
-gcc, flex and bison installed. Primer requires that the environment variable
-`PRIMER_LIBRARY_PATH` points to the path containing the file Library.pri, e.g.
+gcc, flex and bison installed. The environment variable `PRIMER_LIBRARY_PATH`
+should be set to point to the path containing the file Library.pri, e.g.
   
     export PRIMER_LIBRARY_PATH=/path/to/primer/
 
