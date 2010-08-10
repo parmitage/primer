@@ -63,9 +63,6 @@ node *eval(node *p, environment *env)
                break;
             }
 
-            case PAREN:
-               return eval(p->opr.op[0], env);
-
             case DEF:
             {
                symbol name = p->opr.op[0]->ival;
@@ -89,14 +86,15 @@ node *eval(node *p, environment *env)
                fn->opr.env = environment_new(fn->opr.env);
 
                /* bind parameters */
-               node *params = p->opr.op[1];
-               bind(fn->opr.op[0], params, fn->opr.env, env);
+               node *args = p->opr.op[1];
+               bind(fn->opr.op[0], args, fn->opr.env, env);
 
                /* evaluate where clause */
                if (fn->opr.nops == 3)
                   eval(fn->opr.op[2], fn->opr.env);
 
-               //printf("%s: %i\n", symbol_name(fsym), function_is_tail_recursive(fn->opr.op[1], fsym));
+               //printf("%s: %i\n", symbol_name(fsym),
+               //  function_is_tail_recursive(fn->opr.op[1], fsym));
 
                /* evaluate function body */
                if (function_is_tail_recursive(fn->opr.op[1], fsym))
@@ -339,10 +337,10 @@ void bindp(node *args, node *list, environment *fnenv)
       bindp(args->opr.op[1], rest, fnenv);
 }
 
-binding* binding_new(symbol s, node* n)
+binding* binding_new(symbol s, node *n)
 {
    size_t sz = sizeof(binding) + sizeof(int) + sizeof(n);
-   binding* b = (binding*)malloc(sz);	
+   binding *b = (binding*)malloc(sz);	
    b->sym = s;
    b->node = n;
    return b;
@@ -351,7 +349,7 @@ binding* binding_new(symbol s, node* n)
 environment* environment_new(environment* parent)
 {
    size_t size = sizeof(environment) + MAX_BINDINGS_PER_FRAME * sizeof(binding*);
-   environment* env = (environment*)malloc(size);
+   environment *env = (environment*)malloc(size);
 	
    /* enclosing environment will be NULL for global environment */
    env->enclosing = parent;
@@ -624,7 +622,7 @@ void nodefree(node *p)
    free(p);
 }
 
-node* car(node* node)
+node *car(node *node)
 {
    if (node->opr.nops > 0)
       return node->opr.op[0];
@@ -632,7 +630,7 @@ node* car(node* node)
       return NODE_EMPTY;
 }
 
-node* cdr(node* node)
+node *cdr(node *node)
 {
    switch (node->opr.nops)
    {
@@ -649,7 +647,7 @@ bool empty(node *list)
    return list->type == t_cons && list->opr.nops == 0;
 }
 
-node* append(node* list1, node* list2)
+node *append(node *list1, node *list2)
 {
    if (list1->type != t_cons)
       list1 = mkcons(LIST, 1, list1);
@@ -663,8 +661,8 @@ node* append(node* list1, node* list2)
    if (empty(list1))
       return list2;
 
-   node* r = list1;
-   node* n = list1;
+   node *r = list1;
+   node *n = list1;
 	
    while(n->opr.op[1] != NULL && !empty(n->opr.op[1]))
    {

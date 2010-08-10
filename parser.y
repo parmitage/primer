@@ -1,25 +1,25 @@
 %{
-
+   
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include "eval.h"
 
-  void yyerror(char *s);
-  extern FILE *yyin;
-  int yylex(void);
-  void yyerror(char *s);
-
-  int lineno = 1;
-
-  %}
+   void yyerror(char *s);
+   extern FILE *yyin;
+   int yylex(void);
+   void yyerror(char *s);
+   
+   int lineno = 1;
+   
+   %}
 
 %union {
-  char* sval;
-  int ival;
-  float fval;
-  node *nPtr;
+   char* sval;
+   int ival;
+   float fval;
+   node *nPtr;
 }
 
 %token <sval> SYMBOL STRING
@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token SHOW TYPE LENGTH NTH CONS WHERE PAREN RANGE
+%token SHOW TYPE LENGTH NTH CONS WHERE RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -58,7 +58,7 @@ identifier '=' expr                                   { $$ = mkcons(DEF, 2, $1, 
 ;
 
 expr:
-'(' expr ')'                                          { $$ = mkcons(PAREN, 1, $2); }
+'(' expr ')'                                          { $$ = $2; }
 | INTEGER                                             { $$ = mkint($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
@@ -109,29 +109,29 @@ expr                                                  { $$ = mkcons(LIST, 1, $1)
 
 void yyerror(char *s)
 {
-  char* errmsg = malloc(200);
-  errmsg[0] = '\0';
-  error(s);
+   char* errmsg = malloc(200);
+   errmsg[0] = '\0';
+   error(s);
 }
 
 void parse(char* filename)
 {
-  if ((yyin = fopen(filename, "r")) == NULL)
-    {
+   if ((yyin = fopen(filename, "r")) == NULL)
+   {
       printf("Error reading input file\n");
-    }
-	
-  yyparse();
-  ast = temp;
+   }
+   
+   yyparse();
+   ast = temp;
 }
 
 node* parsel(char* filename)
 {
-  if ((yyin = fopen(filename, "r")) == NULL)
-    {
+   if ((yyin = fopen(filename, "r")) == NULL)
+   {
       printf("Error reading input file\n");
-    }
-	
-  yyparse();
-  return temp->opr.op[0];
+   }
+   
+   yyparse();
+   return temp->opr.op[0];
 }
