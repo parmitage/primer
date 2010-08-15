@@ -25,6 +25,44 @@ int main(int argc, char** argv)
    return 0;
 }
 
+void build_closure_environment(node *n, environment *fenv, environment *cenv)
+{
+   /* The closure environment is constructed by taking the global environment
+      and extending it with the bindings closed over by the lambda. */
+
+   switch (n->type)
+   {
+      case t_symbol:
+      {
+         /* not interested in globals as they're already included */
+         binding *b = environment_lookup(global, n->ival);
+
+         if (b != NULL)
+            return;
+
+         b = environment_lookup(fenv, n->ival);
+
+         if (b != NULL)
+         {
+            environment_extend(cenv, b);
+            return;
+         }
+
+         break;
+      }
+
+      case t_cons:
+      {
+         for (int i = 0; i < n->opr.nops; ++i)
+         {
+            build_closure_environment(n->opr.op[i], fenv, cenv);
+         }
+
+         break;
+      }
+   }
+}
+
 node *eval(node *p, environment *env)
 {
    if (!p)
@@ -32,7 +70,7 @@ node *eval(node *p, environment *env)
 
   eval_start:
 
-   switch(p->type)
+   switch (p->type)
    {
       case t_int:
       case t_float:
@@ -48,7 +86,9 @@ node *eval(node *p, environment *env)
          if (b != NULL)
             return eval(b->node, env);
          else
+         {
             error("unbound symbol");
+         }
       }
 
       case t_cons:
@@ -57,7 +97,7 @@ node *eval(node *p, environment *env)
          {
             case PROG:
             {
-               env = environment_new(NULL);
+               global = env = environment_new(NULL);
                eval(library_load("Library"), env);
                eval(p->opr.op[0], env);
                break;
@@ -73,6 +113,9 @@ node *eval(node *p, environment *env)
 				
             case LAMBDA:
             {
+               //environment *ce = environment_new(global);
+               //build_closure_environment(p->opr.op[1], env, ce);
+
                if (p->opr.nops == 2)
                   return mklambda(p->opr.op[0], p->opr.op[1], NULL, env);
                else
@@ -83,31 +126,31 @@ node *eval(node *p, environment *env)
             {
                symbol fsym = p->opr.op[0]->ival;
                node *fn = eval(p->opr.op[0], env);
-               fn->opr.env = environment_new(fn->opr.env);
+               environment *ext = environment_new(fn->opr.env);
 
-               /* bind parameters */
+               /* parameters */
                node *args = p->opr.op[1];
-               bind(fn->opr.op[0], args, fn->opr.env, env);
+               bind(fn->opr.op[0], args, ext, env);
 
-               /* evaluate where clause */
+               /* where clause */
                if (fn->opr.nops == 3)
-                  eval(fn->opr.op[2], fn->opr.env);
+                  eval(fn->opr.op[2], ext);
 
                //printf("%s: %i\n", symbol_name(fsym),
                //  function_is_tail_recursive(fn->opr.op[1], fsym));
 
-               /* evaluate function body */
+               /* function body */
                if (function_is_tail_recursive(fn->opr.op[1], fsym))
                {
-                  //environment_delete(env);
+                  environment_delete(env);
                   p = fn->opr.op[1];
-                  env = fn->opr.env;
+                  env = ext;
                   goto eval_start;
                }
                else
                {
-                  node *ret = eval(fn->opr.op[1], fn->opr.env);
-                  fn->opr.env = environment_delete(fn->opr.env);
+                  node *ret = eval(fn->opr.op[1], ext);
+                  env = environment_delete(ext);
                   return ret;
                }
             }

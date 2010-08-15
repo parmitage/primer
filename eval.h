@@ -59,6 +59,7 @@ node *NODE_BOOL_TRUE;
 node *NODE_BOOL_FALSE;
 node *NODE_INT_ZERO;
 
+environment *global;
 node *temp, *ast;
 int lineno;
 int wildcard;
