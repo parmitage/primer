@@ -3,13 +3,16 @@
 #include <string.h>
 #include <stdarg.h>
 #include "eval.h"
+#include "args.h"
 #include "y.tab.h"
 
 int main(int argc, char** argv)
 {
-   if (argc != 2)
+   defaults();
+
+   if (getargs(argc, argv) == -1)
    {
-      printf("usage: primer <filename>\n");
+      usage();
       return -1;
    }
 
@@ -19,7 +22,7 @@ int main(int argc, char** argv)
    NODE_INT_ZERO = mkint(0);
 	
    lineno = 1;
-   parse(argv[1]);
+   parse(fname);
    wildcard = intern("_");
    eval(ast, NULL);
    return 0;
@@ -98,7 +101,10 @@ node *eval(node *p, environment *env)
             case PROG:
             {
                global = env = environment_new(NULL);
-               eval(library_load("Library"), env);
+               
+               if (loadlib == true)
+                  eval(library_load(stdlib), env);
+
                eval(p->opr.op[0], env);
                break;
             }

@@ -1,5 +1,5 @@
-#ifndef __PRIMER_H__
-#define __PRIMER_H__
+#ifndef __EVAL_H__
+#define __EVAL_H__
 
 #define MAX_DEFS 100
 #define MAX_BINDINGS_PER_FRAME 1000
