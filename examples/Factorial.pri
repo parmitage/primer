@@ -1,13 +1,13 @@
 # This version will overflow stack on larger values.
-factorial = fn (n)
+fac1 = fn (n)
    if n == 0 then 1
-   else n * factorial (n - 1)
+   else n * fac1 (n - 1)
 end
 
-show(factorial(10))
+show(fac1(10))
 
 # This version uses an accumulator.
-factorial = fn (n)
+fac2 = fn (n)
    inner (n, 1)
    where inner = fn (i, acc)
             if i == 0 then acc
@@ -15,4 +15,4 @@ factorial = fn (n)
          end
 end
 
-show(factorial(10))
+show(fac2(10))
