@@ -388,72 +388,77 @@ void bindp(node *args, node *list, environment *fnenv)
 
 binding* binding_new(symbol s, node *n)
 {
-   size_t sz = sizeof(binding) + sizeof(int) + sizeof(n);
-   binding *b = (binding*)malloc(sz);	
+   size_t sz = sizeof(binding);
+   binding *b = (binding *) malloc(sz);	
    b->sym = s;
    b->node = n;
+   b->prev = NULL;
    return b;
 }
 
-environment* environment_new(environment* parent)
+environment* environment_new(environment *parent)
 {
-   size_t size = sizeof(environment) + MAX_BINDINGS_PER_FRAME * sizeof(binding*);
-   environment *env = (environment*)malloc(size);
-	
-   /* enclosing environment will be NULL for global environment */
+   size_t sz = sizeof(environment);
+   environment *env = (environment *) malloc(sz);
    env->enclosing = parent;
-   env->count = 0;	
+   env->bind = NULL;
    return env;
 }
 
-environment *environment_delete(environment* env)
+environment *environment_delete(environment *env)
 {
-   environment *enclosing = env->enclosing;
+   environment *parent = env->enclosing;
 
    if (env->enclosing != NULL)
    {
-      for (int i = 0; i < env->count; ++i)
-      {
-         
-      }
-      
-      //free(env);
+
    }
    
-   return enclosing;
+   return parent;
 }
 
-void environment_extend(environment *env, binding *binding)
+void environment_extend(environment *env, binding *nb)
 {
-   symbol s = binding->sym;
-
-   for (int i = 0; i < env->count; ++i)
+   symbol s = nb->sym;
+   binding *h = env->bind;
+   
+   while (h != NULL)
    {
-      if (s == env->bindings[i]->sym)
+      if (s == h->sym)
          error("symbol already bound in this environment");
+
+      h = h->prev;
    }
 
    /* binding wasn't found so create a new one */
-   env->bindings[env->count++] = binding;
+   nb->prev = env->bind;
+   env->bind = nb;
 }
 
-binding* environment_lookup(environment* env, symbol sym)
+binding* environment_lookup(environment *env, symbol sym)
 {
    environment *top = env;
    bool depth = false;
 
    while (env != NULL)
    {
-      for (int i = 0; i < env->count; ++i)
+      binding *b = env->bind;
+
+      while (b != NULL)
       {
-         if (env->bindings[i]->sym == sym)
+         if (sym == b->sym)
          {
             /* lift a binding into this environment */
-            if (depth)
-               environment_extend(top, env->bindings[i]);
+            /* TODO need to clone the environment in this new design... */
+            /* if (depth) */
+            /* { */
+            /*    environment_extend(top, b); */
+            /* } */
 
-            return env->bindings[i];
+            return b;
          }
+
+         b = b->prev;
       }
 
       env = env->enclosing;
@@ -461,19 +466,6 @@ binding* environment_lookup(environment* env, symbol sym)
    }
   
    return NULL;
-}
-
-void *environment_print(environment* env)
-{
-   while (env != NULL)
-   {
-      for (int i = 0; i < env->count; ++i)
-      {
-         printf("%s\n", symbol_name(env->bindings[i]->sym));
-      }
-      printf("^^^^\n");
-      env = env->enclosing;
-   }
 }
 
 bool function_is_tail_recursive(node *expr, symbol s)

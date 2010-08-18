@@ -2,7 +2,6 @@
 #define __EVAL_H__
 
 #define MAX_DEFS 100
-#define MAX_BINDINGS_PER_FRAME 1000
 #define MAX_SYMBOLS 1000
 
 typedef enum { false = 0, true = 1 } bool;
@@ -41,17 +40,15 @@ typedef struct node {
 typedef int symbol;
 char *symbol_table[MAX_SYMBOLS];
 
-/* a symbol bound to a value */
 typedef struct binding {
-  symbol sym;
-  struct node *node;
+   symbol sym;
+   struct node *node;
+   struct binding *prev;
 } binding;
 
-/* a lexical environment as described in SICP ch.3.2 */
 typedef struct environment {
-  struct environment *enclosing;
-  int count;
-  binding *bindings[MAX_BINDINGS_PER_FRAME];
+   struct environment *enclosing;
+   binding *bind;
 } environment;
 
 node *NODE_EMPTY;
@@ -95,7 +92,6 @@ environment* environment_new(environment* enclosing);
 environment *environment_delete(environment* env);
 void environment_extend(environment* env, binding *binding);
 binding* environment_lookup(environment* env, symbol sym);
-void *environment_print(environment* env);
 
 /* symbol table */
 symbol intern(char *string);
