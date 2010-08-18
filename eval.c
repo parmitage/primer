@@ -733,7 +733,7 @@ int node_type(node* node)
    return node->type;
 }
 
-void display_primitive(node* node)
+void pprint(node* node)
 {
    switch (node->type)
    {
@@ -785,11 +785,11 @@ void display_primitive(node* node)
                         node = NULL;
                         break;
                      case 1:
-                        display_primitive(node->opr.op[0]);
+                        pprint(node->opr.op[0]);
                         node = NULL;
                         break;
                      case 2:
-                        display_primitive(node->opr.op[0]);
+                        pprint(node->opr.op[0]);
                         printf(",");       
                         node = node->opr.op[1];
                         break;
@@ -802,9 +802,9 @@ void display_primitive(node* node)
 		
             case APPLY:
             {
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf("(");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                printf(")");
                break;
             }
@@ -812,18 +812,18 @@ void display_primitive(node* node)
             case LAMBDA:
             {
                printf("fn (");
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf(")\n");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                printf("\nend\n");
                break;
             }
 
             case ';':
             {
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf("\n");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                break;
             }
 
@@ -835,7 +835,7 @@ void display_primitive(node* node)
                {
                   if (params->opr.nops > 0)
                   {
-                     display_primitive(params->opr.op[0]);
+                     pprint(params->opr.op[0]);
                      params = params->opr.op[1];
                      if (params != NULL)
                         printf(", ");
@@ -849,35 +849,35 @@ void display_primitive(node* node)
 
             case DEF:
             {
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf(" = ");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                break;
             }
 
             case IF:
             {
                printf("if ");
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf(" then ");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                printf("\nelse ");
-               display_primitive(node->opr.op[2]);
+               pprint(node->opr.op[2]);
                break;
             }
 
             case CONS:
             {
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf(":");
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                break;
             }
 
             case SHOW:
             {
                printf("show(");
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
                printf(")");
                break;
             }
@@ -897,7 +897,7 @@ void display_primitive(node* node)
             case NE:
             case APPEND:
             {
-               display_primitive(node->opr.op[0]);
+               pprint(node->opr.op[0]);
               
                switch (node->opr.oper)
                {
@@ -917,7 +917,7 @@ void display_primitive(node* node)
                   case APPEND: printf(" ++ "); break;
                }
 
-               display_primitive(node->opr.op[1]);
+               pprint(node->opr.op[1]);
                break;
             }
          }
@@ -936,7 +936,7 @@ void display(node* node)
    if (node == NULL)
       return;
 		
-   display_primitive(node);
+   pprint(node);
 		
    printf("\n");
 }
