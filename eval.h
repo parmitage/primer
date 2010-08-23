@@ -8,33 +8,34 @@ typedef enum { false = 0, true = 1 } bool;
 
 /* supported types */ 
 typedef enum {
-  t_int,
-  t_float,
-  t_bool,
-  t_symbol,
-  t_char,
-  t_cons,
-  t_closure
+   t_int,
+   t_float,
+   t_bool,
+   t_symbol,
+   t_char,
+   t_cons,
+   t_closure
 } t_type;
 
 /* represents a composite operator in the AST */
 typedef struct cons {
-  int oper;                  /* ident */
-  int nops;                  /* arity */
-  struct environment *env;
-  struct node *op[1];        /* operands */
+   int oper;                  /* ident */
+   int nops;                  /* arity */
+   struct environment *env;
+   struct node *op[1];        /* operands */
 } cons;
 
 /* represents a typed node in the AST */
 typedef struct node {
-  t_type type;
-  int lineno;
-  union {
-    int ival;                /* int, bool and char */
-    float fval;
-    char* sval;
-    cons opr;                /* composite */
-  };
+   t_type type;
+   int lineno;
+   int rc;                     /* reference count */
+   union {
+      int ival;                /* int, bool and char */
+      float fval;
+      char* sval;
+      cons opr;                /* composite */
+   };
 } node;
 
 typedef int symbol;
@@ -70,6 +71,9 @@ node* mkcons(int oper, int nops, ...);
 node* mksym(char* s);
 node *mklambda(node *params, node *body, node *where, environment *e);
 node* mkint(int value);
+
+node *mkintc(int value);
+
 node* mkfloat(float value);
 node* mkbool(int value);
 node* mkchar(char value);
@@ -77,8 +81,9 @@ node* mkstr(char* value);
 node* node_from_string(char* value);
 
 /* allocator */
+void incref(node *n);
+void decref(node *n);
 void memory_alloc_error();
-void nodefree(node *p);
 
 /* the evaluator */
 node *eval(node *p, environment* env);
@@ -101,7 +106,6 @@ char *symbol_name(symbol s);
 node* car(node* node);
 node* cdr(node* node);
 int length(node* node);
-int node_type(node* node);
 void display(node* node);
 void display_primitive(node* node);
 bool empty(node *list);

@@ -16,10 +16,9 @@ int main(int argc, char** argv)
       return -1;
    }
 
-   NODE_EMPTY = mkcons(LIST, 0);
-   NODE_BOOL_TRUE = mkbool(true);
-   NODE_BOOL_FALSE = mkbool(false);
-   NODE_INT_ZERO = mkint(0);
+   NODE_EMPTY = mkcons(LIST, 0); NODE_EMPTY->rc = -1;
+   NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
+   NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
 	
    lineno = 1;
    parse(fname);
@@ -80,6 +79,7 @@ node *eval(node *p, environment *env)
       case t_bool:
       case t_char:
       case t_closure:
+         incref(p);
          return p;
 
       case t_symbol:
@@ -87,11 +87,12 @@ node *eval(node *p, environment *env)
          binding *b = environment_lookup(env, p->ival);
 			
          if (b != NULL)
-            return eval(b->node, env);
-         else
          {
-            error("unbound symbol");
+            //incref(b->node);
+            return eval(b->node, env);
          }
+         else
+            error("unbound symbol");
       }
 
       case t_cons:
@@ -164,33 +165,51 @@ node *eval(node *p, environment *env)
             case LIST:
             {
                /* because we can store symbols in lists we evaluate the contents */
+               node *ret;
+               
                switch (p->opr.nops)
                {
                   case 0:
-                     return mkcons(LIST, 0);
+                     ret = mkcons(LIST, 0);
+                     break;
                   case 1:
-                     return mkcons(LIST, 1, eval(p->opr.op[0], env));
+                     ret = mkcons(LIST, 1, eval(p->opr.op[0], env));
+                     break;
                   case 2:
-                     return mkcons(LIST, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     ret = mkcons(LIST, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     break;
                }
+
+               //decref(p);
+               incref(ret);
+               return ret;
             }
             
             case STRING:
             {
+               node *ret;
+
                switch (p->opr.nops)
                {
                   case 0:
-                     return mkcons(STRING, 0);
+                     ret = mkcons(STRING, 0);
+                     break;
                   case 1:
-                     return mkcons(STRING, 1, eval(p->opr.op[0], env));
+                     ret = mkcons(STRING, 1, eval(p->opr.op[0], env));
+                     break;
                   case 2:
-                     return mkcons(STRING, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     ret = mkcons(STRING, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     break;
                }
+
+               //decref(p);
+               incref(ret);
+               return ret;
             }
 				
             case SHOW:
             {
-               node* val = eval(p->opr.op[0], env);
+               node *val = eval(p->opr.op[0], env);
                display(val);
                return val;
             }
@@ -219,7 +238,7 @@ node *eval(node *p, environment *env)
 
             case LENGTH:
             {
-               node* val = eval(p->opr.op[0], env);
+               node *val = eval(p->opr.op[0], env);
                return mkint(length(val));
             }
 
@@ -306,7 +325,7 @@ node *eval(node *p, environment *env)
 				
             case TYPE:
             {
-               int t = node_type(p->opr.op[0]);
+               int t = p->opr.op[0]->type;
 					
                if (t == t_symbol)
                {
@@ -323,22 +342,6 @@ node *eval(node *p, environment *env)
          }
       }
    }
-}
-
-int length(node* node)
-{
-   if (node->type != t_cons)
-      error("argument to length must be a list");
-
-   int len = 0;
-
-   while (node != NULL && node->opr.nops > 0)
-   {
-      len += 1;
-      node = node->opr.op[1];
-   }
-
-   return len;
 }
 
 void bind(node *args, node *params, environment *fnenv, environment *argenv)
@@ -393,10 +396,11 @@ binding* binding_new(symbol s, node *n)
    b->sym = s;
    b->node = n;
    b->prev = NULL;
+   incref(n);
    return b;
 }
 
-environment* environment_new(environment *parent)
+environment *environment_new(environment *parent)
 {
    size_t sz = sizeof(environment);
    environment *env = (environment *) malloc(sz);
@@ -405,15 +409,60 @@ environment* environment_new(environment *parent)
    return env;
 }
 
+void incref(node *n)
+{
+   if (memmgr == false)
+      return;
+
+   if (n->rc == -1)
+      return;
+
+   n->rc++;
+
+   //printf("incref to %i for ", n->rc);
+   //display(n);
+}
+
+void decref(node *n)
+{
+   if (memmgr == false)
+      return;
+
+   if (n->rc == -1)
+      return;
+
+   n->rc--;
+
+   //printf("decref to %i for ", n->rc);
+   //display(n);
+
+   if (n->rc == 0)
+   {
+      printf("free: ");
+      display(n);
+      free(n);
+   }
+}
+
 environment *environment_delete(environment *env)
 {
    environment *parent = env->enclosing;
 
+   /* never free the global environment */
    if (env->enclosing != NULL)
    {
-
+       binding *b = env->bind;
+   
+       while (b != NULL)
+       {
+          node *n = b->node;
+          decref(n);
+          b = b->prev;
+       }
    }
    
+   //free(env);
+
    return parent;
 }
 
@@ -454,7 +503,7 @@ binding* environment_lookup(environment *env, symbol sym)
             /* { */
             /*    environment_extend(top, b); */
             /* } */
-
+            //incref(b->node);
             return b;
          }
 
@@ -507,6 +556,7 @@ node *mkint(int value)
    p->type = t_int;
    p->ival = value;
    p->lineno = lineno;
+   p->rc = 1;
 	
    return p;
 }
@@ -522,6 +572,7 @@ node *mkfloat(float value)
    p->type = t_float;
    p->fval = value;
    p->lineno = lineno;
+   p->rc = 1;
 	
    return p;
 }
@@ -537,7 +588,8 @@ node *mkbool(int value)
    p->type = t_bool;
    p->ival = value;
    p->lineno = lineno;
-	
+   p->rc = 1;
+
    return p;
 }
 
@@ -552,6 +604,7 @@ node* mkchar(char c)
    p->type = t_char;
    p->lineno = lineno;
    p->ival = c;
+   p->rc = 1;
 	
    return p;
 }
@@ -588,6 +641,7 @@ node *mksym(char* s)
    p->type = t_symbol;
    p->ival = intern(s);
    p->lineno = lineno;
+   p->rc = -1;
 	
    return p;
 }
@@ -602,6 +656,7 @@ node *mkcons(int oper, int nops, ...)
 	
    p->type = t_cons;
    p->lineno = lineno;
+   p->rc = 1;
    p->opr.oper = oper;
    p->opr.nops = nops;
    p->opr.env = NULL;
@@ -631,6 +686,7 @@ node *mklambda(node *params, node *body, node *where, environment *e)
 	
    p->type = t_closure;
    p->lineno = lineno;
+   p->rc = 1;
    p->opr.oper = LAMBDA;
    p->opr.nops = where == NULL ? 2 : 3;
    p->opr.env = environment_new(e);
@@ -647,45 +703,60 @@ void memory_alloc_error()
    abort();
 }
 
-void nodefree(node *p)
-{
-   if (!p)
-      return;
-
-   int i;
-	
-   if (p->type == t_cons)
-   {
-      for (i = 0; i < p->opr.nops; i++)
-         nodefree(p->opr.op[i]);
-   }
-	
-   free(p);
-}
-
 node *car(node *node)
 {
+   struct node *ret;
+
    if (node->opr.nops > 0)
-      return node->opr.op[0];
+      ret = node->opr.op[0];
    else
-      return NODE_EMPTY;
+      ret = NODE_EMPTY;
+
+   decref(node);
+   return ret;
 }
 
 node *cdr(node *node)
 {
+   struct node *ret;
+
    switch (node->opr.nops)
    {
       case 0:
       case 1:
-         return NODE_EMPTY;
+         ret = NODE_EMPTY;
+         break;
       case 2:
-         return node->opr.op[1];
+         ret = node->opr.op[1];
+         break;
    }
+
+   decref(node);
+   return ret;
 }
 
 bool empty(node *list)
 {
    return list->type == t_cons && list->opr.nops == 0;
+}
+
+int length(node *node)
+{
+   if (node->type != t_cons)
+      error("argument to length must be a list");
+
+   int len = 0;
+   struct node *iter = node;
+
+   while (iter != NULL && iter->opr.nops > 0)
+   {
+      len += 1;
+      iter = iter->opr.op[1];
+   }
+
+   //printf("length=%i and rc=%i\n", len, node->rc);
+   decref(node);
+   return len;
 }
 
 node *append(node *list1, node *list2)
@@ -712,7 +783,7 @@ node *append(node *list1, node *list2)
 	
    n->opr.nops = 2;
    n->opr.op[1] = list2;
-	
+   
    return r;
 }
 
@@ -728,12 +799,7 @@ node *range(node *s, node *e)
    return list;
 }
 
-int node_type(node* node)
-{
-   return node->type;
-}
-
-void pprint(node* node)
+void pprint(node *node)
 {
    switch (node->type)
    {
@@ -931,13 +997,12 @@ void pprint(node* node)
    }		
 }
 
-void display(node* node)
+void display(node* n)
 {
-   if (node == NULL)
+   if (n == NULL)
       return;
 		
-   pprint(node);
-		
+   pprint(n);
    printf("\n");
 }
 
@@ -945,35 +1010,51 @@ void display(node* node)
 #define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
 #define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
 
-node* add(node* x, node* y)
+node *add(node *x, node *y)
 {
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator + must be of a numeric type");
 
+   node *ret;
+
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         return mkint(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
+         ret = mkint(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
+         break;
       case t_float:
-         return mkfloat(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
+         ret = mkfloat(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
+         break;
    }
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
-node* sub(node* x, node* y)
+node *sub(node *x, node *y)
 {
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator - must be of a numeric type");
 
+   node *ret;
+
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         return mkint(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
+         ret = mkint(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
+         break;
       case t_float:
-         return mkfloat(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
+         ret = mkfloat(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
+         break;
    }
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
-node* mul(node* x, node* y)
+node *mul(node *x, node *y)
 {
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator * must be of a numeric type");
@@ -987,7 +1068,7 @@ node* mul(node* x, node* y)
    }
 }
 
-node* dvd(node* x, node* y)
+node *dvd(node *x, node *y)
 {
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator / must be of a numeric type");
@@ -1001,30 +1082,31 @@ node* dvd(node* x, node* y)
    }
 }
 
-node* lt(node* x, node* y)
+node *lt(node *x, node *y)
 {
-   //if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
-   //  error("operands to operator < must be of a numeric type");
+   node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
-   return EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   decref(x);
+   decref(y);
+   return ret;
 }
 
-node* gt(node* x, node* y)
+node *gt(node *x, node *y)
 {
    return not(lte(x, y));
 }
 
-node* lte(node* x, node* y)
+node *lte(node *x, node *y)
 {
    return EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
-node* gte(node* x, node* y)
+node *gte(node *x, node *y)
 {
    return not(lt(x, y));
 }
 
-node* list_eq(node* l1, node* l2)
+node *list_eq(node *l1, node *l2)
 {
    if (l1->opr.nops == 0 && l2->opr.nops == 0)
       return NODE_BOOL_TRUE;
@@ -1043,32 +1125,34 @@ node* list_eq(node* l1, node* l2)
    return NODE_BOOL_FALSE;
 }
 
-node* eq(node* x, node* y)
+node *eq(node *x, node *y)
 {
-   if (x->type != y->type)
-      return NODE_BOOL_FALSE;
-		
-   if (x->type == t_int || x->type == t_bool)
-      return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-		
-   if (x->type == t_float)
-      return x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   node *ret;
 
-   if (x->type == t_char)
-      return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-	
-   if (x->type == t_cons)
-      return list_eq(x, y);
-		
-   return NODE_BOOL_FALSE;
+   if (x->type != y->type)
+      ret = NODE_BOOL_FALSE;
+   else if (x->type == t_int || x->type == t_bool)
+      ret = x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   else if (x->type == t_float)
+      ret = x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   else if (x->type == t_char)
+      ret = x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   else if (x->type == t_cons)
+      ret = list_eq(x, y);
+   else
+      ret = NODE_BOOL_FALSE;
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
-node* neq(node* x, node* y)
+node *neq(node *x, node *y)
 {
    return(not(eq(x, y)));
 }
 
-node* and(node* x, node* y)
+node *and(node *x, node *y)
 {
    if (x->type != t_bool)
       error("left operand to operator and must be boolean");
@@ -1082,7 +1166,7 @@ node* and(node* x, node* y)
       return NODE_BOOL_TRUE;
 }
 
-node* or(node* x, node* y)
+node *or(node *x, node *y)
 {
    if (x->type != t_bool)
       error("left operand to operator or must be boolean");
@@ -1096,7 +1180,7 @@ node* or(node* x, node* y)
       return NODE_BOOL_FALSE;
 }
 
-node* not(node* x)
+node *not(node *x)
 {
    if (x->type != t_bool)
       error("operand to operator not must be boolean");
@@ -1107,15 +1191,21 @@ node* not(node* x)
       return NODE_BOOL_TRUE;
 }
 
-node* mod(node* x, node* y)
+node *mod(node *x, node *y)
 {
+   node *retval;
+
    if (x->type == t_int && y->type == t_int)
-      return mkint(x->ival % y->ival);
+      retval = mkint(x->ival % y->ival);
    else
-      return 0;
+      error("operator mod can only be applies to integer operands");
+
+   decref(x);
+   decref(y);
+   return retval;
 }
 
-node* library_load(char* name)
+node *library_load(char *name)
 {
    char *libroot, libpath[500];
    libroot = getenv("PRIMER_LIBRARY_PATH");
@@ -1143,7 +1233,7 @@ void error(char *msg)
    exit(0);
 }
 
-bool file_exists(const char * path)
+bool file_exists(const char *path)
 {
    FILE *istream;
 	
