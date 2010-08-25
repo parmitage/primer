@@ -811,11 +811,11 @@ void pprint(node* node)
 				
             case LAMBDA:
             {
-               printf("fn (");
+               printf("\n\tfn (");
                pprint(node->opr.op[0]);
-               printf(")\n");
+               printf(") ");
                pprint(node->opr.op[1]);
-               printf("\nend\n");
+               printf(" end\n");
                break;
             }
 
@@ -928,6 +928,16 @@ void pprint(node* node)
       case t_symbol:
          printf("%s", symbol_name(node->ival));
          break;
+      
+      case t_closure:
+        {
+	       printf("fn (");
+	       pprint(node->opr.op[0]);
+	       printf(")");
+	       pprint(node->opr.op[1]);
+	       printf("end");
+	       break;
+	}
    }		
 }
 
