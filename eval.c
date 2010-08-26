@@ -6,6 +6,11 @@
 #include "args.h"
 #include "y.tab.h"
 
+static long cnt_alloc = 0;
+static long cnt_free = 0;
+static long cnt_inc = 0;
+static long cnt_dec = 0;
+
 int main(int argc, char** argv)
 {
    defaults();
@@ -16,7 +21,7 @@ int main(int argc, char** argv)
       return -1;
    }
 
-   NODE_EMPTY = mkcons(LIST, 0); NODE_EMPTY->rc = -1;
+   //NODE_EMPTY = mkcons(LIST, 0); NODE_EMPTY->rc = -1;
    NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
    NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
 	
@@ -65,6 +70,39 @@ void build_closure_environment(node *n, environment *fenv, environment *cenv)
    }
 }
 
+void env_rebase(environment *env)
+{
+   environment *parent = env->enclosing;
+   environment *grandparent;
+
+   if (parent != NULL && parent->enclosing != NULL)
+      grandparent = parent->enclosing;
+   else
+      return;
+
+   /* copy any non-shadowed bindings from the parent into env */
+   binding *b = parent->bind;
+   
+   while (b != NULL)
+   {
+      binding *b = environment_lookup(env, b->node->ival);
+
+      if (b == NULL)
+         environment_extend(env, b);
+
+      b = b->prev;
+   }
+
+   /* rebase the environment such that it's new parent is it's grandparent */
+   env->enclosing = grandparent;
+   
+   /* free the parent environment - should this call env_delete? if it does, what to
+      do about the reference counts of the bindings that are now part of env? */
+   free(parent);
+}
+
+environment *tco_env;
+
 node *eval(node *p, environment *env)
 {
    if (!p)
@@ -87,10 +125,7 @@ node *eval(node *p, environment *env)
          binding *b = environment_lookup(env, p->ival);
 			
          if (b != NULL)
-         {
-            //incref(b->node);
             return eval(b->node, env);
-         }
          else
             error("unbound symbol");
       }
@@ -107,6 +142,13 @@ node *eval(node *p, environment *env)
                   eval(library_load(stdlib), env);
 
                eval(p->opr.op[0], env);
+
+               environment_delete(global);
+
+               /* DEBUG */
+               printf("inc = %ld\ndec = %ld\nalloc = %ld\nfree = %ld\n",
+                      cnt_inc, cnt_dec, cnt_alloc, cnt_free);
+
                break;
             }
 
@@ -149,15 +191,17 @@ node *eval(node *p, environment *env)
                /* function body */
                if (function_is_tail_recursive(fn->opr.op[1], fsym))
                {
-                  environment_delete(env);
+                  if (tco_env != NULL)
+                     environment_delete(tco_env);
+               
                   p = fn->opr.op[1];
-                  env = ext;
+                  env = tco_env = ext;
                   goto eval_start;
                }
                else
                {
                   node *ret = eval(fn->opr.op[1], ext);
-                  env = environment_delete(ext);
+                  //env = environment_delete(ext);
                   return ret;
                }
             }
@@ -252,7 +296,7 @@ node *eval(node *p, environment *env)
                {
                   if (list == NULL || index < 0)
                   {
-                     return NODE_EMPTY;
+                     return mkcons(LIST, 0);
                      found = true;
                   }
                   else if (index == n)
@@ -396,7 +440,6 @@ binding* binding_new(symbol s, node *n)
    b->sym = s;
    b->node = n;
    b->prev = NULL;
-   incref(n);
    return b;
 }
 
@@ -419,6 +462,9 @@ void incref(node *n)
 
    n->rc++;
 
+   /* DEBUG */
+   cnt_inc++;
+
    //printf("incref to %i for ", n->rc);
    //display(n);
 }
@@ -428,18 +474,31 @@ void decref(node *n)
    if (memmgr == false)
       return;
 
+   if (n == NULL)
+      return;
+
    if (n->rc == -1)
       return;
 
    n->rc--;
+
+   /* if (n->type == t_cons && n->opr.oper == LIST) */
+   /* { */
+   /*    for (int i = 0; i < n->opr.nops; i++) */
+   /*       decref(n->opr.op[i]); */
+   /* } */
+
+   /* DEBUG */
+   cnt_dec++;
 
    //printf("decref to %i for ", n->rc);
    //display(n);
 
    if (n->rc == 0)
    {
-      printf("free: ");
-      display(n);
+      /* DEBUG */
+      cnt_free++;
+
       free(n);
    }
 }
@@ -447,21 +506,18 @@ void decref(node *n)
 environment *environment_delete(environment *env)
 {
    environment *parent = env->enclosing;
-
-   /* never free the global environment */
-   if (env->enclosing != NULL)
-   {
-       binding *b = env->bind;
+   binding *b = env->bind;
    
-       while (b != NULL)
-       {
-          node *n = b->node;
-          decref(n);
-          b = b->prev;
-       }
+   while (b != NULL)
+   {
+      node *n = b->node;
+      decref(n);
+      binding *temp = b;
+      b = b->prev;
+      //free(temp);
    }
    
-   //free(env);
+   free(env);
 
    return parent;
 }
@@ -503,7 +559,6 @@ binding* environment_lookup(environment *env, symbol sym)
             /* { */
             /*    environment_extend(top, b); */
             /* } */
-            //incref(b->node);
             return b;
          }
 
@@ -545,12 +600,18 @@ bool function_is_tail_recursive(node *expr, symbol s)
    }
 }
 
+struct node *prialloc(size_t sz)
+{
+   cnt_alloc++;
+   return (node *) malloc(sz);
+}
+
 node *mkint(int value)
 {
    node *p;
    int size = sizeof(struct node) + sizeof(int);
 
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
 	
    p->type = t_int;
@@ -566,7 +627,7 @@ node *mkfloat(float value)
    node *p;
    size_t size = sizeof(struct node) + sizeof(float);
 	
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
   
    p->type = t_float;
@@ -582,7 +643,7 @@ node *mkbool(int value)
    node *p;
    size_t size = sizeof(struct node) + sizeof(int);
 	
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
 	
    p->type = t_bool;
@@ -598,7 +659,7 @@ node* mkchar(char c)
    node* p;
    size_t size = sizeof(struct node) + sizeof(char);
 		
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
 
    p->type = t_char;
@@ -635,7 +696,7 @@ node *mksym(char* s)
    node *p;
    size_t size = sizeof(struct node) + sizeof(int);
 
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
   
    p->type = t_symbol;
@@ -651,7 +712,7 @@ node *mkcons(int oper, int nops, ...)
    node *p;  
    size_t size = sizeof(struct node) + sizeof(struct cons);
 
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
 	
    p->type = t_cons;
@@ -667,7 +728,7 @@ node *mkcons(int oper, int nops, ...)
    for (int i = 0; i < nops; i++)
    {
       node *arg = va_arg(ap, node*);
-      p->opr.op[i] = (struct node*)malloc(sizeof(arg));
+      p->opr.op[i] = (struct node*)prialloc(sizeof(arg));
       p->opr.op[i] = arg;
    }
 	
@@ -681,7 +742,7 @@ node *mklambda(node *params, node *body, node *where, environment *e)
    node *p;  
    size_t size = sizeof(struct node) + sizeof(struct cons);
 
-   if ((p = (struct node*)malloc(size)) == NULL)
+   if ((p = (struct node*)prialloc(size)) == NULL)
       memory_alloc_error();
 	
    p->type = t_closure;
@@ -710,7 +771,7 @@ node *car(node *node)
    if (node->opr.nops > 0)
       ret = node->opr.op[0];
    else
-      ret = NODE_EMPTY;
+      ret = mkcons(LIST, 0);
 
    decref(node);
    return ret;
@@ -724,7 +785,7 @@ node *cdr(node *node)
    {
       case 0:
       case 1:
-         ret = NODE_EMPTY;
+         ret = mkcons(LIST, 0);
          break;
       case 2:
          ret = node->opr.op[1];
@@ -791,11 +852,13 @@ node *range(node *s, node *e)
 {
    int from = s->ival;
    int to = e->ival;
-   node *list = NODE_EMPTY;
+   node *list = mkcons(LIST, 0);
 
    for (int i = to; i >= from; --i)
       list = append(mkint(i), list);
 
+   decref(s);
+   decref(e);
    return list;
 }
 
@@ -1059,13 +1122,21 @@ node *mul(node *x, node *y)
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator * must be of a numeric type");
 
+   node *ret;
+
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         return mkint(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
+         ret = mkint(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
+         break;
       case t_float:
-         return mkfloat(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
+         ret = mkfloat(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
+         break;
    }
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
 node *dvd(node *x, node *y)
@@ -1073,13 +1144,21 @@ node *dvd(node *x, node *y)
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator / must be of a numeric type");
 
+   node *ret;
+
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         return mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
+         ret = mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
+         break;
       case t_float:
-         return mkfloat(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
+         ret = mkfloat(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
+         break;
    }
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
 node *lt(node *x, node *y)
@@ -1098,7 +1177,11 @@ node *gt(node *x, node *y)
 
 node *lte(node *x, node *y)
 {
-   return EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   
+   decref(x);
+   decref(y);
+   return ret;
 }
 
 node *gte(node *x, node *y)
@@ -1160,10 +1243,16 @@ node *and(node *x, node *y)
    if (y->type != t_bool)
       error("right operand to operator and must be boolean");
 
+   node *ret;
+
    if (x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
-      return NODE_BOOL_FALSE;
+      ret = NODE_BOOL_FALSE;
    else
-      return NODE_BOOL_TRUE;
+      ret = NODE_BOOL_TRUE;
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
 node *or(node *x, node *y)
@@ -1174,10 +1263,16 @@ node *or(node *x, node *y)
    if (y->type != t_bool)
       error("right operand to operator or must be boolean");
   
+   node *ret;
+
    if (x->ival || y->ival)
-      return NODE_BOOL_TRUE;
+      ret = NODE_BOOL_TRUE;
    else
-      return NODE_BOOL_FALSE;
+      ret = NODE_BOOL_FALSE;
+
+   decref(x);
+   decref(y);
+   return ret;
 }
 
 node *not(node *x)
@@ -1185,10 +1280,15 @@ node *not(node *x)
    if (x->type != t_bool)
       error("operand to operator not must be boolean");
 
+   node *ret;
+
    if (x->ival == true)
-      return NODE_BOOL_FALSE;
+      ret = NODE_BOOL_FALSE;
    else
-      return NODE_BOOL_TRUE;
+      ret = NODE_BOOL_TRUE;
+
+   decref(x);
+   return ret;
 }
 
 node *mod(node *x, node *y)

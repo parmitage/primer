@@ -71,9 +71,6 @@ node* mkcons(int oper, int nops, ...);
 node* mksym(char* s);
 node *mklambda(node *params, node *body, node *where, environment *e);
 node* mkint(int value);
-
-node *mkintc(int value);
-
 node* mkfloat(float value);
 node* mkbool(int value);
 node* mkchar(char value);
