@@ -734,7 +734,7 @@ int node_type(node* node)
 }
 
 void pprint(node* node)
-{
+{ 
    switch (node->type)
    {
       case t_int:
@@ -810,11 +810,18 @@ void pprint(node* node)
             }
 				
             case LAMBDA:
-            {
+            {	
                printf("\n\tfn (");
                pprint(node->opr.op[0]);
                printf(") ");
                pprint(node->opr.op[1]);
+		    
+		if (node->opr.op[2] != NULL)
+		{
+			printf("where ");
+			pprint(node->opr.op[2]);
+		}
+		    
                printf(" end\n");
                break;
             }
@@ -930,11 +937,19 @@ void pprint(node* node)
          break;
       
       case t_closure:
-        {
+        {	
 	       printf("fn (");
 	       pprint(node->opr.op[0]);
 	       printf(")");
 	       pprint(node->opr.op[1]);
+		
+		if (node->opr.op[2] != NULL)
+		{
+			printf("\twhere ");
+			pprint(node->opr.op[2]);
+			printf("\n");
+		}
+		
 	       printf("end");
 	       break;
 	}
