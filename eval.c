@@ -32,79 +32,6 @@ int main(int argc, char** argv)
    return 0;
 }
 
-void build_closure_env(node *n, env *fenv, env *cenv)
-{
-   /* The closure env is constructed by taking the global env
-      and extending it with the bindings closed over by the lambda. */
-
-   /* note that this function is not currently in use - the evaluator
-      currently simply captures everything at the point the function
-      is constructed, including things that are not needed... */
-
-   switch (n->type)
-   {
-      case t_symbol:
-      {
-         /* not interested in globals as they're already included */
-         binding *b = env_lookup(global, n->ival);
-
-         if (b != NULL)
-            return;
-
-         b = env_lookup(fenv, n->ival);
-
-         if (b != NULL)
-         {
-            env_extend(cenv, b);
-            return;
-         }
-
-         break;
-      }
-
-      case t_cons:
-      {
-         for (int i = 0; i < n->opr.nops; ++i)
-         {
-            build_closure_env(n->opr.op[i], fenv, cenv);
-         }
-
-         break;
-      }
-   }
-}
-
-void env_rebase(env *e)
-{
-   env *parent = e->parent;
-   env *grandparent;
-
-   if (parent != NULL && parent->parent != NULL)
-      grandparent = parent->parent;
-   else
-      return;
-
-   /* copy any non-shadowed bindings from the parent into env */
-   binding *b = parent->bind;
-   
-   while (b != NULL)
-   {
-      binding *b = env_lookup(e, b->node->ival);
-
-      if (b == NULL)
-         env_extend(e, b);
-
-      b = b->prev;
-   }
-
-   /* rebase the env such that it's new parent is it's grandparent */
-   e->parent = grandparent;
-   
-   /* free the parent env - should this call env_delete? if it does, what to
-      do about the reference counts of the bindings that are now part of env? */
-   free(parent);
-}
-
 env *tco_env;
 
 node *eval(node *n, env *e)
@@ -126,7 +53,7 @@ node *eval(node *n, env *e)
 
       case t_symbol:
       {
-         binding *b = env_lookup(e, n->ival);
+         binding *b = envlookup(e, n->ival);
 			
          if (b != NULL)
             return eval(b->node, e);
@@ -140,13 +67,13 @@ node *eval(node *n, env *e)
          {
             case PROG:
             {
-               global = e = env_new(NULL);
+               global = e = envnew(NULL);
                
                if (arg_loadlib == true)
                   eval(loadlib(arg_stdlib), e);
 
                eval(n->opr.op[0], e);
-               env_delete(global);
+               envdel(global);
 
                trace("inc = %ld\ndec = %ld\nalloc = %ld\nfree = %ld\n",
                            cnt_inc, cnt_dec, cnt_alloc, cnt_free);
@@ -156,14 +83,14 @@ node *eval(node *n, env *e)
             case DEF:
             {
                symbol name = n->opr.op[0]->ival;
-               binding* binding = binding_new(name, eval(n->opr.op[1], e));
-               env_extend(e, binding);
+               binding* binding = bindnew(name, eval(n->opr.op[1], e));
+               envext(e, binding);
                break;
             }
 				
             case LAMBDA:
             {
-               //env *ce = env_new(global);
+               //env *ce = envnew(global);
                //build_closure_env(n->opr.op[1], env, ce);
 
                if (n->opr.nops == 2)
@@ -176,7 +103,7 @@ node *eval(node *n, env *e)
             {
                symbol fsym = n->opr.op[0]->ival;
                node *fn = eval(n->opr.op[0], e);
-               env *ext = env_new(fn->opr.env);
+               env *ext = envnew(fn->opr.env);
 
                /* parameters */
                node *args = n->opr.op[1];
@@ -186,14 +113,11 @@ node *eval(node *n, env *e)
                if (fn->opr.nops == 3)
                   eval(fn->opr.op[2], ext);
 
-               //printf("%s: %i\n", symname(fsym),
-               //  function_is_tail_recursive(fn->opr.op[1], fsym));
-
                /* function body */
-               if (function_is_tail_recursive(fn->opr.op[1], fsym))
+               if (istailrecur(fn->opr.op[1], fsym))
                {
                   if (tco_env != NULL)
-                     env_delete(tco_env);
+                     envdel(tco_env);
                
                   n = fn->opr.op[1];
                   e = tco_env = ext;
@@ -202,7 +126,7 @@ node *eval(node *n, env *e)
                else
                {
                   node *ret = eval(fn->opr.op[1], ext);
-                  //env = env_delete(ext);
+                  //env = envdel(ext);
                   return ret;
                }
             }
@@ -374,7 +298,7 @@ node *eval(node *n, env *e)
 					
                if (t == t_symbol)
                {
-                  binding *b = env_lookup(e, n->opr.op[0]->ival);
+                  binding *b = envlookup(e, n->opr.op[0]->ival);
 						
                   if (b != NULL)
                      t = b->node->type;
@@ -402,8 +326,8 @@ void bind(node *args, node *params, env *fnenv, env *argenv)
           
          if (args->opr.op[0]->type == t_symbol)
          {
-            binding* b = binding_new(args->opr.op[0]->ival, n);
-            env_extend(fnenv, b);
+            binding* b = bindnew(args->opr.op[0]->ival, n);
+            envext(fnenv, b);
          }
          else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == CONS)
             bindp(args->opr.op[0], n, fnenv);
@@ -418,23 +342,23 @@ void bindp(node *args, node *list, env *fnenv)
 
    if (args->opr.op[0]->ival != wildcard)
    {
-      binding *headb = binding_new(args->opr.op[0]->ival, head);
-      env_extend(fnenv, headb);
+      binding *headb = bindnew(args->opr.op[0]->ival, head);
+      envext(fnenv, headb);
    }
 
    if (args->opr.op[1]->type == t_symbol)
    {
       if (args->opr.op[1]->ival != wildcard)
       {
-         binding *restb = binding_new(args->opr.op[1]->ival, rest);
-         env_extend(fnenv, restb);
+         binding *restb = bindnew(args->opr.op[1]->ival, rest);
+         envext(fnenv, restb);
       }
    }
    else
       bindp(args->opr.op[1], rest, fnenv);
 }
 
-binding* binding_new(symbol s, node *n)
+binding* bindnew(symbol s, node *n)
 {
    size_t sz = sizeof(binding);
    binding *b = (binding *) malloc(sz);	
@@ -444,7 +368,7 @@ binding* binding_new(symbol s, node *n)
    return b;
 }
 
-env *env_new(env *parent)
+env *envnew(env *parent)
 {
    size_t sz = sizeof(env);
    env *e = (env *) malloc(sz);
@@ -504,7 +428,7 @@ void decref(node *n)
    }
 }
 
-env *env_delete(env *e)
+env *envdel(env *e)
 {
    env *parent = e->parent;
    binding *b = e->bind;
@@ -526,7 +450,7 @@ env *env_delete(env *e)
    return parent;
 }
 
-void env_extend(env *e, binding *nb)
+void envext(env *e, binding *nb)
 {
    symbol s = nb->sym;
    binding *h = e->bind;
@@ -544,7 +468,7 @@ void env_extend(env *e, binding *nb)
    e->bind = nb;
 }
 
-binding* env_lookup(env *e, symbol sym)
+binding* envlookup(env *e, symbol sym)
 {
    env *top = e;
    bool depth = false;
@@ -561,7 +485,7 @@ binding* env_lookup(env *e, symbol sym)
             /* TODO need to clone the env in this new design... */
             /* if (depth) */
             /* { */
-            /*    env_extend(top, b); */
+            /*    envext(top, b); */
             /* } */
             return b;
          }
@@ -576,7 +500,7 @@ binding* env_lookup(env *e, symbol sym)
    return NULL;
 }
 
-bool function_is_tail_recursive(node *expr, symbol s)
+bool istailrecur(node *expr, symbol s)
 {
 /* TODO more cases that need special handling... */
    
@@ -594,8 +518,8 @@ bool function_is_tail_recursive(node *expr, symbol s)
             case APPLY:
                return expr->opr.op[0]->ival == s;
             case IF:
-               return function_is_tail_recursive(expr->opr.op[1], s) &&
-                  function_is_tail_recursive(expr->opr.op[2], s);
+               return istailrecur(expr->opr.op[1], s) &&
+                  istailrecur(expr->opr.op[2], s);
             default:
                return false;
          }
@@ -616,7 +540,7 @@ node *mkint(int value)
    int size = sizeof(struct node) + sizeof(int);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
 	
    p->type = t_int;
    p->ival = value;
@@ -632,7 +556,7 @@ node *mkfloat(float value)
    size_t size = sizeof(struct node) + sizeof(float);
 	
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
   
    p->type = t_float;
    p->fval = value;
@@ -648,7 +572,7 @@ node *mkbool(int value)
    size_t size = sizeof(struct node) + sizeof(int);
 	
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
 	
    p->type = t_bool;
    p->ival = value;
@@ -664,7 +588,7 @@ node* mkchar(char c)
    size_t size = sizeof(struct node) + sizeof(char);
 		
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
 
    p->type = t_char;
    p->lineno = lineno;
@@ -682,15 +606,15 @@ node* mkstr(char* value)
    char* temp = (char*)malloc(destlen + 1);
    strncpy(temp, value + 1, copylen);
    temp[copylen] = '\0';
-   return node_from_string(temp);
+   return strtonode(temp);
 }
 
-node* node_from_string(char* value)
+node* strtonode(char* value)
 {
    int len = strlen(value);
 
    if (len > 1)
-      return mkcons(STRING, 2, mkchar(value[0]), node_from_string(value + 1));
+      return mkcons(STRING, 2, mkchar(value[0]), strtonode(value + 1));
    else
       return mkcons(STRING, 1, mkchar(value[0]));
 }
@@ -701,7 +625,7 @@ node *mksym(char* s)
    size_t size = sizeof(struct node) + sizeof(int);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
   
    p->type = t_symbol;
    p->ival = intern(s);
@@ -717,7 +641,7 @@ node *mkcons(int oper, int nops, ...)
    size_t size = sizeof(struct node) + sizeof(struct cons);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
 	
    p->type = t_cons;
    p->lineno = lineno;
@@ -747,14 +671,14 @@ node *mklambda(node *params, node *body, node *where, env *e)
    size_t size = sizeof(struct node) + sizeof(struct cons);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
-      memory_alloc_error();
+      badalloc();
 	
    p->type = t_closure;
    p->lineno = lineno;
    p->rc = 1;
    p->opr.oper = LAMBDA;
    p->opr.nops = where == NULL ? 2 : 3;
-   p->opr.env = env_new(e);
+   p->opr.env = envnew(e);
    p->opr.op[0] = params;
    p->opr.op[1] = body;
    p->opr.op[2] = where;
@@ -762,10 +686,9 @@ node *mklambda(node *params, node *body, node *where, env *e)
    return p;
 }
 
-void memory_alloc_error()
+void badalloc()
 {
-   printf("memory_alloc_error()\n");
-   abort();
+   error("Unable to allocate memory - erminating");
 }
 
 node *car(node *node)
@@ -1070,21 +993,21 @@ void pprint(node *node)
          break;
       
       case t_closure:
-        {	
-	       printf("fn (");
-	       pprint(node->opr.op[0]);
-	       printf(")");
-	       pprint(node->opr.op[1]);
+      {	
+         printf("fn (");
+         pprint(node->opr.op[0]);
+         printf(")");
+         pprint(node->opr.op[1]);
 		
-		if (node->opr.op[2] != NULL)
-		{
-			printf("\twhere ");
-			pprint(node->opr.op[2]);
-			printf("\n");
-		}
+         if (node->opr.op[2] != NULL)
+         {
+            printf("\twhere ");
+            pprint(node->opr.op[2]);
+            printf("\n");
+         }
 		
-	       printf("end");
-	       break;
+         printf("end");
+         break;
 	}
    }		
 }
