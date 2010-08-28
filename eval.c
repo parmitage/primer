@@ -867,7 +867,7 @@ node *range(node *s, node *e)
 }
 
 void pprint(node *node)
-{
+{ 
    switch (node->type)
    {
       case t_int:
@@ -943,12 +943,19 @@ void pprint(node *node)
             }
 				
             case LAMBDA:
-            {
-               printf("fn (");
+            {	
+               printf("\n\tfn (");
                pprint(node->opr.op[0]);
-               printf(")\n");
+               printf(") ");
                pprint(node->opr.op[1]);
-               printf("\nend\n");
+		    
+		if (node->opr.op[2] != NULL)
+		{
+			printf("where ");
+			pprint(node->opr.op[2]);
+		}
+		    
+               printf(" end\n");
                break;
             }
 
@@ -1061,6 +1068,24 @@ void pprint(node *node)
       case t_symbol:
          printf("%s", symname(node->ival));
          break;
+      
+      case t_closure:
+        {	
+	       printf("fn (");
+	       pprint(node->opr.op[0]);
+	       printf(")");
+	       pprint(node->opr.op[1]);
+		
+		if (node->opr.op[2] != NULL)
+		{
+			printf("\twhere ");
+			pprint(node->opr.op[2]);
+			printf("\n");
+		}
+		
+	       printf("end");
+	       break;
+	}
    }		
 }
 
