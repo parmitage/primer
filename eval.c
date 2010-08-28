@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include "main.h"
+#include "utils.h"
 #include "eval.h"
-#include "args.h"
 #include "y.tab.h"
 
 static long cnt_alloc = 0;
@@ -15,43 +16,46 @@ int main(int argc, char** argv)
 {
    defaults();
 
-   if (getargs(argc, argv) == -1)
+   if (args(argc, argv) == -1)
    {
       usage();
       return -1;
    }
 
-   //NODE_EMPTY = mkcons(LIST, 0); NODE_EMPTY->rc = -1;
    NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
    NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
 	
    lineno = 1;
-   parse(fname);
+   parse(arg_fname);
    wildcard = intern("_");
    eval(ast, NULL);
    return 0;
 }
 
-void build_closure_environment(node *n, environment *fenv, environment *cenv)
+void build_closure_env(node *n, env *fenv, env *cenv)
 {
-   /* The closure environment is constructed by taking the global environment
+   /* The closure env is constructed by taking the global env
       and extending it with the bindings closed over by the lambda. */
+
+   /* note that this function is not currently in use - the evaluator
+      currently simply captures everything at the point the function
+      is constructed, including things that are not needed... */
 
    switch (n->type)
    {
       case t_symbol:
       {
          /* not interested in globals as they're already included */
-         binding *b = environment_lookup(global, n->ival);
+         binding *b = env_lookup(global, n->ival);
 
          if (b != NULL)
             return;
 
-         b = environment_lookup(fenv, n->ival);
+         b = env_lookup(fenv, n->ival);
 
          if (b != NULL)
          {
-            environment_extend(cenv, b);
+            env_extend(cenv, b);
             return;
          }
 
@@ -62,7 +66,7 @@ void build_closure_environment(node *n, environment *fenv, environment *cenv)
       {
          for (int i = 0; i < n->opr.nops; ++i)
          {
-            build_closure_environment(n->opr.op[i], fenv, cenv);
+            build_closure_env(n->opr.op[i], fenv, cenv);
          }
 
          break;
@@ -70,13 +74,13 @@ void build_closure_environment(node *n, environment *fenv, environment *cenv)
    }
 }
 
-void env_rebase(environment *env)
+void env_rebase(env *e)
 {
-   environment *parent = env->enclosing;
-   environment *grandparent;
+   env *parent = e->parent;
+   env *grandparent;
 
-   if (parent != NULL && parent->enclosing != NULL)
-      grandparent = parent->enclosing;
+   if (parent != NULL && parent->parent != NULL)
+      grandparent = parent->parent;
    else
       return;
 
@@ -85,123 +89,120 @@ void env_rebase(environment *env)
    
    while (b != NULL)
    {
-      binding *b = environment_lookup(env, b->node->ival);
+      binding *b = env_lookup(e, b->node->ival);
 
       if (b == NULL)
-         environment_extend(env, b);
+         env_extend(e, b);
 
       b = b->prev;
    }
 
-   /* rebase the environment such that it's new parent is it's grandparent */
-   env->enclosing = grandparent;
+   /* rebase the env such that it's new parent is it's grandparent */
+   e->parent = grandparent;
    
-   /* free the parent environment - should this call env_delete? if it does, what to
+   /* free the parent env - should this call env_delete? if it does, what to
       do about the reference counts of the bindings that are now part of env? */
    free(parent);
 }
 
-environment *tco_env;
+env *tco_env;
 
-node *eval(node *p, environment *env)
+node *eval(node *n, env *e)
 {
-   if (!p)
+   if (!n)
       return NODE_BOOL_FALSE;
 
   eval_start:
 
-   switch (p->type)
+   switch (n->type)
    {
       case t_int:
       case t_float:
       case t_bool:
       case t_char:
       case t_closure:
-         incref(p);
-         return p;
+         incref(n);
+         return n;
 
       case t_symbol:
       {
-         binding *b = environment_lookup(env, p->ival);
+         binding *b = env_lookup(e, n->ival);
 			
          if (b != NULL)
-            return eval(b->node, env);
+            return eval(b->node, e);
          else
             error("unbound symbol");
       }
 
       case t_cons:
       {
-         switch(p->opr.oper)
+         switch(n->opr.oper)
          {
             case PROG:
             {
-               global = env = environment_new(NULL);
+               global = e = env_new(NULL);
                
-               if (loadlib == true)
-                  eval(library_load(stdlib), env);
+               if (arg_loadlib == true)
+                  eval(loadlib(arg_stdlib), e);
 
-               eval(p->opr.op[0], env);
+               eval(n->opr.op[0], e);
+               env_delete(global);
 
-               environment_delete(global);
-
-               /* DEBUG */
-               printf("inc = %ld\ndec = %ld\nalloc = %ld\nfree = %ld\n",
-                      cnt_inc, cnt_dec, cnt_alloc, cnt_free);
-
+               trace("inc = %ld\ndec = %ld\nalloc = %ld\nfree = %ld\n",
+                           cnt_inc, cnt_dec, cnt_alloc, cnt_free);
                break;
             }
 
             case DEF:
             {
-               symbol name = p->opr.op[0]->ival;
-               binding* binding = binding_new(name, eval(p->opr.op[1], env));
-               environment_extend(env, binding);
+               symbol name = n->opr.op[0]->ival;
+               binding* binding = binding_new(name, eval(n->opr.op[1], e));
+               env_extend(e, binding);
                break;
             }
 				
             case LAMBDA:
             {
-               //environment *ce = environment_new(global);
-               //build_closure_environment(p->opr.op[1], env, ce);
+               //env *ce = env_new(global);
+               //build_closure_env(n->opr.op[1], env, ce);
 
-               if (p->opr.nops == 2)
-                  return mklambda(p->opr.op[0], p->opr.op[1], NULL, env);
+               if (n->opr.nops == 2)
+                  return mklambda(n->opr.op[0], n->opr.op[1], NULL, e);
                else
-                  return mklambda(p->opr.op[0], p->opr.op[1], p->opr.op[2], env);
+                  return mklambda(n->opr.op[0], n->opr.op[1], n->opr.op[2], e);
             }
 
             case APPLY:
             {
-               symbol fsym = p->opr.op[0]->ival;
-               node *fn = eval(p->opr.op[0], env);
-               environment *ext = environment_new(fn->opr.env);
+               symbol fsym = n->opr.op[0]->ival;
+               node *fn = eval(n->opr.op[0], e);
+               env *ext = env_new(fn->opr.env);
 
                /* parameters */
-               node *args = p->opr.op[1];
-               bind(fn->opr.op[0], args, ext, env);
+               node *args = n->opr.op[1];
+               bind(fn->opr.op[0], args, ext, e);
 
                /* where clause */
                if (fn->opr.nops == 3)
                   eval(fn->opr.op[2], ext);
 
-               //printf("%s: %i\n", symbol_name(fsym),
+               //printf("%s: %i\n", symname(fsym),
                //  function_is_tail_recursive(fn->opr.op[1], fsym));
 
                /* function body */
                if (function_is_tail_recursive(fn->opr.op[1], fsym))
                {
                   if (tco_env != NULL)
-                     environment_delete(tco_env);
+                     env_delete(tco_env);
                
-                  p = fn->opr.op[1];
-                  env = tco_env = ext;
+                  n = fn->opr.op[1];
+                  e = tco_env = ext;
                   goto eval_start;
                }
                else
                {
                   node *ret = eval(fn->opr.op[1], ext);
-                  //env = environment_delete(ext);
+                  //env = env_delete(ext);
                   return ret;
                }
             }
@@ -211,16 +212,16 @@ node *eval(node *p, environment *env)
                /* because we can store symbols in lists we evaluate the contents */
                node *ret;
                
-               switch (p->opr.nops)
+               switch (n->opr.nops)
                {
                   case 0:
                      ret = mkcons(LIST, 0);
                      break;
                   case 1:
-                     ret = mkcons(LIST, 1, eval(p->opr.op[0], env));
+                     ret = mkcons(LIST, 1, eval(n->opr.op[0], e));
                      break;
                   case 2:
-                     ret = mkcons(LIST, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     ret = mkcons(LIST, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
                      break;
                }
 
@@ -233,16 +234,16 @@ node *eval(node *p, environment *env)
             {
                node *ret;
 
-               switch (p->opr.nops)
+               switch (n->opr.nops)
                {
                   case 0:
                      ret = mkcons(STRING, 0);
                      break;
                   case 1:
-                     ret = mkcons(STRING, 1, eval(p->opr.op[0], env));
+                     ret = mkcons(STRING, 1, eval(n->opr.op[0], e));
                      break;
                   case 2:
-                     ret = mkcons(STRING, 2, eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+                     ret = mkcons(STRING, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
                      break;
                }
 
@@ -250,46 +251,46 @@ node *eval(node *p, environment *env)
                incref(ret);
                return ret;
             }
-				
+
             case SHOW:
             {
-               node *val = eval(p->opr.op[0], env);
+               node *val = eval(n->opr.op[0], e);
                display(val);
                return val;
             }
 				
             case ';':
             {
-               eval(p->opr.op[0], env);
-               eval(p->opr.op[1], env);
+               eval(n->opr.op[0], e);
+               eval(n->opr.op[1], e);
                break;
             }
 
             case IF:
             {              			
-               node *pred = eval(p->opr.op[0], env);
+               node *pred = eval(n->opr.op[0], e);
 
                if (pred->type != t_bool)
                   error("type of predicate is not boolean");
 					
                if (pred->ival > 0)
-                  p = p->opr.op[1];
+                  n = n->opr.op[1];
                else
-                  p = p->opr.op[2];
+                  n = n->opr.op[2];
 
                goto eval_start;
             }
 
             case LENGTH:
             {
-               node *val = eval(p->opr.op[0], env);
+               node *val = eval(n->opr.op[0], e);
                return mkint(length(val));
             }
 
             case NTH:
             {
-               node *list = eval(p->opr.op[0], env);
-               int index = eval(p->opr.op[1], env)->ival, n = 0;
+               node *list = eval(n->opr.op[0], e);
+               int index = eval(n->opr.op[1], e)->ival, n = 0;
                bool found = false;
 
                while (!found)
@@ -315,65 +316,65 @@ node *eval(node *p, environment *env)
             }
 				
             case '+':
-               return add(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return add(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case '-':
             {
-               if (p->opr.nops == 1)
-                  return sub(mkint(0), eval(p->opr.op[0], env));
-               else if (p->opr.nops == 2)
-                  return sub(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               if (n->opr.nops == 1)
+                  return sub(mkint(0), eval(n->opr.op[0], e));
+               else if (n->opr.nops == 2)
+                  return sub(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
             }
 				
             case '*':
-               return mul(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return mul(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case '/':
-               return dvd(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return dvd(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case '<':
-               return lt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return lt(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case '>':
-               return gt(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return gt(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case GE:
-               return gte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return gte(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case LE:
-               return lte(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return lte(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case NE:
-               return neq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return neq(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case EQ:
-               return eq(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return eq(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case AND:
-               return and(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return and(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case OR:
-               return or(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return or(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case MOD:
-               return mod(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return mod(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 
             case APPEND:
-               return append(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return append(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 
             case RANGE:
-               return range(eval(p->opr.op[0], env), eval(p->opr.op[1], env));
+               return range(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
             case NOT:
-               return not(eval(p->opr.op[0], env));
+               return not(eval(n->opr.op[0], e));
 				
             case TYPE:
             {
-               int t = p->opr.op[0]->type;
+               int t = n->opr.op[0]->type;
 					
                if (t == t_symbol)
                {
-                  binding *b = environment_lookup(env, p->opr.op[0]->ival);
+                  binding *b = env_lookup(e, n->opr.op[0]->ival);
 						
                   if (b != NULL)
                      t = b->node->type;
@@ -388,7 +389,7 @@ node *eval(node *p, environment *env)
    }
 }
 
-void bind(node *args, node *params, environment *fnenv, environment *argenv)
+void bind(node *args, node *params, env *fnenv, env *argenv)
 {
    if (params != NULL)
    {		
@@ -402,7 +403,7 @@ void bind(node *args, node *params, environment *fnenv, environment *argenv)
          if (args->opr.op[0]->type == t_symbol)
          {
             binding* b = binding_new(args->opr.op[0]->ival, n);
-            environment_extend(fnenv, b);
+            env_extend(fnenv, b);
          }
          else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == CONS)
             bindp(args->opr.op[0], n, fnenv);
@@ -410,7 +411,7 @@ void bind(node *args, node *params, environment *fnenv, environment *argenv)
    }
 }
 
-void bindp(node *args, node *list, environment *fnenv)
+void bindp(node *args, node *list, env *fnenv)
 {
    node *head = car(list);
    node *rest = cdr(list);
@@ -418,7 +419,7 @@ void bindp(node *args, node *list, environment *fnenv)
    if (args->opr.op[0]->ival != wildcard)
    {
       binding *headb = binding_new(args->opr.op[0]->ival, head);
-      environment_extend(fnenv, headb);
+      env_extend(fnenv, headb);
    }
 
    if (args->opr.op[1]->type == t_symbol)
@@ -426,7 +427,7 @@ void bindp(node *args, node *list, environment *fnenv)
       if (args->opr.op[1]->ival != wildcard)
       {
          binding *restb = binding_new(args->opr.op[1]->ival, rest);
-         environment_extend(fnenv, restb);
+         env_extend(fnenv, restb);
       }
    }
    else
@@ -443,18 +444,18 @@ binding* binding_new(symbol s, node *n)
    return b;
 }
 
-environment *environment_new(environment *parent)
+env *env_new(env *parent)
 {
-   size_t sz = sizeof(environment);
-   environment *env = (environment *) malloc(sz);
-   env->enclosing = parent;
-   env->bind = NULL;
-   return env;
+   size_t sz = sizeof(env);
+   env *e = (env *) malloc(sz);
+   e->parent = parent;
+   e->bind = NULL;
+   return e;
 }
 
 void incref(node *n)
 {
-   if (memmgr == false)
+   if (!refctr)
       return;
 
    if (n->rc == -1)
@@ -471,7 +472,7 @@ void incref(node *n)
 
 void decref(node *n)
 {
-   if (memmgr == false)
+   if (!refctr)
       return;
 
    if (n == NULL)
@@ -503,61 +504,64 @@ void decref(node *n)
    }
 }
 
-environment *environment_delete(environment *env)
+env *env_delete(env *e)
 {
-   environment *parent = env->enclosing;
-   binding *b = env->bind;
-   
-   while (b != NULL)
+   env *parent = e->parent;
+   binding *b = e->bind;
+
+   if (refctr)
    {
-      node *n = b->node;
-      decref(n);
-      binding *temp = b;
-      b = b->prev;
-      //free(temp);
+      while (b != NULL)
+      {
+         node *n = b->node;
+         decref(n);
+         binding *temp = b;
+         b = b->prev;
+         free(temp);
+      }
+      
+      free(e);
    }
-   
-   free(env);
 
    return parent;
 }
 
-void environment_extend(environment *env, binding *nb)
+void env_extend(env *e, binding *nb)
 {
    symbol s = nb->sym;
-   binding *h = env->bind;
+   binding *h = e->bind;
    
    while (h != NULL)
    {
       if (s == h->sym)
-         error("symbol already bound in this environment");
+         error("symbol already bound in this env");
 
       h = h->prev;
    }
 
    /* binding wasn't found so create a new one */
-   nb->prev = env->bind;
-   env->bind = nb;
+   nb->prev = e->bind;
+   e->bind = nb;
 }
 
-binding* environment_lookup(environment *env, symbol sym)
+binding* env_lookup(env *e, symbol sym)
 {
-   environment *top = env;
+   env *top = e;
    bool depth = false;
 
-   while (env != NULL)
+   while (e != NULL)
    {
-      binding *b = env->bind;
+      binding *b = e->bind;
 
       while (b != NULL)
       {
          if (sym == b->sym)
          {
-            /* lift a binding into this environment */
-            /* TODO need to clone the environment in this new design... */
+            /* lift a binding into this env */
+            /* TODO need to clone the env in this new design... */
             /* if (depth) */
             /* { */
-            /*    environment_extend(top, b); */
+            /*    env_extend(top, b); */
             /* } */
             return b;
          }
@@ -565,7 +569,7 @@ binding* environment_lookup(environment *env, symbol sym)
          b = b->prev;
       }
 
-      env = env->enclosing;
+      e = e->parent;
       depth = true;
    }
   
@@ -737,7 +741,7 @@ node *mkcons(int oper, int nops, ...)
    return p;
 }
 
-node *mklambda(node *params, node *body, node *where, environment *e)
+node *mklambda(node *params, node *body, node *where, env *e)
 {
    node *p;  
    size_t size = sizeof(struct node) + sizeof(struct cons);
@@ -750,7 +754,7 @@ node *mklambda(node *params, node *body, node *where, environment *e)
    p->rc = 1;
    p->opr.oper = LAMBDA;
    p->opr.nops = where == NULL ? 2 : 3;
-   p->opr.env = environment_new(e);
+   p->opr.env = env_new(e);
    p->opr.op[0] = params;
    p->opr.op[1] = body;
    p->opr.op[2] = where;
@@ -1055,7 +1059,7 @@ void pprint(node *node)
       }
 		
       case t_symbol:
-         printf("%s", symbol_name(node->ival));
+         printf("%s", symname(node->ival));
          break;
    }		
 }
@@ -1305,7 +1309,7 @@ node *mod(node *x, node *y)
    return retval;
 }
 
-node *library_load(char *name)
+node *loadlib(char *name)
 {
    char *libroot, libpath[500];
    libroot = getenv("PRIMER_LIBRARY_PATH");
@@ -1318,7 +1322,7 @@ node *library_load(char *name)
     
    sprintf(libpath, "%s%s.pri", libroot, name);
     
-   if (!file_exists(libpath))
+   if (!fexists(libpath))
    {
       printf("Unable to find library: %s\n", name);
       exit(-1);
@@ -1333,36 +1337,21 @@ void error(char *msg)
    exit(0);
 }
 
-bool file_exists(const char *path)
-{
-   FILE *istream;
-	
-   if((istream = fopen(path, "r")) == NULL)
-   {
-      return false;
-   }
-   else
-   {
-      fclose(istream);
-      return true;
-   }
-}
-
 symbol intern(char *string)
 {
    static int new_symbol_index = 0;
 
    for (int i = 0; i < new_symbol_index; i++)
    {
-      if (strcmp(string, symbol_table[i]) == 0)
+      if (strcmp(string, symtab[i]) == 0)
          return i;
    }
   
-   symbol_table[new_symbol_index] = string;
+   symtab[new_symbol_index] = string;
    return new_symbol_index++;
 }
 
-char *symbol_name(symbol s)
+char *symname(symbol s)
 {
-   return symbol_table[s];
+   return symtab[s];
 }
