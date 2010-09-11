@@ -75,8 +75,8 @@ node *eval(node *n, env *e)
                eval(n->opr.op[0], e);
                envdel(global);
 
-               trace("inc = %ld\ndec = %ld\nalloc = %ld\nfree = %ld\n",
-                           cnt_inc, cnt_dec, cnt_alloc, cnt_free);
+               trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
+                     cnt_inc, cnt_dec, cnt_alloc, cnt_free);
                break;
             }
 
@@ -126,7 +126,7 @@ node *eval(node *n, env *e)
                else
                {
                   node *ret = eval(fn->opr.op[1], ext);
-                  //env = envdel(ext);
+                  //e = envdel(ext);
                   return ret;
                }
             }
@@ -696,7 +696,10 @@ node *car(node *node)
    struct node *ret;
 
    if (node->opr.nops > 0)
+   {
       ret = node->opr.op[0];
+      incref(ret);
+   }
    else
       ret = mkcons(LIST, 0);
 
@@ -716,6 +719,7 @@ node *cdr(node *node)
          break;
       case 2:
          ret = node->opr.op[1];
+         incref(ret);
          break;
    }
 
