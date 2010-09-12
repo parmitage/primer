@@ -10,14 +10,14 @@ update = fn (d:ds, key, val)
    if d != [] then
       if head(d) == key then
          add(ds, key, val)
-      else [d] ++ update(ds, key, val)
+      else d : update(ds, key, val)
    else d
 end
 
 remove = fn (d:ds, key)
    if d != [] then
       if head(d) == key then ds
-      else [d] ++ remove(ds, key)
+      else d : remove(ds, key)
    else d
 end
 

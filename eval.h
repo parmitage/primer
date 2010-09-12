@@ -2,25 +2,21 @@
 #define __EVAL_H__
 
 #include "main.h"
+#include "types.h"
 
 #define MAX_SYMBOLS 1000
 
-typedef enum {
-   t_int,
-   t_float,
-   t_bool,
-   t_symbol,
-   t_char,
-   t_cons,
-   t_closure
-} t_type;
-
-typedef struct cons {
+typedef struct pair {
    int oper;
    int nops;
    struct env *env;
    struct node *op[1];
-} cons;
+} pair;
+
+typedef struct tuple {
+   int count;
+   struct node *n[MAX_TUPLES]; 
+} tuple;
 
 typedef struct node {
    t_type type;
@@ -30,7 +26,8 @@ typedef struct node {
       int ival;
       float fval;
       char* sval;
-      cons opr;
+      tuple tuple;
+      pair opr;
    };
 } node;
 
@@ -56,7 +53,7 @@ symbol wildcard;
 void parse(char *filename);
 node *parsel(char *filename);
 
-node *mkcons(int oper, int nops, ...);
+node *mkpair(int oper, int nops, ...);
 node *mksym(char *s);
 node *mklambda(node *params, node *body, node *where, env *e);
 node *mkint(int value);
@@ -64,6 +61,7 @@ node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);
 node *mkstr(char *value);
+node *mktuple(node *list);
 node *strtonode(char *value);
 
 struct node *prialloc(size_t sz);
@@ -75,6 +73,7 @@ node *eval(node *p, env *e);
 bool istailrecur(node *expr, symbol s);
 
 void bind(node *args, node *params, env *fnenv, env *argenv);
+void bindt(node *arg, node *tuple, env *fnenv);
 void bindp(node *args, node *list, env *fnenv);
 binding *bindnew(symbol name, node* node);
 env *envnew(env* enclosing);
@@ -107,6 +106,7 @@ node *and(node *x, node *y);
 node *or(node *x, node *y);
 node *not(node *node);
 node *mod(node *x, node *y);
+node *cons(node *atom, node *list);
 node *append(node *list1, node *list2);
 node *range(node *from, node *to);
 

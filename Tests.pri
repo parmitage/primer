@@ -32,9 +32,7 @@ greaterThan3 = fn (x)
 end
 
 listCountdown = fn (x)
-  if x > 0 then
-    [x] ++ listCountdown(x - 1)
-  else 0
+   reverse(0..x)
 end
 
 makeAdder = fn (y)
@@ -57,12 +55,6 @@ assert("multi-item list equality", [1,2,3,4,5], [1,2,3,4,5])
 assert("list of variables equality", [a, b], [10, 15])
 assert("nested list equality", [1,2,[3,[4],5,6,7],8,[9,10],11], [1,2,[3,[4],5,6,7],8,[9,10],11])
 assert("lists with symbols", [0,a,b], [0,10,15])
-assert("int type code", type(1), 0)
-assert("float type code", type(4.5), 1)
-assert("bool type code", type(true), 2)
-assert("char type code", type('a'), 4)
-assert("function type code", type(double), 6)
-assert("type code of a variable", type(a), 0)
 assert("integer type check", isint(10), true)
 assert("integer type check to fail", isint(false), false)
 assert("float type check", isfloat(10.1), true)
@@ -104,7 +96,7 @@ assert("nested precedence override", 3 + (2 * ((9 - (8 / 2)) + 1)), 15)
 assert("list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6])
 assert("nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6])
 assert("string append", "this" ++ " is " ++ "a test", "this is a test")
-assert("char append equals string", ('a' ++ 'b' ++ 'c') == "abc", true)
+assert("char append equals string", ('a' : 'b' : 'c' : []) == "abc", true)
 assert("simple range", 1..5, [1,2,3,4,5])
 assert("greater than", 5 > 2, true)
 assert("greater than fails", 5 > 9, false)

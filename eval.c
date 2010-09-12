@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "main.h"
+#include "types.h"
 #include "utils.h"
 #include "eval.h"
 #include "y.tab.h"
@@ -61,7 +62,28 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
-      case t_cons:
+      case t_tuple:
+      {
+         /* TODO: factor some of this allocation code out of eval... */
+         node *tuple;
+         size_t sz = sizeof(struct node) + sizeof(struct tuple);
+         
+         if ((tuple = (struct node*)prialloc(sz)) == NULL)
+            badalloc();
+         
+         tuple->type = t_tuple;
+         tuple->lineno = lineno;
+         tuple->rc = 1;
+         
+         for (int i = 0; i < n->tuple.count; ++i)
+            tuple->tuple.n[i] = eval(n->tuple.n[i], e);
+
+         tuple->tuple.count = n->tuple.count;
+
+         return tuple;
+      }
+
+      case t_pair:
       {
          switch(n->opr.oper)
          {
@@ -139,13 +161,13 @@ node *eval(node *n, env *e)
                switch (n->opr.nops)
                {
                   case 0:
-                     ret = mkcons(LIST, 0);
+                     ret = mkpair(LIST, 0);
                      break;
                   case 1:
-                     ret = mkcons(LIST, 1, eval(n->opr.op[0], e));
+                     ret = mkpair(LIST, 1, eval(n->opr.op[0], e));
                      break;
                   case 2:
-                     ret = mkcons(LIST, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
+                     ret = mkpair(LIST, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
                      break;
                }
 
@@ -153,7 +175,7 @@ node *eval(node *n, env *e)
                incref(ret);
                return ret;
             }
-            
+           
             case STRING:
             {
                node *ret;
@@ -161,13 +183,13 @@ node *eval(node *n, env *e)
                switch (n->opr.nops)
                {
                   case 0:
-                     ret = mkcons(STRING, 0);
+                     ret = mkpair(STRING, 0);
                      break;
                   case 1:
-                     ret = mkcons(STRING, 1, eval(n->opr.op[0], e));
+                     ret = mkpair(STRING, 1, eval(n->opr.op[0], e));
                      break;
                   case 2:
-                     ret = mkcons(STRING, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
+                     ret = mkpair(STRING, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
                      break;
                }
 
@@ -221,7 +243,7 @@ node *eval(node *n, env *e)
                {
                   if (list == NULL || index < 0)
                   {
-                     return mkcons(LIST, 0);
+                     return mkpair(LIST, 0);
                      found = true;
                   }
                   else if (index == n)
@@ -286,6 +308,9 @@ node *eval(node *n, env *e)
             case APPEND:
                return append(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 
+            case CONS:
+               return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
+
             case RANGE:
                return range(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 				
@@ -329,9 +354,20 @@ void bind(node *args, node *params, env *fnenv, env *argenv)
             binding* b = bindnew(args->opr.op[0]->ival, n);
             envext(fnenv, b);
          }
-         else if (args->opr.op[0]->type == t_cons && args->opr.op[0]->opr.oper == CONS)
+         else if (args->opr.op[0]->type == t_pair && args->opr.op[0]->opr.oper == CONS)
             bindp(args->opr.op[0], n, fnenv);
+         else if (args->opr.op[0]->type == t_tuple)
+            bindt(args->opr.op[0], n, fnenv);
       }
+   }
+}
+
+void bindt(node *arg, node *tuple, env *fnenv)
+{
+   for (int i = 0; i < arg->tuple.count; ++i)
+   {
+      binding *b = bindnew(arg->tuple.n[i]->ival, tuple->tuple.n[i]);
+      envext(fnenv, b);
    }
 }
 
@@ -407,7 +443,7 @@ void decref(node *n)
 
    n->rc--;
 
-   /* if (n->type == t_cons && n->opr.oper == LIST) */
+   /* if (n->type == t_pair && n->opr.oper == LIST) */
    /* { */
    /*    for (int i = 0; i < n->opr.nops; i++) */
    /*       decref(n->opr.op[i]); */
@@ -512,7 +548,7 @@ bool istailrecur(node *expr, symbol s)
       case t_char:
       case t_symbol:
          return true;
-      case t_cons:
+      case t_pair:
          switch(expr->opr.oper)
          {
             case APPLY:
@@ -614,9 +650,9 @@ node* strtonode(char* value)
    int len = strlen(value);
 
    if (len > 1)
-      return mkcons(STRING, 2, mkchar(value[0]), strtonode(value + 1));
+      return mkpair(STRING, 2, mkchar(value[0]), strtonode(value + 1));
    else
-      return mkcons(STRING, 1, mkchar(value[0]));
+      return mkpair(STRING, 1, mkchar(value[0]));
 }
 
 node *mksym(char* s)
@@ -635,15 +671,15 @@ node *mksym(char* s)
    return p;
 }
 
-node *mkcons(int oper, int nops, ...)
+node *mkpair(int oper, int nops, ...)
 {
    node *p;  
-   size_t size = sizeof(struct node) + sizeof(struct cons);
+   size_t size = sizeof(struct node) + sizeof(struct pair);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
       badalloc();
 	
-   p->type = t_cons;
+   p->type = t_pair;
    p->lineno = lineno;
    p->rc = 1;
    p->opr.oper = oper;
@@ -665,10 +701,37 @@ node *mkcons(int oper, int nops, ...)
    return p;
 }
 
+node *mktuple(node *list)
+{
+   node *tuple;
+   size_t sz = sizeof(struct node) + sizeof(struct tuple);
+   
+   if ((tuple = (struct node*)prialloc(sz)) == NULL)
+      badalloc();
+
+   tuple->type = t_tuple;
+   tuple->lineno = lineno;
+   tuple->rc = 1;
+
+   int len = 0;
+   struct node *iter = list;
+
+   while (iter != NULL && iter->opr.nops > 0)
+   {
+      tuple->tuple.n[len] = iter->opr.op[0];
+      len++;      
+      iter = iter->opr.op[1];
+   }
+
+   tuple->tuple.count = len;
+
+   return tuple;
+}
+
 node *mklambda(node *params, node *body, node *where, env *e)
 {
    node *p;  
-   size_t size = sizeof(struct node) + sizeof(struct cons);
+   size_t size = sizeof(struct node) + sizeof(struct pair);
 
    if ((p = (struct node*)prialloc(size)) == NULL)
       badalloc();
@@ -701,7 +764,7 @@ node *car(node *node)
       incref(ret);
    }
    else
-      ret = mkcons(LIST, 0);
+      ret = mkpair(LIST, 0);
 
    decref(node);
    return ret;
@@ -715,7 +778,7 @@ node *cdr(node *node)
    {
       case 0:
       case 1:
-         ret = mkcons(LIST, 0);
+         ret = mkpair(LIST, 0);
          break;
       case 2:
          ret = node->opr.op[1];
@@ -729,12 +792,12 @@ node *cdr(node *node)
 
 bool empty(node *list)
 {
-   return list->type == t_cons && list->opr.nops == 0;
+   return list->type == t_pair && list->opr.nops == 0;
 }
 
 int length(node *node)
 {
-   if (node->type != t_cons)
+   if (node->type != t_pair)
       error("argument to length must be a list");
 
    int len = 0;
@@ -751,14 +814,16 @@ int length(node *node)
    return len;
 }
 
+node *cons(node *atom, node *list)
+{
+   if (empty(list))
+      return mkpair(LIST, 1, atom);
+   else
+      return mkpair(LIST, 2, atom, list);
+}
+
 node *append(node *list1, node *list2)
 {
-   if (list1->type != t_cons)
-      list1 = mkcons(LIST, 1, list1);
-
-   if (list2->type != t_cons)
-      list2 = mkcons(LIST, 1, list2);
-
    if (empty(list2))
       return list1;
 
@@ -783,10 +848,10 @@ node *range(node *s, node *e)
 {
    int from = s->ival;
    int to = e->ival;
-   node *list = mkcons(LIST, 0);
+   node *list = mkpair(LIST, 0);
 
    for (int i = to; i >= from; --i)
-      list = append(mkint(i), list);
+      list = cons(mkint(i), list);
 
    decref(s);
    decref(e);
@@ -810,7 +875,7 @@ void pprint(node *node)
          printf("%c", node->ival);
          break;
 		
-      case t_cons:
+      case t_pair:
       {
          switch (node->opr.oper)
          {
@@ -859,7 +924,7 @@ void pprint(node *node)
                printf("]");
                break;
             }
-		
+
             case APPLY:
             {
                pprint(node->opr.op[0]);
@@ -875,17 +940,17 @@ void pprint(node *node)
                pprint(node->opr.op[0]);
                printf(") ");
                pprint(node->opr.op[1]);
-		    
-		if (node->opr.op[2] != NULL)
-		{
-			printf("where ");
-			pprint(node->opr.op[2]);
-		}
-		    
+               
+               if (node->opr.op[2] != NULL)
+               {
+                  printf("where ");
+                  pprint(node->opr.op[2]);
+               }
+               
                printf(" end\n");
                break;
             }
-
+            
             case ';':
             {
                pprint(node->opr.op[0]);
@@ -993,8 +1058,24 @@ void pprint(node *node)
       }
 		
       case t_symbol:
+      {
          printf("%s", symname(node->ival));
          break;
+      }
+
+      case t_tuple:
+      {
+         printf("{");
+         
+         for (int i = 0; i < node->tuple.count; ++i)
+         {
+            pprint(node->tuple.n[i]);
+            printf(",");
+         }
+         
+         printf("}");
+         break;
+      }
       
       case t_closure:
       {	
@@ -1176,7 +1257,7 @@ node *eq(node *x, node *y)
       ret = x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    else if (x->type == t_char)
       ret = x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-   else if (x->type == t_cons)
+   else if (x->type == t_pair)
       ret = list_eq(x, y);
    else
       ret = NODE_BOOL_FALSE;
