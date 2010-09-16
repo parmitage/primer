@@ -13,7 +13,7 @@ static long cnt_free = 0;
 static long cnt_inc = 0;
 static long cnt_dec = 0;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
    defaults();
 
@@ -49,7 +49,6 @@ node *eval(node *n, env *e)
       case t_bool:
       case t_char:
       case t_closure:
-         incref(n);
          return n;
 
       case t_symbol:
@@ -57,23 +56,17 @@ node *eval(node *n, env *e)
          binding *b = envlookup(e, n->ival);
 			
          if (b != NULL)
+         {
+            incref(b->node);
             return eval(b->node, e);
+         }
          else
             error("unbound symbol");
       }
 
       case t_tuple:
       {
-         /* TODO: factor some of this allocation code out of eval... */
-         node *tuple;
-         size_t sz = sizeof(struct node) + sizeof(struct tuple);
-         
-         if ((tuple = (struct node*)prialloc(sz)) == NULL)
-            badalloc();
-         
-         tuple->type = t_tuple;
-         tuple->lineno = lineno;
-         tuple->rc = 1;
+         node *tuple = mktuple();
          
          for (int i = 0; i < n->tuple.count; ++i)
             tuple->tuple.n[i] = eval(n->tuple.n[i], e);
@@ -105,7 +98,7 @@ node *eval(node *n, env *e)
             case DEF:
             {
                symbol name = n->opr.op[0]->ival;
-               binding* binding = bindnew(name, eval(n->opr.op[1], e));
+               binding *binding = bindnew(name, eval(n->opr.op[1], e));
                envext(e, binding);
                break;
             }
@@ -172,7 +165,7 @@ node *eval(node *n, env *e)
                }
 
                //decref(p);
-               incref(ret);
+               //incref(ret);
                return ret;
             }
            
@@ -194,7 +187,7 @@ node *eval(node *n, env *e)
                }
 
                //decref(p);
-               incref(ret);
+               //incref(ret);
                return ret;
             }
 
@@ -331,6 +324,7 @@ node *eval(node *n, env *e)
                      t = -1;
                }
 
+               decref(n);
                return mkint(t);
             }
          }
@@ -443,12 +437,6 @@ void decref(node *n)
 
    n->rc--;
 
-   /* if (n->type == t_pair && n->opr.oper == LIST) */
-   /* { */
-   /*    for (int i = 0; i < n->opr.nops; i++) */
-   /*       decref(n->opr.op[i]); */
-   /* } */
-
    /* DEBUG */
    cnt_dec++;
 
@@ -459,6 +447,12 @@ void decref(node *n)
    {
       /* DEBUG */
       cnt_free++;
+
+      if (n->type == t_pair && n->opr.oper == LIST)
+      {
+         for (int i = 0; i < n->opr.nops; i++)
+            decref(n->opr.op[i]);
+      }
 
       free(n);
    }
@@ -564,73 +558,54 @@ bool istailrecur(node *expr, symbol s)
    }
 }
 
-struct node *prialloc(size_t sz)
+struct node *prialloc()
 {
    cnt_alloc++;
-   return (node *) malloc(sz);
+   node *p;
+
+   if ((p = (struct node*)malloc(sizeof(struct node))) == NULL)
+      error("Unable to allocate memory - terminating");
+
+   return p;
 }
 
 node *mkint(int value)
 {
-   node *p;
-   int size = sizeof(struct node) + sizeof(int);
-
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-	
+   node *p = prialloc();
    p->type = t_int;
    p->ival = value;
    p->lineno = lineno;
    p->rc = 1;
-	
    return p;
 }
 
 node *mkfloat(float value)
 {
-   node *p;
-   size_t size = sizeof(struct node) + sizeof(float);
-	
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-  
+   node *p = prialloc();
    p->type = t_float;
    p->fval = value;
    p->lineno = lineno;
    p->rc = 1;
-	
    return p;
 }
 
 node *mkbool(int value)
 {
-   node *p;
-   size_t size = sizeof(struct node) + sizeof(int);
-	
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-	
+   node *p = prialloc();
    p->type = t_bool;
    p->ival = value;
    p->lineno = lineno;
    p->rc = 1;
-
    return p;
 }
 
 node* mkchar(char c)
 {
-   node* p;
-   size_t size = sizeof(struct node) + sizeof(char);
-		
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-
+   node *p = prialloc();
    p->type = t_char;
    p->lineno = lineno;
    p->ival = c;
    p->rc = 1;
-	
    return p;
 }
 
@@ -657,28 +632,17 @@ node* strtonode(char* value)
 
 node *mksym(char* s)
 {
-   node *p;
-   size_t size = sizeof(struct node) + sizeof(int);
-
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-  
+   node *p = prialloc();
    p->type = t_symbol;
    p->ival = intern(s);
    p->lineno = lineno;
    p->rc = -1;
-	
    return p;
 }
 
 node *mkpair(int oper, int nops, ...)
 {
-   node *p;  
-   size_t size = sizeof(struct node) + sizeof(struct pair);
-
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-	
+   node *p = prialloc();
    p->type = t_pair;
    p->lineno = lineno;
    p->rc = 1;
@@ -692,7 +656,6 @@ node *mkpair(int oper, int nops, ...)
    for (int i = 0; i < nops; i++)
    {
       node *arg = va_arg(ap, node*);
-      p->opr.op[i] = (struct node*)prialloc(sizeof(arg));
       p->opr.op[i] = arg;
    }
 	
@@ -701,17 +664,19 @@ node *mkpair(int oper, int nops, ...)
    return p;
 }
 
-node *mktuple(node *list)
+node *mktuple()
 {
-   node *tuple;
-   size_t sz = sizeof(struct node) + sizeof(struct tuple);
-   
-   if ((tuple = (struct node*)prialloc(sz)) == NULL)
-      badalloc();
+   node *p = prialloc();
+   p->type = t_tuple;
+   p->lineno = lineno;
+   p->rc = 1;
+   p->tuple.count = 0;
+   return p;
+}
 
-   tuple->type = t_tuple;
-   tuple->lineno = lineno;
-   tuple->rc = 1;
+node *list2tuple(node *list)
+{
+   node *tuple = mktuple();
 
    int len = 0;
    struct node *iter = list;
@@ -730,12 +695,7 @@ node *mktuple(node *list)
 
 node *mklambda(node *params, node *body, node *where, env *e)
 {
-   node *p;  
-   size_t size = sizeof(struct node) + sizeof(struct pair);
-
-   if ((p = (struct node*)prialloc(size)) == NULL)
-      badalloc();
-	
+   node *p = prialloc();
    p->type = t_closure;
    p->lineno = lineno;
    p->rc = 1;
@@ -745,13 +705,7 @@ node *mklambda(node *params, node *body, node *where, env *e)
    p->opr.op[0] = params;
    p->opr.op[1] = body;
    p->opr.op[2] = where;
-
    return p;
-}
-
-void badalloc()
-{
-   error("Unable to allocate memory - erminating");
 }
 
 node *car(node *node)
@@ -1234,6 +1188,9 @@ node *list_eq(node *l1, node *l2)
    if (l1->opr.nops != l2->opr.nops)
       return NODE_BOOL_FALSE;
 	
+   incref(l1); //Compensate for the unwanted decref eq is
+   incref(l2); //about to perform. Not 100% sure about this one.
+
    if (eq(l1->opr.op[0], l2->opr.op[0])->ival == true)
    {
       if (l1->opr.nops == 2 && l2->opr.nops == 2)

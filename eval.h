@@ -10,7 +10,7 @@ typedef struct pair {
    int oper;
    int nops;
    struct env *env;
-   struct node *op[1];
+   struct node *op[3];
 } pair;
 
 typedef struct tuple {
@@ -61,13 +61,13 @@ node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);
 node *mkstr(char *value);
-node *mktuple(node *list);
+node *mktuple();
+node *list2tuple(node *list);
 node *strtonode(char *value);
 
-struct node *prialloc(size_t sz);
+struct node *prialloc();
 void incref(node *n);
 void decref(node *n);
-void badalloc();
 
 node *eval(node *p, env *e);
 bool istailrecur(node *expr, symbol s);

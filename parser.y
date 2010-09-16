@@ -93,7 +93,7 @@ expr:
 | NOT expr                                            { $$ = mkpair(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkpair('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }
-| '{' list '}'                                        { $$ = mktuple($2); }
+| '{' list '}'                                        { $$ = list2tuple($2); }
 ;
 
 identifier:
