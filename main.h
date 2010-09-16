@@ -3,6 +3,8 @@
 
 typedef enum { false = 0, true = 1 } bool;
 
+#define doif(pred, expr) if (pred) expr
+
 /* command line arguments to the interpreter */
 char arg_fname[1000];
 bool arg_loadlib;

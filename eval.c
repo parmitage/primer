@@ -1024,7 +1024,7 @@ void pprint(node *node)
          for (int i = 0; i < node->tuple.count; ++i)
          {
             pprint(node->tuple.n[i]);
-            printf(",");
+            doif(i < node->tuple.count - 1, printf(","));
          }
          
          printf("}");
