@@ -26,7 +26,7 @@
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
-%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST TUPLE
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
 %token SHOW TYPE LENGTH NTH CONS WHERE RANGE
 
 %nonassoc ELSE
@@ -93,7 +93,6 @@ expr:
 | NOT expr                                            { $$ = mkpair(NOT, 1, $2); }
 | '-' expr %prec UMINUS                               { $$ = mkpair('-', 1, $2); }
 | '[' list ']'                                        { $$ = $2; }
-| '{' list '}'                                        { $$ = list2tuple($2); }
 ;
 
 identifier:

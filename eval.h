@@ -2,37 +2,6 @@
 #define __EVAL_H__
 
 #include "main.h"
-#include "types.h"
-
-#define MAX_SYMBOLS 1000
-
-typedef struct pair {
-   int oper;
-   int nops;
-   struct env *env;
-   struct node *op[3];
-} pair;
-
-typedef struct tuple {
-   int count;
-   struct node *n[MAX_TUPLES]; 
-} tuple;
-
-typedef struct node {
-   t_type type;
-   int lineno;
-   int rc;
-   union {
-      int ival;
-      float fval;
-      char* sval;
-      tuple tuple;
-      pair opr;
-   };
-} node;
-
-typedef int symbol;
-char *symtab[MAX_SYMBOLS];
 
 typedef struct binding {
    symbol sym;
@@ -61,8 +30,6 @@ node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);
 node *mkstr(char *value);
-node *mktuple();
-node *list2tuple(node *list);
 node *strtonode(char *value);
 
 struct node *prialloc();
@@ -72,8 +39,8 @@ void decref(node *n);
 node *eval(node *p, env *e);
 bool istailrecur(node *expr, symbol s);
 
-void bind(node *args, node *params, env *fnenv, env *argenv);
-void bindt(node *arg, node *tuple, env *fnenv);
+void bindarg(node *args, node *params, env *fnenv, env *argenv);
+void bind(node *lhs, node *rhs, env *env);
 void bindp(node *args, node *list, env *fnenv);
 binding *bindnew(symbol name, node* node);
 env *envnew(env* enclosing);

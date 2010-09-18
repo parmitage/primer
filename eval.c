@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include "main.h"
-#include "types.h"
 #include "utils.h"
 #include "eval.h"
 #include "y.tab.h"
@@ -64,18 +63,6 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
-      case t_tuple:
-      {
-         node *tuple = mktuple();
-         
-         for (int i = 0; i < n->tuple.count; ++i)
-            tuple->tuple.n[i] = eval(n->tuple.n[i], e);
-
-         tuple->tuple.count = n->tuple.count;
-
-         return tuple;
-      }
-
       case t_pair:
       {
          switch(n->opr.oper)
@@ -122,7 +109,7 @@ node *eval(node *n, env *e)
 
                /* parameters */
                node *args = n->opr.op[1];
-               bind(fn->opr.op[0], args, ext, e);
+               bindarg(fn->opr.op[0], args, ext, e);
 
                /* where clause */
                if (fn->opr.nops == 3)
@@ -147,6 +134,7 @@ node *eval(node *n, env *e)
             }
 
             case LIST:
+            case STRING:
             {
                /* because we can store symbols in lists we evaluate the contents */
                node *ret;
@@ -154,43 +142,21 @@ node *eval(node *n, env *e)
                switch (n->opr.nops)
                {
                   case 0:
-                     ret = mkpair(LIST, 0);
+                     ret = mkpair(n->opr.oper, 0);
                      break;
                   case 1:
-                     ret = mkpair(LIST, 1, eval(n->opr.op[0], e));
+                     ret = mkpair(n->opr.oper, 1, eval(n->opr.op[0], e));
                      break;
                   case 2:
-                     ret = mkpair(LIST, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
+                     ret = mkpair(n->opr.oper, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
                      break;
                }
 
-               //decref(p);
+               decref(n);
                //incref(ret);
                return ret;
             }
            
-            case STRING:
-            {
-               node *ret;
-
-               switch (n->opr.nops)
-               {
-                  case 0:
-                     ret = mkpair(STRING, 0);
-                     break;
-                  case 1:
-                     ret = mkpair(STRING, 1, eval(n->opr.op[0], e));
-                     break;
-                  case 2:
-                     ret = mkpair(STRING, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-                     break;
-               }
-
-               //decref(p);
-               //incref(ret);
-               return ret;
-            }
-
             case SHOW:
             {
                node *val = eval(n->opr.op[0], e);
@@ -324,7 +290,7 @@ node *eval(node *n, env *e)
                      t = -1;
                }
 
-               decref(n);
+               //decref(n);
                return mkint(t);
             }
          }
@@ -332,37 +298,27 @@ node *eval(node *n, env *e)
    }
 }
 
-void bind(node *args, node *params, env *fnenv, env *argenv)
+void bindarg(node *args, node *params, env *fnenv, env *argenv)
 {
    if (params != NULL)
    {		
       if (params->opr.nops > 1)
-         bind(args->opr.op[1], params->opr.op[1], fnenv, argenv);
+         bindarg(args->opr.op[1], params->opr.op[1], fnenv, argenv);
 		
       if (params->opr.nops > 0)
-      {
-         node *n = eval(params->opr.op[0], argenv);
-          
-         if (args->opr.op[0]->type == t_symbol)
-         {
-            binding* b = bindnew(args->opr.op[0]->ival, n);
-            envext(fnenv, b);
-         }
-         else if (args->opr.op[0]->type == t_pair && args->opr.op[0]->opr.oper == CONS)
-            bindp(args->opr.op[0], n, fnenv);
-         else if (args->opr.op[0]->type == t_tuple)
-            bindt(args->opr.op[0], n, fnenv);
-      }
+         bind(args, eval(params->opr.op[0], argenv), fnenv);
    }
 }
 
-void bindt(node *arg, node *tuple, env *fnenv)
+void bind(node *lhs, node *rhs, env *env)
 {
-   for (int i = 0; i < arg->tuple.count; ++i)
-   {
-      binding *b = bindnew(arg->tuple.n[i]->ival, tuple->tuple.n[i]);
-      envext(fnenv, b);
-   }
+    if (lhs->opr.op[0]->type == t_symbol)
+    {
+       binding* b = bindnew(lhs->opr.op[0]->ival, rhs);
+       envext(env, b);
+    }
+    else if (lhs->opr.op[0]->type == t_pair && lhs->opr.op[0]->opr.oper == CONS)
+       bindp(lhs->opr.op[0], rhs, env);
 }
 
 void bindp(node *args, node *list, env *fnenv)
@@ -407,13 +363,11 @@ env *envnew(env *parent)
    return e;
 }
 
+#define SKIP_REF_COUNT if (!refctr || n == NULL || n->rc == -1) return;
+
 void incref(node *n)
 {
-   if (!refctr)
-      return;
-
-   if (n->rc == -1)
-      return;
+   SKIP_REF_COUNT
 
    n->rc++;
 
@@ -426,14 +380,7 @@ void incref(node *n)
 
 void decref(node *n)
 {
-   if (!refctr)
-      return;
-
-   if (n == NULL)
-      return;
-
-   if (n->rc == -1)
-      return;
+   SKIP_REF_COUNT
 
    n->rc--;
 
@@ -448,13 +395,13 @@ void decref(node *n)
       /* DEBUG */
       cnt_free++;
 
-      if (n->type == t_pair && n->opr.oper == LIST)
+      if (n->type == t_pair && (n->opr.oper == LIST || n->opr.oper == STRING))
       {
          for (int i = 0; i < n->opr.nops; i++)
             decref(n->opr.op[i]);
       }
 
-      free(n);
+      //free(n);
    }
 }
 
@@ -564,7 +511,7 @@ struct node *prialloc()
    node *p;
 
    if ((p = (struct node*)malloc(sizeof(struct node))) == NULL)
-      error("Unable to allocate memory - terminating");
+      error("Unable to allocate memory!");
 
    return p;
 }
@@ -662,35 +609,6 @@ node *mkpair(int oper, int nops, ...)
    va_end(ap);
 	
    return p;
-}
-
-node *mktuple()
-{
-   node *p = prialloc();
-   p->type = t_tuple;
-   p->lineno = lineno;
-   p->rc = 1;
-   p->tuple.count = 0;
-   return p;
-}
-
-node *list2tuple(node *list)
-{
-   node *tuple = mktuple();
-
-   int len = 0;
-   struct node *iter = list;
-
-   while (iter != NULL && iter->opr.nops > 0)
-   {
-      tuple->tuple.n[len] = iter->opr.op[0];
-      len++;      
-      iter = iter->opr.op[1];
-   }
-
-   tuple->tuple.count = len;
-
-   return tuple;
 }
 
 node *mklambda(node *params, node *body, node *where, env *e)
@@ -923,8 +841,7 @@ void pprint(node *node)
                   {
                      pprint(params->opr.op[0]);
                      params = params->opr.op[1];
-                     if (params != NULL)
-                        printf(", ");
+                     when(params != NULL, printf(", "));
                   }
                   else
                      params = NULL;
@@ -1017,20 +934,6 @@ void pprint(node *node)
          break;
       }
 
-      case t_tuple:
-      {
-         printf("{");
-         
-         for (int i = 0; i < node->tuple.count; ++i)
-         {
-            pprint(node->tuple.n[i]);
-            doif(i < node->tuple.count - 1, printf(","));
-         }
-         
-         printf("}");
-         break;
-      }
-      
       case t_closure:
       {	
          printf("fn (");
