@@ -8,7 +8,7 @@ The knowledge you'll gain is transferable to other functional languages such as
 Getting Started
 ---------------
 The Primer interpreter is still under development and lacks many important
-features, including memory management. Until the interpreter reaches a stable
+features. Until the interpreter reaches a stable
 state you must build it from source. The code is available from
 [github](http://github.com/parmitage/primer) and can be pulled with the
 following command:
@@ -47,11 +47,6 @@ create with them are shorter and easier to understand.
 
 Conventions used in this tutorial
 ---------------------------------
-Code can be taken from this tutorial and pasted into a text file
-without modification. Some expressions may depend upon
-definitions which were previously introduced but for brevity I won't
-repeat them.
-
 Comments are introduced with the # character and extend to the end of
 the line. I will sometimes place comments above or to the side of an
 expression with ==> to signify the output of the expression but this
@@ -119,17 +114,22 @@ are indexed from 0.
     xs1!4        # ==> 4
     xs1!a        # ==> 0
 
-Lists can be constructed programatically with the ++ operator.
+An item can be prepended to a list with : operator which is called cons.
 
-    a ++ [a, [b, c], a] ++ 'c' ++ [4, 5, 6]
+    1 : [2,3,4]  # ==> [1,2,3,4]
+    1 : 2 : []   # ==> [1,2]
+
+Note that the second argument to cons must be a list. To append list use
+the ++ operator.
+
+    [1,2,3] ++ [4,5,6]
 
 The Primer standard library (found in Library.pri) provides several
 functions for working with lists such as __search__, __sort__ and __reverse__.
 
 Primer provides a simple character type and strings are nothing
 more than lists of characters with syntactic sugar for creating
-them. This means that operators designed for use with lists can often
-be used with strings.
+them. This means that many list operators can be used with strings.
 
     "hello" == ['h', 'e', 'l', 'l', 'o']    # ==> true
     head("hello")                           # ==> 'h'
@@ -137,7 +137,7 @@ be used with strings.
 
 Recursion
 ---------
-Because we can't mutate a variable, it's not possible to use iteration
+Because we can't mutate a variable it's not possible to use iteration
 in a functional programming language. Instead we use recursive
 functions as in this example which counts the number of elements in a list.
 
@@ -177,8 +177,8 @@ other, to the parameters of f and to definitions in the global scope
 but they can not be accessed from outside of f.
 
 Primer is said to be lexically scoped which means that a symbol is
-bound at a given point if and only if that point is textually enclosed
-by a block in which the symbol is defined, or if the symbol is
+bound at a given point either if that point is textually enclosed
+by a block in which the symbol is defined or if the symbol is
 globally defined.
 
 A binding may temporarily 'overwrite' a more global binding. This is
@@ -198,8 +198,8 @@ binding of a which shadows the global binding. Notice also that within
 the local function a, there's a second instance of shadowing: its
 parameter x shadows c's parameter x.
 
-The basic rule is that a function will use the most local definition of a
-symbol that it can find and will search outwards to successively wider scopes in
+The basic rule is that a function will use the most local possible definition
+and will search outwards to successively wider scopes in
 order to resolve a symbol. If no symbol is found even at the global scope then
 the symbol is said to be unbound and an error is raised.
 
@@ -228,7 +228,7 @@ find the first number in a list which is evenly divisible by 3.
     show(findNumberDivisibleBy3(xs))
 
 This works but is rather limited. We could parameterise the
-function to search for any value of n but we can do better! Looking at
+function to search for any value of n but we can do better. Looking at
 the function we can see that there are two aspects to
 it: search and test. By turning search into a higher
 order function we can make it more general.
@@ -263,7 +263,7 @@ which pass.
 
     findAllByFun = fn (f, xs)
         if xs != [] then
-           if f(head(xs)) then [head(xs)] ++ findAllByFun(f, tail(xs))
+           if f(head(xs)) then head(xs) : findAllByFun(f, tail(xs))
            else findAllByFun(f, tail(xs))
         else []
     end
@@ -311,14 +311,17 @@ matches the rest.
 
     third = fn (x:y:z:xs) z end
 
+Patterns can also be used in definitions.
+
+    x:xs = [1,2,3,4]
+
 If you're only interested in part of the de-structured list, you can
 use a wildcard which binds against any value but doesn't create a
 binding.
 
     head = fn (x:_) x end
     tail = fn (_:xs) xs end
-
-De-structuring is a useful way of simplifying your function definitions.
+    x:_:xs = [1,2,3,4]
 
 Mapping, folding and filtering
 ------------------------------
@@ -333,7 +336,7 @@ transformed values.
 The implementation of map in the standard library is quite straightforward.
 
     map = fn (f, x:xs)
-       if x != [] then f(x) ++ map(f, xs)
+       if x != [] then f(x) : map(f, xs)
        else []
     end
 
@@ -376,7 +379,7 @@ The implementation of filter should look familiar to you from earlier!
 
     filter = fn (f, y:ys)
        if y != [] then
-          if f(y) then [y] ++ filter(f, ys)
+          if f(y) then y : filter(f, ys)
           else filter(f, ys)
        else []
     end
@@ -426,11 +429,11 @@ Tail Recursion
 Earlier we wrote a function to count the number of elements in a list.
 
     count = fn (xs)
-        if xs != [] then 1 + count(tail(xs))
-        else 0
+       if xs != [] then 1 + count(tail(xs))
+       else 0
     end
 
-However, this function is not efficient and will crash on a
+However, this function is inefficient and will crash on a
 sufficiently long list. In most programming languages, every time a
 function is called, information is pushed onto the stack including
 parameter information and where it should return its value to. The
@@ -494,24 +497,25 @@ I encourage you to write your own solution but here's my attempt.
 
     W = 0 S = 1 E = 2 N = 3
     dirs = ['W', 'S', 'E', 'N']
-    
-    position = fn (x, y, h) [x, y, h] end
+    rover = [10, 10, N]
+    command = "R1R3L2L1"
+
     print = fn (x:y:h:_) show([x, y, dirs!h]) end
-    
+
     move = fn (r, s)
-        foldl(transform, r, s)
-        where transform = fn (x:y:h:_, c)
-                  if c == 'L' then [x, y, (h + 1) mod 4]
-                  else if c == 'R' then [x, y, rotr(h) - 1]
-                  else translate(x, y, h, c - '0')
-              end
-              rotr = fn (h) if h == 0 then 4 else h end
-              translate = fn (x, y, h, c)
-                  if even(h) then [x + ((h - 1) * c), y, h]
-                  else [x, y + ((h - 2) * c), h]
-              end
+       foldl(transform, r, s)
+       where transform = fn (x:y:h:_, c)
+                if c == 'L' then [x, y, (h + 1) mod 4]
+                else if c == 'R' then [x, y, rotr(h) - 1]
+                else translate(x, y, h, c - '0')
+             end
+             rotr = fn (h) if h == 0 then 4 else h end
+             translate = fn (x, y, h, c)
+                if even(h) then [x + ((h - 1) * c), y, h]
+                else [x, y + ((h - 2) * c), h]
+             end
     end
-    
-    print(move(position(10, 10, N), "R1R3L2L1"))
+
+    print(move(rover, command))
 
 The examples directory contains several other simple programs.

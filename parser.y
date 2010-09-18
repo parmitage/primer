@@ -53,7 +53,7 @@ stmt                                                  { $$ = $1; }
 ;
 
 stmt:
-identifier '=' expr                                   { $$ = mkpair(DEF, 2, $1, $3); }
+expr '=' expr                                         { $$ = mkpair(DEF, 2, $1, $3); }
 | expr                                                { $$ = $1; }
 ;
 

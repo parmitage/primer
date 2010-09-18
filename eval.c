@@ -84,9 +84,10 @@ node *eval(node *n, env *e)
 
             case DEF:
             {
-               symbol name = n->opr.op[0]->ival;
-               binding *binding = bindnew(name, eval(n->opr.op[1], e));
-               envext(e, binding);
+               //symbol name = n->opr.op[0]->ival;
+               //binding *binding = bindnew(name, eval(n->opr.op[1], e));
+               //envext(e, binding);
+               bind(n, eval(n->opr.op[1], e), e);
                break;
             }
 				
@@ -314,7 +315,7 @@ void bind(node *lhs, node *rhs, env *env)
 {
     if (lhs->opr.op[0]->type == t_symbol)
     {
-       binding* b = bindnew(lhs->opr.op[0]->ival, rhs);
+       binding *b = bindnew(lhs->opr.op[0]->ival, rhs);
        envext(env, b);
     }
     else if (lhs->opr.op[0]->type == t_pair && lhs->opr.op[0]->opr.oper == CONS)
