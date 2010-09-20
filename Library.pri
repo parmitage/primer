@@ -7,9 +7,12 @@ assert = fn (id, act, exp)
    else true
 end
 
-map = fn (f, x:xs)
-   if x != [] then f(x) : map(f, xs)
-   else []
+map = fn (f, xs)
+   inner(xs, [])
+   where inner = fn (x:xs, accum)
+            if x != [] then inner(xs, f(x) : accum)
+            else reverse(accum)
+         end
 end
 
 foldl = fn (f, init, x:xs)
@@ -22,16 +25,22 @@ foldr = fn (f, init, x:xs)
    else init
 end
 
-filter = fn (f, y:ys)
-   if y != [] then
-      if f(y) then y : filter(f, ys)
-      else filter(f, ys)
-   else []
+filter = fn (f, xs)
+   inner(xs, [])
+   where inner = fn (y:ys, accum)
+            if y != [] then
+               if f(y) then inner(ys, accum ++ [y])
+               else inner(ys, accum)
+            else accum
+         end
 end
 
-reverse = fn (x:xs)
-   if x != [] then reverse(xs) ++ [x]
-   else xs
+reverse = fn (xs)
+   inner(xs, [])
+   where inner = fn (x:xs, accum)
+            if x != [] then inner(xs, x : accum)
+            else accum
+         end
 end
 
 find = fn (a, x:xs)

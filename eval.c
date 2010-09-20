@@ -7,11 +7,6 @@
 #include "eval.h"
 #include "y.tab.h"
 
-static long cnt_alloc = 0;
-static long cnt_free = 0;
-static long cnt_inc = 0;
-static long cnt_dec = 0;
-
 int main(int argc, char **argv)
 {
    defaults();
@@ -31,8 +26,6 @@ int main(int argc, char **argv)
    eval(ast, NULL);
    return 0;
 }
-
-env *tco_env;
 
 node *eval(node *n, env *e)
 {
@@ -84,9 +77,6 @@ node *eval(node *n, env *e)
 
             case DEF:
             {
-               //symbol name = n->opr.op[0]->ival;
-               //binding *binding = bindnew(name, eval(n->opr.op[1], e));
-               //envext(e, binding);
                bind(n, eval(n->opr.op[1], e), e);
                break;
             }
@@ -1209,18 +1199,12 @@ node *loadlib(char *name)
    libroot = getenv("PRIMER_LIBRARY_PATH");
   	
    if (libroot == NULL)
-   {
-      printf("The environment variable PRIMER_LIBRARY_PATH has not been set\n");
-      exit(-1);
-   }
+      error("The environment variable PRIMER_LIBRARY_PATH has not been set");
     
    sprintf(libpath, "%s%s.pri", libroot, name);
     
    if (!fexists(libpath))
-   {
-      printf("Unable to find library: %s\n", name);
-      exit(-1);
-   }
+      error("Unable to find standard library");
   
    return parsel(libpath);
 }
@@ -1228,7 +1212,7 @@ node *loadlib(char *name)
 void error(char *msg)
 {
    printf("error: %s\n", msg);
-   exit(0);
+   exit(-1);
 }
 
 symbol intern(char *string)
