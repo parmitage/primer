@@ -15,16 +15,21 @@ typedef enum {
    t_char,
    t_pair,
    t_list,
-   t_tuple,
    t_closure
 } t_type;
 
 typedef struct pair {
    int oper;
    int nops;
-   struct env *env;
    struct node *op[3];
 } pair;
+
+typedef struct closure {
+   struct node *args;
+   struct node *body;
+   struct node *where;
+   struct env *env;
+} closure;
 
 typedef struct node {
    t_type type;
@@ -34,6 +39,7 @@ typedef struct node {
       int ival;
       float fval;
       char* sval;
+      closure *fn;
       pair opr;
    };
 } node;

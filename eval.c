@@ -96,29 +96,29 @@ node *eval(node *n, env *e)
             {
                symbol fsym = n->opr.op[0]->ival;
                node *fn = eval(n->opr.op[0], e);
-               env *ext = envnew(fn->opr.env);
+               env *ext = envnew(fn->fn->env);
 
                /* parameters */
                node *args = n->opr.op[1];
-               bindarg(fn->opr.op[0], args, ext, e);
+               bindarg(fn->fn->args, args, ext, e);
 
                /* where clause */
-               if (fn->opr.nops == 3)
-                  eval(fn->opr.op[2], ext);
+               if (fn->fn->where != NULL)
+                  eval(fn->fn->where, ext);
 
                /* function body */
-               if (istailrecur(fn->opr.op[1], fsym))
+               if (istailrecur(fn->fn->body, fsym))
                {
                   if (tco_env != NULL)
                      envdel(tco_env);
                
-                  n = fn->opr.op[1];
+                  n = fn->fn->body;
                   e = tco_env = ext;
                   goto eval_start;
                }
                else
                {
-                  node *ret = eval(fn->opr.op[1], ext);
+                  node *ret = eval(fn->fn->body, ext);
                   //e = envdel(ext);
                   return ret;
                }
@@ -586,7 +586,6 @@ node *mkpair(int oper, int nops, ...)
    p->rc = 1;
    p->opr.oper = oper;
    p->opr.nops = nops;
-   p->opr.env = NULL;
 
    va_list ap;
    va_start(ap, nops);
@@ -602,18 +601,17 @@ node *mkpair(int oper, int nops, ...)
    return p;
 }
 
-node *mklambda(node *params, node *body, node *where, env *e)
+node *mklambda(node *args, node *body, node *where, env *env)
 {
    node *p = prialloc();
    p->type = t_closure;
    p->lineno = lineno;
    p->rc = 1;
-   p->opr.oper = LAMBDA;
-   p->opr.nops = where == NULL ? 2 : 3;
-   p->opr.env = envnew(e);
-   p->opr.op[0] = params;
-   p->opr.op[1] = body;
-   p->opr.op[2] = where;
+   p->fn = (struct closure*)malloc(sizeof(struct closure));
+   p->fn->args = args;
+   p->fn->body = body;
+   p->fn->where = where;
+   p->fn->env = envnew(env);
    return p;
 }
 
