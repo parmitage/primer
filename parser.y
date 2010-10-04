@@ -71,7 +71,6 @@ expr:
 | identifier '(' list ')'                             { $$ = mkpair(APPLY, 2, $1, $3); }
 | IF expr THEN expr ELSE expr                         { $$ = mkpair(IF, 3, $2, $4, $6); }
 | expr CONS expr                                      { $$ = mkpair(CONS, 2, $1, $3); }
-| NOT expr                                            { $$ = mkpair(NOT, 1, $2); }
 | TYPE '(' expr ')'                                   { $$ = mkpair(TYPE, 1, $3); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3, NULL); }
 | LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3, NULL); }
@@ -87,6 +86,7 @@ expr:
 | expr EQ expr                                        { $$ = mkoperator(eq, $1, $3); }
 | expr AND expr                                       { $$ = mkoperator(and, $1, $3); }
 | expr OR expr                                        { $$ = mkoperator(or, $1, $3); }
+| NOT expr                                            { $$ = mkoperator(not, $2, NULL); }
 | expr MOD expr                                       { $$ = mkoperator(mod, $1, $3); }
 | expr APPEND expr                                    { $$ = mkoperator(append, $1, $3); }
 | expr RANGE expr                                     { $$ = mkoperator(range, $1, $3); }

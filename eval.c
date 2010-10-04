@@ -180,9 +180,6 @@ node *eval(node *n, env *e)
             case CONS:
                return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 
-            case NOT:
-               return not(eval(n->opr.op[0], e));
-				
             case TYPE:
             {
                int t = n->opr.op[0]->type;
@@ -1059,7 +1056,15 @@ node *lt(node *args)
 
 node *gt(node *args)
 {
-   return not(lte(args));
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
+   node *ret = EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+
+   //decref(x);
+   //decref(y);
+
+   return ret;
 }
 
 node *lte(node *args)
@@ -1075,7 +1080,13 @@ node *lte(node *args)
 
 node *gte(node *args)
 {
-   return not(lt(args));
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+   node *ret = EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+   
+   //decref(x);
+   //decref(y);
+   return ret;
 }
 
 node *list_eq(node *l1, node *l2)
@@ -1121,12 +1132,13 @@ node *eq(node *args)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 
 node *neq(node *args)
 {
-   return(not(eq(args)));
+   return eq(args)->ival == true ? NODE_BOOL_FALSE : NODE_BOOL_TRUE;
 }
 
 node *and(node *args)
@@ -1175,8 +1187,10 @@ node *or(node *args)
    return ret;
 }
 
-node *not(node *x)
+node *not(node *args)
 {
+   node *x = args->opr.op[0];
+
    if (x->type != t_bool)
       error("operand to operator not must be boolean");
 
