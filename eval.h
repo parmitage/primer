@@ -6,16 +6,14 @@
 #define MAX_SYMBOLS 1000
 
 typedef enum {
-   t_any,
-   t_num,
    t_int,
    t_float,
    t_bool,
    t_symbol,
    t_char,
    t_pair,
-   t_list,
-   t_closure
+   t_closure,
+   t_operator
 } t_type;
 
 typedef struct pair {
@@ -31,6 +29,12 @@ typedef struct closure {
    struct env *env;
 } closure;
 
+typedef struct operator {
+   struct node * (*primitive) (struct node *);
+   struct node *arg1;
+   struct node *arg2;
+} operator;
+
 typedef struct node {
    t_type type;
    int lineno;
@@ -40,6 +44,7 @@ typedef struct node {
       float fval;
       char* sval;
       closure *fn;
+      operator *op;
       pair opr;
    };
 } node;
@@ -59,7 +64,7 @@ typedef struct env {
 } env;
 
 node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp, *ast;
-env *global, *tco_env;
+env *top, *tco_env;
 int lineno;
 symbol wildcard;
 
@@ -75,6 +80,8 @@ node *parsel(char *filename);
 /* constructors */
 node *mkpair(int oper, int nops, ...);
 node *mksym(char *s);
+node *mkprimitive(struct node * (*primitive) (struct node *));
+node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2);
 node *mklambda(node *params, node *body, node *where, env *e);
 node *mkint(int value);
 node *mkfloat(float value);
@@ -97,36 +104,40 @@ void bindp(node *args, node *list, env *fnenv);
 binding *bindnew(symbol name, node* node);
 env *envnew(env* enclosing);
 env *envdel(env* e);
-void envext(env *e, binding *binding);
+void extend(env *e, binding *binding);
 binding *envlookup(env *e, symbol sym);
 symbol intern(char *string);
 char *symname(symbol s);
 
+/* special forms */
+void pprint(node *node);
+bool empty(node *list);
+node *list_eq(node *l1, node *l2);
+node *cons(node *atom, node *list);
+
 /* primitive operators */
 node *car(node *node);
 node *cdr(node *node);
-int length(node *node);
-void display(node *node);
-void pprint(node *node);
-bool empty(node *list);
-node *add(node *x, node *y);
-node *sub(node *x, node *y);
-node *mul(node *x, node *y);
-node *dvd(node *x, node *y);
-node *lt(node *x, node *y);
-node *gt(node *x, node *y);
-node *lte(node *x, node *y);
-node *gte(node *x, node *y);
-node *eq(node *x, node *y);
-node *neq(node *x, node *y);
-node *list_eq(node *l1, node *l2);
-node *and(node *x, node *y);
-node *or(node *x, node *y);
-node *not(node *node);
-node *mod(node *x, node *y);
-node *cons(node *atom, node *list);
-node *append(node *list1, node *list2);
-node *range(node *from, node *to);
+node *len(node *node);
+node *nth(node *args);
+node *add(node *args);
+node *sub(node *args);
+node *neg(node *args);
+node *mul(node *args);
+node *dvd(node *args);
+node *lt(node *args);
+node *gt(node *args);
+node *lte(node *args);
+node *gte(node *args);
+node *eq(node *args);
+node *neq(node *args);
+node *and(node *args);
+node *or(node *args);
+node *not(node *args);
+node *mod(node *args);
+node *append(node *args);
+node *range(node *args);
+node *show(node *args);
 
 /* misc utils */
 node *loadlib(char *name);

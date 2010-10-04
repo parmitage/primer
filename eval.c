@@ -19,11 +19,13 @@ int main(int argc, char **argv)
 
    NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
    NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
-	
+
+   top = envnew(NULL);
+
    lineno = 1;
    parse(arg_fname);
    wildcard = intern("_");
-   eval(ast, NULL);
+   eval(ast, top);
    return 0;
 }
 
@@ -56,19 +58,23 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
+      case t_operator:
+      {
+         /* TODO this use of mkpair would be tidied up when we have proper cons cells */
+         return n->op->primitive(mkpair(-1, 2, eval(n->op->arg1, e), eval(n->op->arg2, e)));
+      }
+
       case t_pair:
       {
          switch(n->opr.oper)
          {
             case PROG:
             {
-               global = e = envnew(NULL);
-               
                if (arg_loadlib == true)
                   eval(loadlib(arg_stdlib), e);
 
                eval(n->opr.op[0], e);
-               envdel(global);
+               envdel(top);
 
                trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
                      cnt_inc, cnt_dec, cnt_alloc, cnt_free);
@@ -83,7 +89,7 @@ node *eval(node *n, env *e)
 				
             case LAMBDA:
             {
-               //env *ce = envnew(global);
+               //env *ce = envnew(top);
                //build_closure_env(n->opr.op[1], env, ce);
 
                if (n->opr.nops == 2)
@@ -148,13 +154,7 @@ node *eval(node *n, env *e)
                return ret;
             }
            
-            case SHOW:
-            {
-               node *val = eval(n->opr.op[0], e);
-               display(val);
-               return val;
-            }
-				
+            /* TODO can ';' and PROG be merged? */
             case ';':
             {
                eval(n->opr.op[0], e);
@@ -177,93 +177,9 @@ node *eval(node *n, env *e)
                goto eval_start;
             }
 
-            case LENGTH:
-            {
-               node *val = eval(n->opr.op[0], e);
-               return mkint(length(val));
-            }
-
-            case NTH:
-            {
-               node *list = eval(n->opr.op[0], e);
-               int index = eval(n->opr.op[1], e)->ival, n = 0;
-               bool found = false;
-
-               while (!found)
-               {
-                  if (list == NULL || index < 0)
-                  {
-                     return mkpair(LIST, 0);
-                     found = true;
-                  }
-                  else if (index == n)
-                  {
-                     return car(list);
-                     found = true;
-                  }
-                  else
-                  {
-                     list = cdr(list);
-                     ++n;
-                  }
-               }
-              
-               break;
-            }
-				
-            case '+':
-               return add(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case '-':
-            {
-               if (n->opr.nops == 1)
-                  return sub(mkint(0), eval(n->opr.op[0], e));
-               else if (n->opr.nops == 2)
-                  return sub(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-            }
-				
-            case '*':
-               return mul(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case '/':
-               return dvd(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case '<':
-               return lt(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case '>':
-               return gt(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case GE:
-               return gte(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case LE:
-               return lte(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case NE:
-               return neq(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case EQ:
-               return eq(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case AND:
-               return and(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case OR:
-               return or(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
-            case MOD:
-               return mod(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-
-            case APPEND:
-               return append(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-
             case CONS:
                return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
 
-            case RANGE:
-               return range(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-				
             case NOT:
                return not(eval(n->opr.op[0], e));
 				
@@ -306,7 +222,7 @@ void bind(node *lhs, node *rhs, env *env)
     if (lhs->opr.op[0]->type == t_symbol)
     {
        binding *b = bindnew(lhs->opr.op[0]->ival, rhs);
-       envext(env, b);
+       extend(env, b);
     }
     else if (lhs->opr.op[0]->type == t_pair && lhs->opr.op[0]->opr.oper == CONS)
        bindp(lhs->opr.op[0], rhs, env);
@@ -320,7 +236,7 @@ void bindp(node *args, node *list, env *fnenv)
    if (args->opr.op[0]->ival != wildcard)
    {
       binding *headb = bindnew(args->opr.op[0]->ival, head);
-      envext(fnenv, headb);
+      extend(fnenv, headb);
    }
 
    if (args->opr.op[1]->type == t_symbol)
@@ -328,7 +244,7 @@ void bindp(node *args, node *list, env *fnenv)
       if (args->opr.op[1]->ival != wildcard)
       {
          binding *restb = bindnew(args->opr.op[1]->ival, rest);
-         envext(fnenv, restb);
+         extend(fnenv, restb);
       }
    }
    else
@@ -366,7 +282,7 @@ void incref(node *n)
    cnt_inc++;
 
    //printf("incref to %i for ", n->rc);
-   //display(n);
+   //show(n);
 }
 
 void decref(node *n)
@@ -379,7 +295,7 @@ void decref(node *n)
    cnt_dec++;
 
    //printf("decref to %i for ", n->rc);
-   //display(n);
+   //show(n);
 
    if (n->rc == 0)
    {
@@ -418,7 +334,7 @@ env *envdel(env *e)
    return parent;
 }
 
-void envext(env *e, binding *nb)
+void extend(env *e, binding *nb)
 {
    symbol s = nb->sym;
    binding *h = e->bind;
@@ -453,7 +369,7 @@ binding* envlookup(env *e, symbol sym)
             /* TODO need to clone the env in this new design... */
             /* if (depth) */
             /* { */
-            /*    envext(top, b); */
+            /*    extend(top, b); */
             /* } */
             return b;
          }
@@ -615,6 +531,19 @@ node *mklambda(node *args, node *body, node *where, env *env)
    return p;
 }
 
+node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2)
+{
+   node *p = prialloc();
+   p->type = t_operator;
+   p->lineno = lineno;
+   p->rc = -1;
+   p->op = (struct operator*)malloc(sizeof(struct operator));
+   p->op->primitive = op;
+   p->op->arg1 = arg1;
+   p->op->arg2 = arg2;
+   return p;
+}
+
 node *car(node *node)
 {
    struct node *ret;
@@ -656,23 +585,53 @@ bool empty(node *list)
    return list->type == t_pair && list->opr.nops == 0;
 }
 
-int length(node *node)
+node *len(node *node)
 {
+   node = node->opr.op[0];
+
    if (node->type != t_pair)
       error("argument to length must be a list");
 
-   int len = 0;
+   int n = 0;
    struct node *iter = node;
 
    while (iter != NULL && iter->opr.nops > 0)
    {
-      len += 1;
+      n += 1;
       iter = iter->opr.op[1];
    }
 
-   //printf("length=%i and rc=%i\n", len, node->rc);
    decref(node);
-   return len;
+
+   return mkint(n);
+}
+
+node *nth(node *args)
+{
+   node *list = args->opr.op[0];
+   int index = args->opr.op[1]->ival;
+
+   int n = 0;
+   bool found = false;
+
+   while (!found)
+   {
+      if (list == NULL || index < 0)
+      {
+         return mkpair(LIST, 0);
+         found = true;
+      }
+      else if (index == n)
+      {
+         return car(list);
+         found = true;
+      }
+      else
+      {
+         list = cdr(list);
+         ++n;
+      }
+   }
 }
 
 node *cons(node *atom, node *list)
@@ -683,8 +642,11 @@ node *cons(node *atom, node *list)
       return mkpair(LIST, 2, atom, list);
 }
 
-node *append(node *list1, node *list2)
+node *append(node *args)
 {
+   node *list1 = args->opr.op[0];
+   node *list2 = args->opr.op[1];
+
    if (empty(list2))
       return list1;
 
@@ -705,8 +667,11 @@ node *append(node *list1, node *list2)
    return r;
 }
 
-node *range(node *s, node *e)
+node *range(node *args)
 {
+   node *s = args->opr.op[0];
+   node *e = args->opr.op[1];
+
    int from = s->ival;
    int to = e->ival;
    node *list = mkpair(LIST, 0);
@@ -943,21 +908,22 @@ void pprint(node *node)
    }		
 }
 
-void display(node* n)
+node *show(node *args)
 {
-   if (n == NULL)
-      return;
-		
-   pprint(n);
+   pprint(args->opr.op[0]);
    printf("\n");
+   return args->opr.op[0];
 }
 
 #define IS_NUMERIC_TYPE(x) (x->type == t_int || x->type == t_float || x->type == t_char ? true : false)
 #define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
 #define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
 
-node *add(node *x, node *y)
+node *add(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator + must be of a numeric type");
 
@@ -973,13 +939,17 @@ node *add(node *x, node *y)
          break;
    }
 
-   decref(x);
-   decref(y);
+   // decref(args)
+   // decref(x);
+   // decref(y);
    return ret;
 }
 
-node *sub(node *x, node *y)
+node *sub(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator - must be of a numeric type");
 
@@ -1000,8 +970,35 @@ node *sub(node *x, node *y)
    return ret;
 }
 
-node *mul(node *x, node *y)
+node *neg(node *args)
 {
+   node *x = args->opr.op[0];
+
+   if (!IS_NUMERIC_TYPE(x))
+      error("operand to neg must be of a numeric type");
+
+   node *ret;
+
+   switch (x->type)
+   {
+      case t_int:
+         ret = mkint(-x->ival);
+         break;
+      case t_float:
+         ret = mkfloat(-x->fval);
+         break;
+   }
+
+   decref(x);
+
+   return ret;
+}
+
+node *mul(node *args)
+{
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator * must be of a numeric type");
 
@@ -1017,13 +1014,16 @@ node *mul(node *x, node *y)
          break;
    }
 
-   decref(x);
-   decref(y);
+   //decref(x);
+   //decref(y);
    return ret;
 }
 
-node *dvd(node *x, node *y)
+node *dvd(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+   
    if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
       error("operands to operator / must be of a numeric type");
 
@@ -1044,32 +1044,38 @@ node *dvd(node *x, node *y)
    return ret;
 }
 
-node *lt(node *x, node *y)
+node *lt(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
-   decref(x);
-   decref(y);
+   //decref(x);
+   //decref(y);
+
    return ret;
 }
 
-node *gt(node *x, node *y)
+node *gt(node *args)
 {
-   return not(lte(x, y));
+   return not(lte(args));
 }
 
-node *lte(node *x, node *y)
+node *lte(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
    node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
-   decref(x);
-   decref(y);
+   //decref(x);
+   //decref(y);
    return ret;
 }
 
-node *gte(node *x, node *y)
+node *gte(node *args)
 {
-   return not(lt(x, y));
+   return not(lt(args));
 }
 
 node *list_eq(node *l1, node *l2)
@@ -1083,7 +1089,7 @@ node *list_eq(node *l1, node *l2)
    incref(l1); //Compensate for the unwanted decref eq is
    incref(l2); //about to perform. Not 100% sure about this one.
 
-   if (eq(l1->opr.op[0], l2->opr.op[0])->ival == true)
+   if (eq(mkpair(-1, 2, l1->opr.op[0], l2->opr.op[0]))->ival == true)
    {
       if (l1->opr.nops == 2 && l2->opr.nops == 2)
          return list_eq(l1->opr.op[1], l2->opr.op[1]);
@@ -1094,8 +1100,10 @@ node *list_eq(node *l1, node *l2)
    return NODE_BOOL_FALSE;
 }
 
-node *eq(node *x, node *y)
+node *eq(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
    node *ret;
 
    if (x->type != y->type)
@@ -1116,13 +1124,16 @@ node *eq(node *x, node *y)
    return ret;
 }
 
-node *neq(node *x, node *y)
+node *neq(node *args)
 {
-   return(not(eq(x, y)));
+   return(not(eq(args)));
 }
 
-node *and(node *x, node *y)
+node *and(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    if (x->type != t_bool)
       error("left operand to operator and must be boolean");
 
@@ -1141,8 +1152,11 @@ node *and(node *x, node *y)
    return ret;
 }
 
-node *or(node *x, node *y)
+node *or(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
+
    if (x->type != t_bool)
       error("left operand to operator or must be boolean");
 
@@ -1177,8 +1191,10 @@ node *not(node *x)
    return ret;
 }
 
-node *mod(node *x, node *y)
+node *mod(node *args)
 {
+   node *x = args->opr.op[0];
+   node *y = args->opr.op[1];
    node *retval;
 
    if (x->type == t_int && y->type == t_int)

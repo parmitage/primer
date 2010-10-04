@@ -148,10 +148,10 @@ last = fn (xs) head(reverse(xs)) end
 odd = fn (n) n mod 2 != 0 end
 even = fn (n) n mod 2 == 0 end
 
-isint = fn (a) type(a) == 2 end
-isfloat = fn (a) type(a) == 3 end
-isbool = fn (a) type(a) == 4 end
-ischar = fn (a) type(a) == 6 end
-islist = fn (a) type(a) == 7 end
-isfn = fn (a) type(a) == 8 end
+isint = fn (a) type(a) == 0 end
+isfloat = fn (a) type(a) == 1 end
+isbool = fn (a) type(a) == 2 end
+ischar = fn (a) type(a) == 4 end
+islist = fn (a) type(a) == 5 end
+isfn = fn (a) type(a) == 7 end
 isstring = fn (a) islist(a) and all(fn (c) ischar(c) end, a) end
