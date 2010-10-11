@@ -135,6 +135,7 @@ node *and(node *args);
 node *or(node *args);
 node *not(node *args);
 node *mod(node *args);
+node *type(node *args);
 node *append(node *args);
 node *range(node *args);
 node *show(node *args);

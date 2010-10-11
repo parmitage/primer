@@ -71,7 +71,7 @@ expr:
 | identifier '(' list ')'                             { $$ = mkpair(APPLY, 2, $1, $3); }
 | IF expr THEN expr ELSE expr                         { $$ = mkpair(IF, 3, $2, $4, $6); }
 | expr CONS expr                                      { $$ = mkpair(CONS, 2, $1, $3); }
-| TYPE '(' expr ')'                                   { $$ = mkpair(TYPE, 1, $3); }
+| TYPE '(' expr ')'                                   { $$ = mkoperator(type, $3, NULL); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3, NULL); }
 | LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3, NULL); }
 | expr '+' expr                                       { $$ = mkoperator(add, $1, $3); }

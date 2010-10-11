@@ -179,24 +179,6 @@ node *eval(node *n, env *e)
 
             case CONS:
                return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-
-            case TYPE:
-            {
-               int t = n->opr.op[0]->type;
-					
-               if (t == t_symbol)
-               {
-                  binding *b = envlookup(e, n->opr.op[0]->ival);
-						
-                  if (b != NULL)
-                     t = b->node->type;
-                  else
-                     t = -1;
-               }
-
-               //decref(n);
-               return mkint(t);
-            }
          }
       }
    }
@@ -1219,6 +1201,12 @@ node *mod(node *args)
    decref(x);
    decref(y);
    return retval;
+}
+
+node *type(node *args)
+{
+   node *x = args->opr.op[0];
+   return mkint(x->type);
 }
 
 node *loadlib(char *name)
