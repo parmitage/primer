@@ -7,6 +7,18 @@
 #include "eval.h"
 #include "y.tab.h"
 
+/*
+  TODO hand written parser
+  TODO intern all builtins into top environment and change operators to not store args
+  TODO proper CONS cells
+  TODO REPL
+  TODO reference counter
+  TODO proper tail recursion checks
+  TODO proper build closure environment
+  TODO merge lambda and closure structs so that lambda->closure is simpler
+  TODO tidy up bind, bindarg and bindp
+ */
+
 int main(int argc, char **argv)
 {
    defaults();
@@ -23,9 +35,17 @@ int main(int argc, char **argv)
    top = envnew(NULL);
 
    lineno = 1;
-   parse(arg_fname);
    wildcard = intern("_");
-   eval(ast, top);
+
+   if (arg_loadlib == true)
+      eval(loadlib(arg_stdlib), top);
+
+   eval(parse(arg_fname), top);
+   envdel(top);
+
+   trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
+         cnt_inc, cnt_dec, cnt_alloc, cnt_free);
+
    return 0;
 }
 
@@ -58,76 +78,87 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
+      case t_lambda:
+      {
+         //env *ce = envnew(top);
+         //build_closure_env(n->opr.op[1], env, ce);
+         return mkclosure(n->lambda->args, n->lambda->body, n->lambda->where, e);
+      }
+
       case t_operator:
       {
          /* TODO this use of mkpair would be tidied up when we have proper cons cells */
          return n->op->primitive(mkpair(-1, 2, eval(n->op->arg1, e), eval(n->op->arg2, e)));
       }
 
+      case t_apply:
+      {
+         symbol fsym = n->apply->fn->ival;
+         node *fn = eval(n->apply->fn, e);
+         env *ext = envnew(fn->fn->env);
+
+         /* parameters */
+         node *args = n->apply->args;
+         bindarg(fn->fn->args, args, ext, e);
+
+         /* where clause */
+         if (fn->fn->where != NULL)
+            eval(fn->fn->where, ext);
+
+         /* function body */
+         if (istailrecur(fn->fn->body, fsym))
+         {
+            if (tco_env != NULL)
+               envdel(tco_env);
+               
+            n = fn->fn->body;
+            e = tco_env = ext;
+            goto eval_start;
+         }
+         else
+         {
+            node *ret = eval(fn->fn->body, ext);
+            //e = envdel(ext);
+            return ret;
+         }
+      }
+
+      case t_cond:
+      {              			
+         node *pred = eval(n->cond->predicate, e);
+         ASSERT(pred->type, t_bool, "type of predicate is not boolean");
+					
+         if (pred->ival > 0)
+            n = n->cond->consequent;
+         else
+            n = n->cond->alternate;
+
+         goto eval_start;
+      }
+
+      case t_seq:
+      {
+         eval(n->seq->this, e);
+         
+         if (n->seq->next != NULL)
+         {
+            n = n->seq->next;
+            goto eval_start;
+         }
+
+         break;
+      }
+
       case t_pair:
       {
          switch(n->opr.oper)
          {
-            case PROG:
-            {
-               if (arg_loadlib == true)
-                  eval(loadlib(arg_stdlib), e);
-
-               eval(n->opr.op[0], e);
-               envdel(top);
-
-               trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
-                     cnt_inc, cnt_dec, cnt_alloc, cnt_free);
-               break;
-            }
-
+            /* TODO DEF is difficult to convert to a type because bind is expecting
+               a cons to be passed as it's compaitble with parameter binding */
             case DEF:
             {
                bind(n, eval(n->opr.op[1], e), e);
                break;
-            }
-				
-            case LAMBDA:
-            {
-               //env *ce = envnew(top);
-               //build_closure_env(n->opr.op[1], env, ce);
-
-               if (n->opr.nops == 2)
-                  return mklambda(n->opr.op[0], n->opr.op[1], NULL, e);
-               else
-                  return mklambda(n->opr.op[0], n->opr.op[1], n->opr.op[2], e);
-            }
-
-            case APPLY:
-            {
-               symbol fsym = n->opr.op[0]->ival;
-               node *fn = eval(n->opr.op[0], e);
-               env *ext = envnew(fn->fn->env);
-
-               /* parameters */
-               node *args = n->opr.op[1];
-               bindarg(fn->fn->args, args, ext, e);
-
-               /* where clause */
-               if (fn->fn->where != NULL)
-                  eval(fn->fn->where, ext);
-
-               /* function body */
-               if (istailrecur(fn->fn->body, fsym))
-               {
-                  if (tco_env != NULL)
-                     envdel(tco_env);
-               
-                  n = fn->fn->body;
-                  e = tco_env = ext;
-                  goto eval_start;
-               }
-               else
-               {
-                  node *ret = eval(fn->fn->body, ext);
-                  //e = envdel(ext);
-                  return ret;
-               }
             }
 
             case LIST:
@@ -154,29 +185,8 @@ node *eval(node *n, env *e)
                return ret;
             }
            
-            /* TODO can ';' and PROG be merged? */
-            case ';':
-            {
-               eval(n->opr.op[0], e);
-               eval(n->opr.op[1], e);
-               break;
-            }
-
-            case IF:
-            {              			
-               node *pred = eval(n->opr.op[0], e);
-
-               if (pred->type != t_bool)
-                  error("type of predicate is not boolean");
-					
-               if (pred->ival > 0)
-                  n = n->opr.op[1];
-               else
-                  n = n->opr.op[2];
-
-               goto eval_start;
-            }
-
+            /* TODO CONS is difficult to convert to a type because CONS
+               is used in the binding logic... */
             case CONS:
                return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
          }
@@ -494,7 +504,20 @@ node *mkpair(int oper, int nops, ...)
    return p;
 }
 
-node *mklambda(node *args, node *body, node *where, env *env)
+node *mklambda(node *args, node *body, node *where)
+{
+   node *p = prialloc();
+   p->type = t_lambda;
+   p->lineno = lineno;
+   p->rc = 1;
+   p->lambda = (struct lambda*)malloc(sizeof(struct lambda));
+   p->lambda->args = args;
+   p->lambda->body = body;
+   p->lambda->where = where;
+   return p;
+}
+
+node *mkclosure(node *args, node *body, node *where, env *env)
 {
    node *p = prialloc();
    p->type = t_closure;
@@ -518,6 +541,43 @@ node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2)
    p->op->primitive = op;
    p->op->arg1 = arg1;
    p->op->arg2 = arg2;
+   return p;
+}
+
+node *mkapply(node *fn, node *args)
+{
+   node *p = prialloc();
+   p->type = t_apply;
+   p->lineno = lineno;
+   p->rc = -1;
+   p->apply = (struct apply*)malloc(sizeof(struct apply));
+   p->apply->fn = fn;
+   p->apply->args = args;
+   return p;
+}
+
+node *mkcond(node *predicate, node *consequent, node *alternate)
+{
+   node *p = prialloc();
+   p->type = t_cond;
+   p->lineno = lineno;
+   p->rc = -1;
+   p->cond = (struct cond*)malloc(sizeof(struct cond));
+   p->cond->predicate = predicate;
+   p->cond->consequent = consequent;
+   p->cond->alternate = alternate;
+   return p;
+}
+
+node *mkseq(node *this, node *next)
+{
+   node *p = prialloc();
+   p->type = t_seq;
+   p->lineno = lineno;
+   p->rc = -1;
+   p->seq = (struct seq*)malloc(sizeof(struct seq));
+   p->seq->this = this;
+   p->seq->next = next;
    return p;
 }
 
@@ -1050,7 +1110,7 @@ node *loadlib(char *name)
    if (!fexists(libpath))
       error("Unable to find standard library");
   
-   return parsel(libpath);
+   return parse(libpath);
 }
 
 void error(char *msg)

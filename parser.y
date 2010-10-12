@@ -44,12 +44,12 @@
 %%
 
 program :
-stmts                                                 { temp = mkpair(PROG, 1, $1); }
+stmts                                                 { temp = $1; }
 ;
 
 stmts:
 stmt                                                  { $$ = $1; }
-| stmt stmts                                          { $$ = mkpair(';', 2, $1, $2); }
+| stmt stmts                                          { $$ = mkseq($1, $2); }
 ;
 
 stmt:
@@ -66,10 +66,10 @@ expr:
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
 | identifier                                          { $$ = $1; }
-| LAMBDA '(' list ')' expr END                        { $$ = mkpair(LAMBDA, 2, $3, $5); }
-| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkpair(LAMBDA, 3, $3, $5, $7); }
-| identifier '(' list ')'                             { $$ = mkpair(APPLY, 2, $1, $3); }
-| IF expr THEN expr ELSE expr                         { $$ = mkpair(IF, 3, $2, $4, $6); }
+| LAMBDA '(' list ')' expr END                        { $$ = mklambda($3, $5, NULL); }
+| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mklambda($3, $5, $7); }
+| identifier '(' list ')'                             { $$ = mkapply($1, $3); }
+| IF expr THEN expr ELSE expr                         { $$ = mkcond($2, $4, $6); }
 | expr CONS expr                                      { $$ = mkpair(CONS, 2, $1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkoperator(type, $3, NULL); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3, NULL); }
@@ -114,7 +114,7 @@ void yyerror(char *s)
    error(s);
 }
 
-void parse(char* filename)
+node* parse(char* filename)
 {
    if ((yyin = fopen(filename, "r")) == NULL)
    {
@@ -122,16 +122,5 @@ void parse(char* filename)
    }
    
    yyparse();
-   ast = temp;
-}
-
-node* parsel(char* filename)
-{
-   if ((yyin = fopen(filename, "r")) == NULL)
-   {
-      printf("Error reading input file\n");
-   }
-   
-   yyparse();
-   return temp->opr.op[0];
+   return temp;
 }

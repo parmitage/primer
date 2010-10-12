@@ -20,7 +20,11 @@ typedef enum {
    t_char,
    t_pair,
    t_closure,
-   t_operator
+   t_operator,
+   t_apply,
+   t_lambda,
+   t_cond,
+   t_seq
 } t_type;
 
 typedef struct pair {
@@ -28,6 +32,11 @@ typedef struct pair {
    int nops;
    struct node *op[3];
 } pair;
+
+typedef struct seq {
+   struct node *this;
+   struct node *next;
+} seq;
 
 typedef struct closure {
    struct node *args;
@@ -42,6 +51,23 @@ typedef struct operator {
    struct node *arg2;
 } operator;
 
+typedef struct apply {
+   struct node *fn;
+   struct node *args;
+} apply;
+
+typedef struct lambda {
+   struct node *args;
+   struct node *body;
+   struct node *where;
+} lambda;
+
+typedef struct cond {
+   struct node *predicate;
+   struct node *consequent;
+   struct node *alternate;
+} cond;
+
 typedef struct node {
    t_type type;
    int lineno;
@@ -52,6 +78,10 @@ typedef struct node {
       char* sval;
       closure *fn;
       operator *op;
+      apply *apply;
+      lambda *lambda;
+      cond *cond;
+      seq *seq;
       pair opr;
    };
 } node;
@@ -81,21 +111,24 @@ static long cnt_inc = 0;
 static long cnt_dec = 0;
 
 /* abstract syntax tree */
-void parse(char *filename);
-node *parsel(char *filename);
+node *parse(char *filename);
 
 /* constructors */
 node *mkpair(int oper, int nops, ...);
 node *mksym(char *s);
 node *mkprimitive(struct node * (*primitive) (struct node *));
 node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2);
-node *mklambda(node *params, node *body, node *where, env *e);
+node *mklambda(node *params, node *body, node *where);
+node *mkclosure(node *params, node *body, node *where, env *e);
 node *mkint(int value);
 node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);
 node *mkstr(char *value);
 node *strtonode(char *value);
+node *mkapply(node *fn, node *args);
+node *mkcond(node *predicate, node *consequent, node *alternate);
+node *mkseq(node *this, node *next);
 
 /* memory management */
 struct node *prialloc();
