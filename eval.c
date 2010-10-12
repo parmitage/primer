@@ -249,8 +249,6 @@ env *envnew(env *parent)
    return e;
 }
 
-#define SKIP_REF_COUNT if (!refctr || n == NULL || n->rc == -1) return;
-
 void incref(node *n)
 {
    SKIP_REF_COUNT
@@ -567,9 +565,7 @@ bool empty(node *list)
 node *len(node *node)
 {
    node = node->opr.op[0];
-
-   if (node->type != t_pair)
-      error("argument to length must be a list");
+   ASSERT(node->type, t_pair, "argument to length must be a list");
 
    int n = 0;
    struct node *iter = node;
@@ -679,13 +675,16 @@ void pprint(node *node)
       case t_char:
          printf("%c", node->ival);
          break;
-		
+      case t_symbol:
+         printf("%s", symname(node->ival));
+         break;
+      case t_closure:
+         printf("#<closure>");
+         break;
       case t_pair:
-      {
          switch (node->opr.oper)
          {
             case STRING:
-            {
                printf("\"");
 
                while (node != NULL)
@@ -698,193 +697,35 @@ void pprint(node *node)
                   else
                      node = NULL;
                }
-
+           
                printf("\"");
                break;
-            }
 		
             case LIST:
-            {
                printf("[");
-              
+           
                while (node != NULL)
                {
-                  switch (node->opr.nops)
+                  if (node->opr.nops > 0)
                   {
-                     case 0:
-                        node = NULL;
-                        break;
-                     case 1:
-                        pprint(node->opr.op[0]);
-                        node = NULL;
-                        break;
-                     case 2:
-                        pprint(node->opr.op[0]);
-                        printf(",");       
-                        node = node->opr.op[1];
-                        break;
+                     pprint(node->opr.op[0]);
+                     if (node->opr.nops > 1)
+                        printf(",");
+                     node = node->opr.op[1];
                   }
+                  else
+                     node = NULL;
                }
 					
                printf("]");
                break;
-            }
 
-            case APPLY:
-            {
-               pprint(node->opr.op[0]);
-               printf("(");
-               pprint(node->opr.op[1]);
-               printf(")");
-               break;
-            }
-				
             case LAMBDA:
-            {	
-               printf("\n\tfn (");
-               pprint(node->opr.op[0]);
-               printf(") ");
-               pprint(node->opr.op[1]);
-               
-               if (node->opr.op[2] != NULL)
-               {
-                  printf("where ");
-                  pprint(node->opr.op[2]);
-               }
-               
-               printf(" end\n");
+               printf("#<lambda>");
                break;
-            }
-            
-            case ';':
-            {
-               pprint(node->opr.op[0]);
-               printf("\n");
-               pprint(node->opr.op[1]);
-               break;
-            }
-
-            case ',':
-            {
-               struct node *params = node;
-
-               while (params != NULL)
-               {
-                  if (params->opr.nops > 0)
-                  {
-                     pprint(params->opr.op[0]);
-                     params = params->opr.op[1];
-                     when(params != NULL, printf(", "));
-                  }
-                  else
-                     params = NULL;
-               }
-
-               break;
-            }
-
-            case DEF:
-            {
-               pprint(node->opr.op[0]);
-               printf(" = ");
-               pprint(node->opr.op[1]);
-               break;
-            }
-
-            case IF:
-            {
-               printf("if ");
-               pprint(node->opr.op[0]);
-               printf(" then ");
-               pprint(node->opr.op[1]);
-               printf("\nelse ");
-               pprint(node->opr.op[2]);
-               break;
-            }
-
-            case CONS:
-            {
-               pprint(node->opr.op[0]);
-               printf(":");
-               pprint(node->opr.op[1]);
-               break;
-            }
-
-            case SHOW:
-            {
-               printf("show(");
-               pprint(node->opr.op[0]);
-               printf(")");
-               break;
-            }
-
-            case '>':
-            case '<':
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case GE:
-            case LE:
-            case MOD:
-            case AND:
-            case OR:
-            case EQ:
-            case NE:
-            case APPEND:
-            {
-               pprint(node->opr.op[0]);
-              
-               switch (node->opr.oper)
-               {
-                  case '>': printf(" > "); break;
-                  case '<': printf(" < "); break;
-                  case '+': printf(" + "); break;
-                  case '-': printf(" - "); break;
-                  case '*': printf(" * "); break;
-                  case '/': printf(" / "); break;
-                  case GE: printf(" >= "); break;
-                  case LE: printf(" <= "); break;
-                  case MOD: printf(" mod "); break;
-                  case AND: printf(" and "); break;
-                  case OR: printf(" or "); break;
-                  case EQ: printf(" == "); break;
-                  case NE: printf(" != "); break;
-                  case APPEND: printf(" ++ "); break;
-               }
-
-               pprint(node->opr.op[1]);
-               break;
-            }
          }
-			
          break;
-      }
-		
-      case t_symbol:
-      {
-         printf("%s", symname(node->ival));
-         break;
-      }
-
-      case t_closure:
-      {	
-         printf("fn (");
-         pprint(node->opr.op[0]);
-         printf(")");
-         pprint(node->opr.op[1]);
-		
-         if (node->opr.op[2] != NULL)
-         {
-            printf("\twhere ");
-            pprint(node->opr.op[2]);
-            printf("\n");
-         }
-		
-         printf("end");
-         break;
-	}
-   }		
+   }
 }
 
 node *show(node *args)
@@ -894,17 +735,13 @@ node *show(node *args)
    return args->opr.op[0];
 }
 
-#define IS_NUMERIC_TYPE(x) (x->type == t_int || x->type == t_float || x->type == t_char ? true : false)
-#define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
-#define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
-
 node *add(node *args)
 {
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
 
-   if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
-      error("operands to operator + must be of a numeric type");
+   ASSERT_NUM(x, "left operand to + must be numeric");
+   ASSERT_NUM(y, "right operand to + must be numeric");
 
    node *ret;
 
@@ -929,8 +766,8 @@ node *sub(node *args)
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
 
-   if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
-      error("operands to operator - must be of a numeric type");
+   ASSERT_NUM(x, "left operand to - must be numeric");
+   ASSERT_NUM(y, "right operand to - must be numeric");
 
    node *ret;
 
@@ -953,8 +790,7 @@ node *neg(node *args)
 {
    node *x = args->opr.op[0];
 
-   if (!IS_NUMERIC_TYPE(x))
-      error("operand to neg must be of a numeric type");
+   ASSERT_NUM(x, "operand to - must be numeric");
 
    node *ret;
 
@@ -977,9 +813,9 @@ node *mul(node *args)
 {
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
-
-   if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
-      error("operands to operator * must be of a numeric type");
+   
+   ASSERT_NUM(x, "left operand to * must be numeric");
+   ASSERT_NUM(y, "right operand to * must be numeric");
 
    node *ret;
 
@@ -1003,8 +839,8 @@ node *dvd(node *args)
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
    
-   if (!IS_NUMERIC_TYPE(x) || !IS_NUMERIC_TYPE(y))
-      error("operands to operator / must be of a numeric type");
+   ASSERT_NUM(x, "left operand to / must be numeric");
+   ASSERT_NUM(y, "right operand to / must be numeric");
 
    node *ret;
 
@@ -1128,11 +964,8 @@ node *and(node *args)
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
 
-   if (x->type != t_bool)
-      error("left operand to operator and must be boolean");
-
-   if (y->type != t_bool)
-      error("right operand to operator and must be boolean");
+   ASSERT(x->type, t_bool, "left operand to and must be boolean");
+   ASSERT(y->type, t_bool, "right operand to and must be boolean");
 
    node *ret;
 
@@ -1151,12 +984,9 @@ node *or(node *args)
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
 
-   if (x->type != t_bool)
-      error("left operand to operator or must be boolean");
+   ASSERT(x->type, t_bool, "left operand to or must be boolean");
+   ASSERT(y->type, t_bool, "right operand to or must be boolean");
 
-   if (y->type != t_bool)
-      error("right operand to operator or must be boolean");
-  
    node *ret;
 
    if (x->ival || y->ival)
@@ -1173,8 +1003,7 @@ node *not(node *args)
 {
    node *x = args->opr.op[0];
 
-   if (x->type != t_bool)
-      error("operand to operator not must be boolean");
+   ASSERT(x->type, t_bool, "operand to not must be boolean");
 
    node *ret;
 
@@ -1191,12 +1020,11 @@ node *mod(node *args)
 {
    node *x = args->opr.op[0];
    node *y = args->opr.op[1];
-   node *retval;
 
-   if (x->type == t_int && y->type == t_int)
-      retval = mkint(x->ival % y->ival);
-   else
-      error("operator mod can only be applies to integer operands");
+   ASSERT(x->type, t_int, "left operand to mod must be integer");
+   ASSERT(y->type, t_int, "right operand to mod must be integer");
+
+   node *retval = mkint(x->ival % y->ival);
 
    decref(x);
    decref(y);

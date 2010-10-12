@@ -5,6 +5,13 @@
 
 #define MAX_SYMBOLS 1000
 
+#define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
+#define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
+#define ASSERT(x, t, m) if (x != t) error(m)
+#define ASSERT_NUM(x, m) if (!(x->type == t_int || x->type == t_float || x->type == t_char)) error(m)
+
+#define SKIP_REF_COUNT if (!refctr || n == NULL || n->rc == -1) return;
+
 typedef enum {
    t_int,
    t_float,
