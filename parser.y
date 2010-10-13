@@ -49,7 +49,7 @@ stmts                                                 { temp = $1; }
 
 stmts:
 stmt                                                  { $$ = $1; }
-| stmt stmts                                          { $$ = mkseq($1, $2); }
+| stmt stmts                                          { $$ = mkast(t_seq, $1, $2, NULL); }
 ;
 
 stmt:
@@ -66,10 +66,10 @@ expr:
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
 | identifier                                          { $$ = $1; }
-| LAMBDA '(' list ')' expr END                        { $$ = mklambda($3, $5, NULL); }
-| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mklambda($3, $5, $7); }
-| identifier '(' list ')'                             { $$ = mkapply($1, $3); }
-| IF expr THEN expr ELSE expr                         { $$ = mkcond($2, $4, $6); }
+| LAMBDA '(' list ')' expr END                        { $$ = mkast(t_lambda, $3, $5, NULL); }
+| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkast(t_lambda, $3, $5, $7); }
+| identifier '(' list ')'                             { $$ = mkast(t_apply, $1, $3, NULL); }
+| IF expr THEN expr ELSE expr                         { $$ = mkast(t_cond, $2, $4, $6); }
 | expr CONS expr                                      { $$ = mkpair(CONS, 2, $1, $3); }
 | TYPE '(' expr ')'                                   { $$ = mkoperator(type, $3, NULL); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3, NULL); }

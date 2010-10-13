@@ -33,11 +33,6 @@ typedef struct pair {
    struct node *op[3];
 } pair;
 
-typedef struct seq {
-   struct node *this;
-   struct node *next;
-} seq;
-
 typedef struct closure {
    struct node *args;
    struct node *body;
@@ -51,22 +46,11 @@ typedef struct operator {
    struct node *arg2;
 } operator;
 
-typedef struct apply {
-   struct node *fn;
-   struct node *args;
-} apply;
-
-typedef struct lambda {
-   struct node *args;
-   struct node *body;
-   struct node *where;
-} lambda;
-
-typedef struct cond {
-   struct node *predicate;
-   struct node *consequent;
-   struct node *alternate;
-} cond;
+typedef struct ast {
+   struct node *n1;
+   struct node *n2;
+   struct node *n3;
+} ast;
 
 typedef struct node {
    t_type type;
@@ -75,13 +59,9 @@ typedef struct node {
    union {
       int ival;
       float fval;
-      char* sval;
       closure *fn;
       operator *op;
-      apply *apply;
-      lambda *lambda;
-      cond *cond;
-      seq *seq;
+      ast *ast;
       pair opr;
    };
 } node;
@@ -100,7 +80,7 @@ typedef struct env {
    binding *bind;
 } env;
 
-node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp, *ast;
+node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp;
 env *top, *tco_env;
 int lineno;
 symbol wildcard;
@@ -129,6 +109,7 @@ node *strtonode(char *value);
 node *mkapply(node *fn, node *args);
 node *mkcond(node *predicate, node *consequent, node *alternate);
 node *mkseq(node *this, node *next);
+node *mkast(t_type type, node *n1, node *n2, node *n3);
 
 /* memory management */
 struct node *prialloc();

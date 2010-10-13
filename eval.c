@@ -8,6 +8,7 @@
 #include "y.tab.h"
 
 /*
+  TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
   TODO hand written parser
   TODO intern all builtins into top environment and change operators to not store args
   TODO proper CONS cells
@@ -15,7 +16,6 @@
   TODO reference counter
   TODO proper tail recursion checks
   TODO proper build closure environment
-  TODO merge lambda and closure structs so that lambda->closure is simpler
   TODO tidy up bind, bindarg and bindp
  */
 
@@ -82,7 +82,7 @@ node *eval(node *n, env *e)
       {
          //env *ce = envnew(top);
          //build_closure_env(n->opr.op[1], env, ce);
-         return mkclosure(n->lambda->args, n->lambda->body, n->lambda->where, e);
+         return mkclosure(n->ast->n1, n->ast->n2, n->ast->n3, e);
       }
 
       case t_operator:
@@ -93,12 +93,12 @@ node *eval(node *n, env *e)
 
       case t_apply:
       {
-         symbol fsym = n->apply->fn->ival;
-         node *fn = eval(n->apply->fn, e);
+         symbol fsym = n->ast->n1->ival;
+         node *fn = eval(n->ast->n1, e);
          env *ext = envnew(fn->fn->env);
 
          /* parameters */
-         node *args = n->apply->args;
+         node *args = n->ast->n2;
          bindarg(fn->fn->args, args, ext, e);
 
          /* where clause */
@@ -125,24 +125,24 @@ node *eval(node *n, env *e)
 
       case t_cond:
       {              			
-         node *pred = eval(n->cond->predicate, e);
+         node *pred = eval(n->ast->n1, e);
          ASSERT(pred->type, t_bool, "type of predicate is not boolean");
 					
          if (pred->ival > 0)
-            n = n->cond->consequent;
+            n = n->ast->n2;
          else
-            n = n->cond->alternate;
+            n = n->ast->n3;
 
          goto eval_start;
       }
 
       case t_seq:
       {
-         eval(n->seq->this, e);
+         eval(n->ast->n1, e);
          
-         if (n->seq->next != NULL)
+         if (n->ast->n2 != NULL)
          {
-            n = n->seq->next;
+            n = n->ast->n2;
             goto eval_start;
          }
 
@@ -153,14 +153,6 @@ node *eval(node *n, env *e)
       {
          switch(n->opr.oper)
          {
-            /* TODO DEF is difficult to convert to a type because bind is expecting
-               a cons to be passed as it's compaitble with parameter binding */
-            case DEF:
-            {
-               bind(n, eval(n->opr.op[1], e), e);
-               break;
-            }
-
             case LIST:
             case STRING:
             {
@@ -183,6 +175,14 @@ node *eval(node *n, env *e)
                decref(n);
                //incref(ret);
                return ret;
+            }
+
+            /* TODO DEF is difficult to convert to a type because bind is expecting
+               a cons to be passed as it's compaitble with parameter binding */
+            case DEF:
+            {
+               bind(n, eval(n->opr.op[1], e), e);
+               break;
             }
            
             /* TODO CONS is difficult to convert to a type because CONS
@@ -504,19 +504,6 @@ node *mkpair(int oper, int nops, ...)
    return p;
 }
 
-node *mklambda(node *args, node *body, node *where)
-{
-   node *p = prialloc();
-   p->type = t_lambda;
-   p->lineno = lineno;
-   p->rc = 1;
-   p->lambda = (struct lambda*)malloc(sizeof(struct lambda));
-   p->lambda->args = args;
-   p->lambda->body = body;
-   p->lambda->where = where;
-   return p;
-}
-
 node *mkclosure(node *args, node *body, node *where, env *env)
 {
    node *p = prialloc();
@@ -544,40 +531,16 @@ node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2)
    return p;
 }
 
-node *mkapply(node *fn, node *args)
+node *mkast(t_type type, node *n1, node *n2, node *n3)
 {
    node *p = prialloc();
-   p->type = t_apply;
+   p->type = type;
    p->lineno = lineno;
    p->rc = -1;
-   p->apply = (struct apply*)malloc(sizeof(struct apply));
-   p->apply->fn = fn;
-   p->apply->args = args;
-   return p;
-}
-
-node *mkcond(node *predicate, node *consequent, node *alternate)
-{
-   node *p = prialloc();
-   p->type = t_cond;
-   p->lineno = lineno;
-   p->rc = -1;
-   p->cond = (struct cond*)malloc(sizeof(struct cond));
-   p->cond->predicate = predicate;
-   p->cond->consequent = consequent;
-   p->cond->alternate = alternate;
-   return p;
-}
-
-node *mkseq(node *this, node *next)
-{
-   node *p = prialloc();
-   p->type = t_seq;
-   p->lineno = lineno;
-   p->rc = -1;
-   p->seq = (struct seq*)malloc(sizeof(struct seq));
-   p->seq->this = this;
-   p->seq->next = next;
+   p->ast = (struct ast*)malloc(sizeof(struct ast));
+   p->ast->n1 = n1;
+   p->ast->n2 = n2;
+   p->ast->n3 = n3;
    return p;
 }
 
