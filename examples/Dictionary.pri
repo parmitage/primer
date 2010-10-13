@@ -6,19 +6,19 @@ get = fn (d, key)
    where v = findByFn(key, fn (x) x!0 end, d)
 end
 
-update = fn (d:ds, key, val)
-   if d != [] then
-      if head(d) == key then
-         add(ds, key, val)
-      else d : update(ds, key, val)
-   else d
+update = fn (ds, key, val)
+   if head(ds) != [] then
+      if head(head(ds)) == key then
+         add(tail(ds), key, val)
+      else head(ds) : update(tail(ds), key, val)
+   else head(ds)
 end
 
-remove = fn (d:ds, key)
-   if d != [] then
-      if head(d) == key then ds
-      else d : remove(ds, key)
-   else d
+remove = fn (ds, key)
+   if head(ds) != [] then
+      if head(head(ds)) == key then tail(ds)
+      else head(ds) : remove(tail(ds), key)
+   else head(ds)
 end
 
 d = []

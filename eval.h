@@ -24,7 +24,11 @@ typedef enum {
    t_apply,
    t_lambda,
    t_cond,
-   t_seq
+   t_seq,
+   t_def,
+   t_cons,
+   t_car,
+   t_cdr
 } t_type;
 
 typedef struct pair {
@@ -119,9 +123,7 @@ void decref(node *n);
 /* evaluation */
 node *eval(node *p, env *e);
 bool istailrecur(node *expr, symbol s);
-void bindarg(node *args, node *params, env *fnenv, env *argenv);
-void bind(node *lhs, node *rhs, env *env);
-void bindp(node *args, node *list, env *fnenv);
+void bind(node *args, node *params, env *fnenv, env *argenv);
 binding *bindnew(symbol name, node* node);
 env *envnew(env* enclosing);
 env *envdel(env* e);

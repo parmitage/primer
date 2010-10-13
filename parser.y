@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token SHOW TYPE LENGTH NTH CONS WHERE RANGE
+%token HEAD TAIL SHOW TYPE LENGTH NTH CONS WHERE RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -53,7 +53,7 @@ stmt                                                  { $$ = $1; }
 ;
 
 stmt:
-expr '=' expr                                         { $$ = mkpair(DEF, 2, $1, $3); }
+expr '=' expr                                         { $$ = mkast(t_def, $1, $3, NULL); }
 | expr                                                { $$ = $1; }
 ;
 
@@ -70,10 +70,12 @@ expr:
 | LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkast(t_lambda, $3, $5, $7); }
 | identifier '(' list ')'                             { $$ = mkast(t_apply, $1, $3, NULL); }
 | IF expr THEN expr ELSE expr                         { $$ = mkast(t_cond, $2, $4, $6); }
-| expr CONS expr                                      { $$ = mkpair(CONS, 2, $1, $3); }
+| expr CONS expr                                      { $$ = mkast(t_cons, $1, $3, NULL); }
 | TYPE '(' expr ')'                                   { $$ = mkoperator(type, $3, NULL); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3, NULL); }
 | LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3, NULL); }
+| HEAD '(' expr ')'                                   { $$ = mkast(t_car, $3, NULL, NULL); }
+| TAIL '(' expr ')'                                   { $$ = mkast(t_cdr, $3, NULL, NULL); }
 | expr '+' expr                                       { $$ = mkoperator(add, $1, $3); }
 | expr '-' expr                                       { $$ = mkoperator(sub, $1, $3); }
 | expr '*' expr                                       { $$ = mkoperator(mul, $1, $3); }

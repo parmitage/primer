@@ -8,15 +8,16 @@
 #include "y.tab.h"
 
 /*
+  TODO rewrite all examples without list destructuring
+  TODO redesign cons cells (and rename to t_cons)
   TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
   TODO hand written parser
   TODO intern all builtins into top environment and change operators to not store args
-  TODO proper CONS cells
   TODO REPL
   TODO reference counter
   TODO proper tail recursion checks
   TODO proper build closure environment
-  TODO tidy up bind, bindarg and bindp
+  TODO make def an expression rather than a statement?
  */
 
 int main(int argc, char **argv)
@@ -78,6 +79,12 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
+      case t_def:
+      {
+         extend(e, bindnew(n->ast->n1->ival, eval(n->ast->n2, e)));
+         break;
+      }
+
       case t_lambda:
       {
          //env *ce = envnew(top);
@@ -91,6 +98,21 @@ node *eval(node *n, env *e)
          return n->op->primitive(mkpair(-1, 2, eval(n->op->arg1, e), eval(n->op->arg2, e)));
       }
 
+      case t_cons:
+      {
+         return cons(eval(n->ast->n1, e), eval(n->ast->n2, e));
+      }
+
+      case t_car:
+      {
+         return car(eval(n->ast->n1, e));
+      }
+
+      case t_cdr:
+      {
+         return cdr(eval(n->ast->n1, e));
+      }
+
       case t_apply:
       {
          symbol fsym = n->ast->n1->ival;
@@ -99,7 +121,7 @@ node *eval(node *n, env *e)
 
          /* parameters */
          node *args = n->ast->n2;
-         bindarg(fn->fn->args, args, ext, e);
+         bind(fn->fn->args, args, ext, e);
 
          /* where clause */
          if (fn->fn->where != NULL)
@@ -176,68 +198,21 @@ node *eval(node *n, env *e)
                //incref(ret);
                return ret;
             }
-
-            /* TODO DEF is difficult to convert to a type because bind is expecting
-               a cons to be passed as it's compaitble with parameter binding */
-            case DEF:
-            {
-               bind(n, eval(n->opr.op[1], e), e);
-               break;
-            }
-           
-            /* TODO CONS is difficult to convert to a type because CONS
-               is used in the binding logic... */
-            case CONS:
-               return cons(eval(n->opr.op[0], e), eval(n->opr.op[1], e));
          }
       }
    }
 }
 
-void bindarg(node *args, node *params, env *fnenv, env *argenv)
+void bind(node *args, node *params, env *fnenv, env *argenv)
 {
    if (params != NULL)
    {		
       if (params->opr.nops > 1)
-         bindarg(args->opr.op[1], params->opr.op[1], fnenv, argenv);
+         bind(cdr(args), cdr(params), fnenv, argenv);
 		
       if (params->opr.nops > 0)
-         bind(args, eval(params->opr.op[0], argenv), fnenv);
+         extend(fnenv, bindnew(car(args)->ival, eval(car(params), argenv)));
    }
-}
-
-void bind(node *lhs, node *rhs, env *env)
-{
-    if (lhs->opr.op[0]->type == t_symbol)
-    {
-       binding *b = bindnew(lhs->opr.op[0]->ival, rhs);
-       extend(env, b);
-    }
-    else if (lhs->opr.op[0]->type == t_pair && lhs->opr.op[0]->opr.oper == CONS)
-       bindp(lhs->opr.op[0], rhs, env);
-}
-
-void bindp(node *args, node *list, env *fnenv)
-{
-   node *head = car(list);
-   node *rest = cdr(list);
-
-   if (args->opr.op[0]->ival != wildcard)
-   {
-      binding *headb = bindnew(args->opr.op[0]->ival, head);
-      extend(fnenv, headb);
-   }
-
-   if (args->opr.op[1]->type == t_symbol)
-   {
-      if (args->opr.op[1]->ival != wildcard)
-      {
-         binding *restb = bindnew(args->opr.op[1]->ival, rest);
-         extend(fnenv, restb);
-      }
-   }
-   else
-      bindp(args->opr.op[1], rest, fnenv);
 }
 
 binding* bindnew(symbol s, node *n)

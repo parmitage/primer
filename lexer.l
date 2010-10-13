@@ -31,6 +31,8 @@ void yyerror(char *);
 "true"                                            return TRUE;
 "false"                                           return FALSE;
 "end"                                             return END;
+"head"                                            return HEAD;
+"tail"                                            return TAIL;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
