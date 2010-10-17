@@ -1,46 +1,24 @@
 html {
-background: #c1c1c1;
+
 color: #222;
 }
 
-div#an-introduction-to-functional-programming-with-primer {
+body {
 background: white;
 font-family: verdana, "trebuchet ms", "Helvetica Neue", Helvetica, Arial, sans-serif;
--moz-border-radius: 1.5em;
--webkit-border-radius: 1.5em;
-border-radius: 1.5em;
 line-height: 140%;
+font-size: 120%;
 width: 900px;
-margin: 20px auto;
-padding: 30px;
+padding: 10px 30px;
 }
 
 pre {
 font-family: monospace;
-background: #f1f1f1;
-border-left: 2px solid black;
+border: 1px dashed black;
 margin-right: 10px;
-margin-left: 13px;
-padding: 3px 0 3px 12px;
+padding: 10px;
 }
 
 h1 {
 font-size: 18pt;
-}
-
-h2 {
-font-size: 14pt;
-margin-top: 40px;
-}
-
-strong {
-color: #f14141;
-font-weight: normal;
-}
-
-div.quote {
-padding: 5px 20px 5px 20px;
-border: 1px dashed black;
-font-style: italic;
-text-align: justify;
 }
