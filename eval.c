@@ -8,7 +8,6 @@
 #include "y.tab.h"
 
 /*
-  TODO rewrite all examples without list destructuring
   TODO redesign cons cells (and rename to t_cons)
   TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
   TODO hand written parser
@@ -35,8 +34,10 @@ int main(int argc, char **argv)
 
    top = envnew(NULL);
 
+   extend(top, bindnew(intern("newline"), mkchar('\n')));
+   extend(top, bindnew(intern("tab"), mkchar('\t')));
+
    lineno = 1;
-   wildcard = intern("_");
 
    if (arg_loadlib == true)
       eval(loadlib(arg_stdlib), top);

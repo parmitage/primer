@@ -24,8 +24,6 @@ void yyerror(char *);
 "if"                                              return IF;
 "then"                                            return THEN;
 "else"                                            return ELSE;
-"elif"                                            return ELIF;
-"def"                                             return DEF;
 "fn"                                              return LAMBDA;
 "where"                                           return WHERE;
 "true"                                            return TRUE;
