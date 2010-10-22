@@ -11,7 +11,6 @@
   TODO redesign cons cells (and rename to t_cons)
   TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
   TODO hand written parser
-  TODO intern all builtins into top environment and change operators to not store args
   TODO REPL
   TODO reference counter
   TODO proper tail recursion checks
@@ -34,8 +33,16 @@ int main(int argc, char **argv)
 
    top = envnew(NULL);
 
+   /* character constants */
    extend(top, bindnew(intern("newline"), mkchar('\n')));
    extend(top, bindnew(intern("tab"), mkchar('\t')));
+
+   /* type names */
+   extend(top, bindnew(intern("int"), mkint(t_int)));
+   extend(top, bindnew(intern("float"), mkint(t_float)));
+   extend(top, bindnew(intern("bool"), mkint(t_bool)));
+   extend(top, bindnew(intern("char"), mkint(t_char)));
+   extend(top, bindnew(intern("string"), mkint(t_string)));
 
    lineno = 1;
 

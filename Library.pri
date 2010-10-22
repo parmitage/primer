@@ -5,13 +5,6 @@
 #
 ##############################################################################
 
-### type codes - used for casts and type tests
-int = 0
-float = 1
-bool = 2
-char = 4
-string = 9999
-
 ### returns true if xs is the empty list
 empty = fn (xs) head(xs) == [] end
 
