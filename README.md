@@ -115,4 +115,8 @@ The Primer standard library, found in Library.pri, defines several useful functi
     product([1,2,3,4,5])                    # 120
     sort([4,2,8,1])                         # [1,2,4,8]
 
+The as operator converts between types.
 
+    show(123.45 as string)                  # "123.45"
+    show(true as int)                       # 1
+    show("123" as int)                      # 123

@@ -6,11 +6,16 @@
 
 (define-generic-mode 'primer-mode
   '("#")
-  '("fn" "end" "if" "then" "else" "where")
+  '("fn" "end" "if" "then" "else" "where" "as")
   '(("=" . 'font-lock-operator)
     ("!" . 'font-lock-operator)
     (":" . 'font-lock-operator)
     ("+" . 'font-lock-operator)
+    ("-" . 'font-lock-operator)
+    ("*" . 'font-lock-operator)
+    ("/" . 'font-lock-operator)
+    ("<" . 'font-lock-operator)
+    (">" . 'font-lock-operator)
     ("[0-9]+" . 'font-lock-variable-name-face))
   '(".pri\\'")
   nil

@@ -434,17 +434,38 @@ node* mkstr(char* value)
    char* temp = (char*)malloc(destlen + 1);
    strncpy(temp, value + 1, copylen);
    temp[copylen] = '\0';
-   return strtonode(temp);
+   return str_to_node(temp);
 }
 
-node* strtonode(char* value)
+node* str_to_node(char* value)
 {
    int len = strlen(value);
 
    if (len > 1)
-      return mkpair(STRING, 2, mkchar(value[0]), strtonode(value + 1));
+      return mkpair(STRING, 2, mkchar(value[0]), str_to_node(value + 1));
    else
       return mkpair(STRING, 1, mkchar(value[0]));
+}
+
+char *node_to_str(node *node)
+{
+   char *str = (char*)malloc(50);
+   int i = 0;
+
+   while (node != NULL)
+   {
+      if (node->opr.nops > 0)
+      {
+         str[i] = node->opr.op[0]->ival;
+         node = node->opr.op[1];
+         ++i;
+      }
+      else
+         node = NULL;
+   }
+
+   str[i] = '\n';
+   return str;
 }
 
 node *mksym(char* s)
@@ -1034,6 +1055,151 @@ node *type(node *args)
 {
    node *x = args->opr.op[0];
    return mkint(x->type);
+}
+
+node *as(node *args)
+{
+   node *from = args->opr.op[0];
+   node *to = args->opr.op[1];
+   int target = to->ival;
+   char buffer[10];
+   int ival;
+   float fval;
+
+   switch (from->type)
+   {
+      case t_int:
+      {
+         switch (target)
+         {
+            case t_string:
+            {
+               ival = from->ival;
+               sprintf(buffer, "%d", ival);
+               return str_to_node(buffer);
+            }
+            
+            case t_float:
+            {
+               fval = from->ival;
+               return mkfloat(fval);
+            }
+
+            case t_bool:
+            {
+               if (from->ival <= 0)
+                  return NODE_BOOL_FALSE;
+               else
+                  return NODE_BOOL_TRUE;
+            }
+
+            default:
+               error("conversion from integer to unsupported type");
+         }
+      }
+
+      case t_float:
+      {
+         switch (target)
+         {
+            case t_string:
+            {
+               fval = from->fval;
+               sprintf(buffer, "%g", fval);
+               return str_to_node(buffer);
+            }
+
+            case t_int:
+               error("conversion from float to int not supported");
+
+            default:
+               error("conversion from float to unsupported type");
+         }
+      }
+
+      case t_bool:
+      {
+         switch (target)
+         {
+            case t_int:
+               return mkint(from->ival);
+
+            case t_float:
+               return mkfloat(from->ival);
+
+            case t_string:
+               return str_to_node(from->ival > 0 ? "true" : "false");
+
+            default:
+               error("cast from bool to unsupported type");
+         }
+      }
+
+      case t_char:
+      {
+         switch (target)
+         {
+            case t_string:
+            {
+               ival = from->ival;
+               sprintf(buffer, "%c", ival);
+               return str_to_node(buffer);
+            }
+
+            case t_int:
+            {
+               ival = from->ival;
+               return mkint(ival);
+            }
+
+            case t_float:
+            {
+               fval = from->ival;
+               return mkfloat(fval);
+            }
+
+            default:
+               error("attempted cast from char to unsupported type");
+         }
+      }
+
+      case t_pair:
+      {
+         if (from->opr.oper == STRING)
+         {
+            char *str = node_to_str(from);
+
+            switch (target)
+            {
+               case t_int:
+               {
+                  ival = atoi(str);
+                  return mkint(ival);
+               }
+
+               case t_float:
+               {
+                  fval = atof(str);
+                  return mkfloat(fval);
+               }
+
+               case t_char:
+               {
+                  ival = atoi(str);
+                  return mkchar(str[0]);
+               }
+
+               default:
+                  error("attempted cast from string to unsupported type");
+            }
+         }
+         else
+            error("lists can not be cast to other types");
+      }
+
+      default:
+         error("cast from unsupported type");
+   }
 }
 
 node *loadlib(char *name)

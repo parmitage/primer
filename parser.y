@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token HEAD TAIL SHOW TYPE LENGTH NTH CONS WHERE RANGE
+%token HEAD TAIL SHOW TYPE AS LENGTH NTH CONS WHERE RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -35,7 +35,7 @@
 %left AND OR APPEND
 %left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
-%left '*' '/' MOD NTH
+%left '*' '/' MOD NTH AS
 %right CONS
 %nonassoc UMINUS
 
@@ -93,6 +93,7 @@ expr:
 | expr APPEND expr                                    { $$ = mkoperator(append, $1, $3); }
 | expr RANGE expr                                     { $$ = mkoperator(range, $1, $3); }
 | expr NTH expr                                       { $$ = mkoperator(nth, $1, $3); }
+| expr AS expr                                        { $$ = mkoperator(as, $1, $3); }
 | '-' expr %prec UMINUS                               { $$ = mkoperator(neg, $2, NULL); }
 | '[' list ']'                                        { $$ = $2; }
 ;

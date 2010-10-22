@@ -1,5 +1,14 @@
+##############################################################################
+#
+# This is the Primer test suite. The first section comprises data and
+# functions for the test cases which follow.
+#
+##############################################################################
+
 a = 10
 b = 15
+c = 66.78
+d = false
 l = [1,2,3,4]
 s = "Hello, world!"
 
@@ -42,19 +51,21 @@ end
 add1 = makeAdder(1)
 add2 = makeAdder(2)
 
+### equality tests
+
 assert("int equality", 1, 1)
+assert("int variable equality", b, 15)
 assert("float equality", 4.5, 4.5)
-assert("bool equality 1", true, true)
-assert("bool equality 2", false, false)
+assert("float variable equality", c, 66.78)
+assert("bool equality true", true, true)
+assert("bool equality false", false, false)
+assert("bool variable equality", d, false)
 assert("string literal equality", "Hello, world!", "Hello, world!")
 assert("string variable equality", s, s)
 assert("string literal and variable equality", s, "Hello, world!")
-assert("empty list equality", [], [])
-assert("short list equality", [2], [2])
-assert("multi-item list equality", [1,2,3,4,5], [1,2,3,4,5])
-assert("list of variables equality", [a, b], [10, 15])
-assert("nested list equality", [1,2,[3,[4],5,6,7],8,[9,10],11], [1,2,[3,[4],5,6,7],8,[9,10],11])
-assert("lists with symbols", [0,a,b], [0,10,15])
+
+### simple type checks
+
 assert("integer type check", isint(10), true)
 assert("integer type check to fail", isint(false), false)
 assert("float type check", isfloat(10.1), true)
@@ -71,6 +82,26 @@ assert("string type check", isstring("hello"), true)
 assert("string type check to fail", isstring([1,2,3,4]), false)
 assert("string variable type check", isstring(s), true)
 assert("string variable type check to fail", isstring(l), false)
+
+### type conversions
+
+assert("int as float", 10 as float, 10.0)
+assert("int as string", 123456 as string, "123456")
+assert("int as bool true", 1 as bool, true)
+assert("int as bool false", 0 as bool, false)
+assert("float as string", 123.45 as string, "123.45")
+assert("char as string", 'a' as string, "a")
+assert("char as int", 'b' as int, 98)
+assert("char as float", 'c' as float, 99.0)
+assert("bool as int", true as int, 1)
+assert("bool as float", false as float, 0.0)
+assert("bool as string", true as string, "true")
+assert("string as int", "123" as int, 123)
+assert("string as float", "4.56" as float, 4.56)
+assert("string as char", "c" as char, 'c')
+
+### math and logic operators
+
 assert("integer addition", 2 + 3, 5)
 assert("integer multiplication", 2 * 3, 6)
 assert("true or true", true or true, true)
@@ -93,11 +124,6 @@ assert("complex precedence", 12 + 3 * 2 / 5 mod 2, 13)
 assert("unary minus with precedence", -10 * 2 - 3, -23)
 assert("override precedence", 10 * (2 - 3), -10)
 assert("nested precedence override", 3 + (2 * ((9 - (8 / 2)) + 1)), 15)
-assert("list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6])
-assert("nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6])
-assert("string append", "this" ++ " is " ++ "a test", "this is a test")
-assert("char append equals string", ('a'::'b'::'c'::[]) == "abc", true)
-assert("simple range", 1..5, [1,2,3,4,5])
 assert("greater than", 5 > 2, true)
 assert("greater than fails", 5 > 9, false)
 assert("less than", 2 < 5, true)
@@ -108,9 +134,28 @@ assert("less than or equal fails", 2 <= 1, false)
 assert("greater than or equal", 9 >= 5, true)
 assert("greater than or equal equal", 2 >= 2, true)
 assert("greater than or equal fails", 2 >= 11, false)
-assert("simple", factorial(5), 120)
-assert("nested", f2(f3(), f4(f1), 12), 216)
-assert("self nested", double(double(double(2))), 16)
+
+### list operators
+
+assert("empty list equality", [], [])
+assert("short list equality", [2], [2])
+assert("multi-item list equality", [1,2,3,4,5], [1,2,3,4,5])
+assert("list of variables equality", [a, b], [10, 15])
+assert("nested list equality", [1,2,[3,[4],5,6,7],8,[9,10],11], [1,2,[3,[4],5,6,7],8,[9,10],11])
+assert("lists with symbols", [0,a,b], [0,10,15])
+assert("list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6])
+assert("nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6])
+assert("string append", "this" ++ " is " ++ "a test", "this is a test")
+assert("char append equals string", ('a'::'b'::'c'::[]) == "abc", true)
+assert("simple range", 1..5, [1,2,3,4,5])
+assert("length of nested list", length([1,2,[3,4,5,6,7],6]), 4)
+assert("length of multiple list concatenations", length([9,10] ++ [11,12] ++ [13,14,15] ++ [16] ++ [17]), 9)
+
+### function application
+
+assert("simple function application", factorial(5), 120)
+assert("nested function application", f2(f3(), f4(f1), 12), 216)
+assert("self nested function application", double(double(double(2))), 16)
 assert("function returns new list", listCountdown(5), [5,4,3,2,1,0])
 assert("higher order with literals", sumWithFun(2, 3, double), 10)
 assert("higher order with variables", sumWithFun(a, b, double), 50)
@@ -118,7 +163,9 @@ assert("higher order with fn", sumWithFun(a, b, fn (x) 2 * x end), 50)
 assert("function with itself as parameter", double(double(2)), 8)
 assert("closure one", add1(2), 3)
 assert("closure two", add2(2), 4)
-assert("length of nested list", length([1,2,[3,4,5,6,7],6]), 4)
+
+### standard library
+
 assert("simple map", map(double, [1,2,3]), [2,4,6])
 assert("simple filter", filter(greaterThan3, [1,2,3,2,4,5,6]), [4,5,6])
 assert("map over concatenated lists", map(double, [1,2,3] ++ [4,5,6]), [2,4,6,8,10,12])
@@ -135,7 +182,6 @@ assert("simple find", find(11, [4,6,10,2,4,11]), 11)
 assert("failing find", find(12, [4,6,10,2,4,11]), false)
 assert("replace", replace(2, 3, [1,2,3,2,4,5,2,7,7,4,2,3,4,2]), [1,3,3,3,4,5,3,7,7,4,3,3,4,3])
 assert("replace nothing", replace(0, 3, [1,2,3,2,4,5,2,7,7,4,2,3,4,2]), [1,2,3,2,4,5,2,7,7,4,2,3,4,2])
-assert("length of multiple list concatenations", length([9,10] ++ [11,12] ++ [13,14,15] ++ [16] ++ [17]), 9)
 assert("sum of list of int", sum([1,2,3]), 6)
 assert("simple nth", [44,12,66,87]!2, 66)
 assert("nth with variable", (1..20)!a, 11)
@@ -214,3 +260,4 @@ assert("intersperse one element list", intersperse('a', [1]), [1])
 assert("intersperse two element list", intersperse('a', [1,2]), [1,'a',2])
 assert("intersperse integers", intersperse(0, [1,2,3,4,5]), [1,0,2,0,3,0,4,0,5])
 assert("intersperse string", intersperse(' ', "hello"), "h e l l o")
+

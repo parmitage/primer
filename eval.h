@@ -89,6 +89,10 @@ env *top, *tco_env;
 int lineno;
 symbol wildcard;
 
+/* not a real type */
+#define t_string 9999
+
+/* memory manager statistics */
 static long cnt_alloc = 0;
 static long cnt_free = 0;
 static long cnt_inc = 0;
@@ -109,11 +113,14 @@ node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);
 node *mkstr(char *value);
-node *strtonode(char *value);
 node *mkapply(node *fn, node *args);
 node *mkcond(node *predicate, node *consequent, node *alternate);
 node *mkseq(node *this, node *next);
 node *mkast(t_type type, node *n1, node *n2, node *n3);
+
+/* primer 'string' handling */ 
+node *str_to_node(char *value);
+char *node_to_str(node *node);
 
 /* memory management */
 struct node *prialloc();
@@ -159,11 +166,12 @@ node *or(node *args);
 node *not(node *args);
 node *mod(node *args);
 node *type(node *args);
+node *as(node *args);
 node *append(node *args);
 node *range(node *args);
 node *show(node *args);
 
-/* misc utils */
+/* utils */
 node *loadlib(char *name);
 void error(char *msg);
 

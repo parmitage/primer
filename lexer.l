@@ -33,6 +33,7 @@ void yyerror(char *);
 "tail"                                            return TAIL;
 "show"                                            return SHOW;
 "type"                                            return TYPE;
+"as"                                              return AS;
 "length"                                          return LENGTH;
 "!"                                               return NTH;
 "::"                                              return CONS;
