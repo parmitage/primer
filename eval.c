@@ -608,7 +608,7 @@ node *len(node *node)
    return mkint(n);
 }
 
-node *nth(node *args)
+node *at(node *args)
 {
    node *list = args->opr.op[0];
    int index = args->opr.op[1]->ival;

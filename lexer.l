@@ -35,7 +35,7 @@ void yyerror(char *);
 "type"                                            return TYPE;
 "as"                                              return AS;
 "length"                                          return LENGTH;
-"!"                                               return NTH;
+"at"                                              return AT;
 "::"                                              return CONS;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }

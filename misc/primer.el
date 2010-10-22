@@ -6,7 +6,7 @@
 
 (define-generic-mode 'primer-mode
   '("#")
-  '("fn" "end" "if" "then" "else" "where" "as")
+  '("fn" "end" "if" "then" "else" "where" "at" "as")
   '(("=" . 'font-lock-operator)
     ("!" . 'font-lock-operator)
     (":" . 'font-lock-operator)

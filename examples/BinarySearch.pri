@@ -9,7 +9,7 @@ binarySearch = fn (xs, x)
             where diff = e - s
                   mid = diff / 2
                   idx = s + mid
-                  val = xs!idx
+                  val = xs at idx
          end         
 end
 

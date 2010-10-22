@@ -149,7 +149,7 @@ node *cons(node *atom, node *list);
 node *car(node *node);
 node *cdr(node *node);
 node *len(node *node);
-node *nth(node *args);
+node *at(node *args);
 node *add(node *args);
 node *sub(node *args);
 node *neg(node *args);

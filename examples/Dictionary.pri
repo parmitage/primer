@@ -3,7 +3,7 @@ add = fn (d, key, val) d ++ [[key, val]] end
 get = fn (d, key)
    if v != [] then head(tail(v))
    else false
-   where v = findByFn(key, fn (x) x!0 end, d)
+   where v = findByFn(key, fn (x) x at 0 end, d)
 end
 
 update = fn (ds, key, val)
