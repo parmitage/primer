@@ -4,14 +4,14 @@ Primer is a simple functional programming language. The latest snapshot of the i
 
 A definition consists of an expression bound to a symbol. The primitive types are int, float, char and bool. Primer is dynamically typed.
 
-    large = 123456
-    pi = 3.14159
-    letter = 'f'
-    happy = true
+    large: 123456
+    pi: 3.14159
+    letter: 'f'
+    happy: true
 
 Functions are first class so can also be bound to symbols. The body of a function is a single expression, the value of which is the return value of the function.
 
-    areaOfCircle = fn (r) pi * r * r end
+    areaOfCircle: fn (r) pi * r * r end
     areaOfCircle(10)
 
 The show function prints a value to stdout. It also returns its argument meaning it can be composed which is useful during debugging.
@@ -20,28 +20,28 @@ The show function prints a value to stdout. It also returns its argument meaning
 
 Primer is lexically scoped and bindings can be shadowed. The where clause introduces definitions that are local to a function.
 
-    myFun = fn (x, y) a + b(y)
-       where a = 125
-             b = fn (n) n * a end
+    myFun: fn (x, y) a + b(y)
+       where a: 125
+             b: fn (n) n * a end
     end
 
 Immutable closures are supported.
 
-    makeAdder = fn (y)
+    makeAdder: fn (y)
        fn (a) y + a end
     end
 
-    add1 = makeAdder(1)
-    add2 = makeAdder(2)
+    add1: makeAdder(1)
+    add2: makeAdder(2)
 
     add1(2)   # 3
     add2(2)   # 4
 
 Lists can be nested to any level and are heterogeneous.
 
-    xs1 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    xs2 = [4, 5.32, pi, true, areaOfCircle, areaOfCircle(5), 'a', "aaa"]
-    xs3 = [4, [5.32, [pi], [], true], areaOfCircle, 'a', "aaa"]
+    xs1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    xs2: [4, 5.32, pi, true, areaOfCircle, areaOfCircle(5), 'a', "aaa"]
+    xs3: [4, [5.32, [pi], [], true], areaOfCircle, 'a', "aaa"]
 
 Several functions provide access to list elements.
  
@@ -71,15 +71,15 @@ Strings are lists of characters meaning that most list functions and operators c
 
 The if statement is an expression so must return a value. As a result, the else branch is mandatory.
 
-    count = fn (xs)
+    count: fn (xs)
        if xs != [] then 1 + count(tail(xs))
        else 0
     end
 
 Primer will eliminate tail calls for tail-recursive functions as in this version of count which uses a local accumulator function.
 
-    count = fn (xs) counter(0, xs)
-       where counter = fn (a, xs)
+    count: fn (xs) counter(0, xs)
+       where counter: fn (a, xs)
                 if xs != [] then counter(a + 1, tail(xs))
                 else a
              end
@@ -87,7 +87,7 @@ Primer will eliminate tail calls for tail-recursive functions as in this version
 
 Primer supports higher order and anonymous functions.
 
-    simpleOpSquared = fn (f, x)
+    simpleOpSquared: fn (f, x)
        f(x) * f(x)
     end
 
@@ -97,8 +97,8 @@ Primer supports higher order and anonymous functions.
 The Primer standard library, found in Library.pri, defines several useful functions.
 
     map(double, [1,2,3,4,5])                # [2,4,6,8,10]
-    foldl(add, 0, [1,2,3,4,5])              # ((((0+1)+2)+3)+4)+5 = 15
-    foldr(add, 0, [1,2,3,4,5])              # 1+(2+(3+(4+(5+0)))) = 15
+    foldl(add, 0, [1,2,3,4,5])              # ((((0+1)+2)+3)+4)+5 -> 15
+    foldr(add, 0, [1,2,3,4,5])              # 1+(2+(3+(4+(5+0)))) -> 15
     filter(odd, [1,2,3,2,4,5,6])            # [1,3,5]
     zip(l1, [4,5,6])                        # [[1,4],[2,5],[3,6]]
     reverse("hello")                        # "olleh"

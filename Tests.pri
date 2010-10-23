@@ -5,51 +5,51 @@
 #
 ##############################################################################
 
-a = 10
-b = 15
-c = 66.78
-d = false
-l = [1,2,3,4]
-s = "Hello, world!"
+a: 10
+b: 15
+c: 66.78
+d: false
+l: [1,2,3,4]
+s: "Hello, world!"
 
-f1 = fn (x) x + b + 2 end
-f2 = fn (x, y, z) x * y - z end
+f1: fn (x) x + b + 2 end
+f2: fn (x, y, z) x * y - z end
 
-f3 = fn ()
-   inner() where inner = fn () 12 end
+f3: fn ()
+   inner() where inner: fn () 12 end
 end
 
-f4 = fn (f)
+f4: fn (f)
   f(2)
 end
 
-double = fn(x)
+double: fn(x)
   x * 2
 end
 
-sumWithFun = fn(x, y, f)
+sumWithFun: fn(x, y, f)
   f(x) + f(y)
 end
 
-factorial = fn(x)
+factorial: fn(x)
   if x == 0 then 1
   else x * factorial(x - 1)
 end
 
-greaterThan3 = fn (x)
+greaterThan3: fn (x)
   x > 3
 end
 
-listCountdown = fn (x)
+listCountdown: fn (x)
    reverse(0..x)
 end
 
-makeAdder = fn (y)
+makeAdder: fn (y)
   fn (a) y + a end
 end
 
-add1 = makeAdder(1)
-add2 = makeAdder(2)
+add1: makeAdder(1)
+add2: makeAdder(2)
 
 ### equality tests
 

@@ -6,9 +6,9 @@
 # all the multiples of 3 or 5 below 1000.
 ############################################################################
 
-pe1 = fn (limit)
+pe1: fn (limit)
    inner(0, 0)
-   where inner = fn (x, accum)
+   where inner: fn (x, accum)
             if x < limit then
                if x mod 3 == 0 or x mod 5 == 0 then
                   inner(x + 1, accum + x)
@@ -31,9 +31,9 @@ show(pe1(1000))  # ==> 234168
 # exceed 40 (this should be 4 million...).
 ############################################################################
 
-fib = fn (n)
+fib: fn (n)
    inner(n, 0, 1)
-   where inner = fn (iter, result, next)
+   where inner: fn (iter, result, next)
                     if iter == 0 then result
                     else inner(iter - 1, next, result + next)
                  end
@@ -48,9 +48,9 @@ show(sum(filter(even, map(fib, 0..40))))
 # What is the largest prime factor of the number 600851475143?
 ############################################################################
 
-prime = fn (x)
+prime: fn (x)
    inner(2)
-   where inner = fn (y)
+   where inner: fn (y)
             if x > y then
                if x mod y == 0 then false
                else inner(y + 1)
@@ -58,11 +58,11 @@ prime = fn (x)
          end
 end
 
-factor = fn (x, y) x mod y == 0 end
+factor: fn (x, y) x mod y == 0 end
 
-pe3 = fn (n)
+pe3: fn (n)
    last(filter(primeFactor, 2..n))
-   where primeFactor = fn (x) prime(x) and factor(n, x) end
+   where primeFactor: fn (x) prime(x) and factor(n, x) end
 end
 
 show(pe3(6000))

@@ -53,7 +53,7 @@ stmt                                                  { $$ = $1; }
 ;
 
 stmt:
-expr '=' expr                                         { $$ = mkast(t_def, $1, $3, NULL); }
+expr ':' expr                                         { $$ = mkast(t_def, $1, $3, NULL); }
 | expr                                                { $$ = $1; }
 ;
 
