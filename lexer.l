@@ -29,14 +29,14 @@ void yyerror(char *);
 "true"                                            return TRUE;
 "false"                                           return FALSE;
 "end"                                             return END;
-"head"                                            return HEAD;
-"tail"                                            return TAIL;
-"show"                                            return SHOW;
-"type"                                            return TYPE;
 "as"                                              return AS;
-"length"                                          return LENGTH;
 "at"                                              return AT;
 "::"                                              return CONS;
+"Head"                                            return HEAD;
+"Tail"                                            return TAIL;
+"Show"                                            return SHOW;
+"Type"                                            return TYPE;
+"Length"                                          return LENGTH;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 \#.*\n?                                           NULL; /* comments */

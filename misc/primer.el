@@ -7,6 +7,7 @@
 (define-generic-mode 'primer-mode
   '("#")
   '("fn" "end" "if" "then" "else" "where" "at" "as"
+    "and" "or" "not" "mod" "true" "false"
     "int" "float" "char" "bool" "string")
   '(("=" . 'font-lock-operator)
     ("!" . 'font-lock-operator)

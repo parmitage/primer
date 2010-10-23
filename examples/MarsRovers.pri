@@ -12,10 +12,10 @@ RoverY: fn (r) r at 1 end
 RoverH: fn (r) r at 2 end
 
 ##############################################################################
-### Move a rover using command string.
+### Move a rover 'r' using a command string 's'.
 ##############################################################################
 Move: fn (r, s)
-   foldl(Transform, r, s)
+   FoldL(Transform, r, s)
    where Transform: fn (r, c)
             if c == 'L' then
                [RoverX(r), RoverY(r), (RoverH(r) + 1) mod 4]
@@ -31,15 +31,17 @@ end
 ### Translate a set of co-ordinates specified as x, y and heading.
 ##############################################################################
 Translate: fn (x, y, h, c)
-   if even(h) then [x + ((h - 1) * c), y, h]
-   else [x, y + ((h - 2) * c), h]
+   if Even(h) then
+      [x + ((h - 1) * c), y, h]
+   else
+      [x, y + ((h - 2) * c), h]
 end
 
 ##############################################################################
 ### Displays a rover to the console in "x y h" notation.
 ##############################################################################
 Print: fn (r)
-   show(x ++ " " ++ y ++ " " ++ d)
+   Show(x ++ " " ++ y ++ " " ++ d)
    where x: RoverX(r) as string
          y: RoverY(r) as string
          d: (dirs at RoverH(r)) as string

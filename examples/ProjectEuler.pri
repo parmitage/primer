@@ -6,18 +6,18 @@
 # all the multiples of 3 or 5 below 1000.
 ############################################################################
 
-pe1: fn (limit)
-   inner(0, 0)
-   where inner: fn (x, accum)
+Pe1: fn (limit)
+   Inner(0, 0)
+   where Inner: fn (x, accum)
             if x < limit then
                if x mod 3 == 0 or x mod 5 == 0 then
-                  inner(x + 1, accum + x)
-               else inner(x + 1, accum)
+                  Inner(x + 1, accum + x)
+               else Inner(x + 1, accum)
             else accum
          end
 end
 
-show(pe1(1000))  # ==> 234168
+Show(Pe1(1000))  # ==> 234168
 
 ############################################################################
 # Project Euler Problem 2
@@ -31,15 +31,15 @@ show(pe1(1000))  # ==> 234168
 # exceed 40 (this should be 4 million...).
 ############################################################################
 
-fib: fn (n)
-   inner(n, 0, 1)
-   where inner: fn (iter, result, next)
+Fib: fn (n)
+   Inner(n, 0, 1)
+   where Inner: fn (iter, result, next)
                     if iter == 0 then result
-                    else inner(iter - 1, next, result + next)
+                    else Inner(iter - 1, next, result + next)
                  end
 end
 
-show(sum(filter(even, map(fib, 0..40))))
+Show(Sum(Filter(Even, Map(Fib, 0..40))))
 
 ############################################################################
 # Project Euler Problem 3
@@ -48,23 +48,23 @@ show(sum(filter(even, map(fib, 0..40))))
 # What is the largest prime factor of the number 600851475143?
 ############################################################################
 
-prime: fn (x)
-   inner(2)
-   where inner: fn (y)
+Prime: fn (x)
+   Inner(2)
+   where Inner: fn (y)
             if x > y then
                if x mod y == 0 then false
-               else inner(y + 1)
+               else Inner(y + 1)
             else true
          end
 end
 
-factor: fn (x, y) x mod y == 0 end
+Factor: fn (x, y) x mod y == 0 end
 
-pe3: fn (n)
-   last(filter(primeFactor, 2..n))
-   where primeFactor: fn (x) prime(x) and factor(n, x) end
+Pe3: fn (n)
+   Last(Filter(PrimeFactor, 2..n))
+   where PrimeFactor: fn (x) Prime(x) and Factor(n, x) end
 end
 
-show(pe3(6000))
+Show(Pe3(6000))
 
-#show(map(prime, 1..10))
+#Show(Map(Prime, 1..10))

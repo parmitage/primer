@@ -1,18 +1,18 @@
 # This version will overflow stack on larger values.
-fac1: fn (n)
+Fac1: fn (n)
    if n == 0 then 1
-   else n * fac1 (n - 1)
+   else n * Fac1 (n - 1)
 end
 
-show(fac1(10))
+Show(Fac1(10))
 
 # This version uses an accumulator.
-fac2: fn (n)
-   inner (n, 1)
-   where inner: fn (i, acc)
+Fac2: fn (n)
+   Inner (n, 1)
+   where Inner: fn (i, acc)
             if i == 0 then acc
-            else inner (i - 1, acc * i)
+            else Inner (i - 1, acc * i)
          end
 end
 
-show(fac2(10))
+Show(Fac2(10))
