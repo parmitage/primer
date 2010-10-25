@@ -1,55 +1,45 @@
-##############################################################################
-### Set up compass positions.
-##############################################################################
+##########################################################################
+### Set up compass points.
 W: 0 S: 1 E: 2 N: 3
-dirs: ['W', 'S', 'E', 'N']
 
-##############################################################################
-### Accessor functions to read properties of a rover.
-##############################################################################
+##########################################################################
+### Constructor and accessors for a rover.
+Rover: fn (x, y, h) [x, y, h] end
 RoverX: fn (r) r at 0 end
 RoverY: fn (r) r at 1 end
 RoverH: fn (r) r at 2 end
 
-##############################################################################
-### Move a rover 'r' using a command string 's'.
-##############################################################################
-Move: fn (r, s)
-   FoldL(Transform, r, s)
-   where Transform: fn (r, c)
-            if c == 'L' then
-               [RoverX(r), RoverY(r), (RoverH(r) + 1) mod 4]
-            else if c == 'R' then
-               [RoverX(r), RoverY(r), RotateRight(RoverH(r)) - 1]
-            else
-               Translate(RoverX(r), RoverY(r), RoverH(r), c - '0')
-         end
-         RotateRight: fn (h) if h == 0 then 4 else h end
+##########################################################################
+### Perform each instruction in the command string.
+Navigate: fn (r, s) FoldL(Move, r, s) end
+
+##########################################################################
+### Move a rover by a single instruction.
+Move: fn (r, c)
+   if c == 'L' then [RoverX(r), RoverY(r), (RoverH(r) + 1) mod 4]
+   else if c == 'R' then [RoverX(r), RoverY(r), RotateRight(RoverH(r)) - 1]
+   else Translate(r, c - '0')
+   where RotateRight: fn (h) if h == 0 then 4 else h end
 end
 
-##############################################################################
-### Translate a set of co-ordinates specified as x, y and heading.
-##############################################################################
-Translate: fn (x, y, h, c)
-   if Even(h) then
-      [x + ((h - 1) * c), y, h]
+##########################################################################
+### Translate a rover by a single command.
+Translate: fn (r, c)
+   if Even(RoverH(r)) then
+      [RoverX(r) + ((RoverH(r) - 1) * c), RoverY(r), RoverH(r)]
    else
-      [x, y + ((h - 2) * c), h]
+      [RoverX(r), RoverY(r) + ((RoverH(r) - 2) *c), RoverH(r)]
 end
 
-##############################################################################
+##########################################################################
 ### Displays a rover to the console in "x y h" notation.
-##############################################################################
 Print: fn (r)
    Show(x ++ " " ++ y ++ " " ++ d)
    where x: RoverX(r) as string
          y: RoverY(r) as string
-         d: (dirs at RoverH(r)) as string
+         d: (['W', 'S', 'E', 'N'] at RoverH(r)) as string
 end
 
-##############################################################################
+##########################################################################
 ### Create a rover and move it using a command string.
-##############################################################################
-rover: [10, 10, N]
-command: "R1R3L2L1"
-Print(Move(rover, command))
+Print(Navigate(Rover(10, 10, N), "R1R3L2L1"))

@@ -5,6 +5,9 @@
 
 #define MAX_SYMBOLS 1000
 
+#define CAR(p) (p != NULL && p->pair->car != NULL ? p->pair->car : NULL)
+#define CDR(p) (p != NULL && p->pair->cdr != NULL ? p->pair->cdr : NULL)
+#define EMPTY(p) (p == NULL || p->pair->car == NULL)
 #define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
 #define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
 #define ASSERT(x, t, m) if (x != t) error(m)
@@ -32,9 +35,9 @@ typedef enum {
 } t_type;
 
 typedef struct pair {
-   int oper;
-   int nops;
-   struct node *op[3];
+   t_type type;
+   struct node *car;
+   struct node *cdr;
 } pair;
 
 typedef struct closure {
@@ -66,7 +69,7 @@ typedef struct node {
       closure *fn;
       operator *op;
       ast *ast;
-      pair opr;
+      pair *pair;
    };
 } node;
 
@@ -102,7 +105,7 @@ static long cnt_dec = 0;
 node *parse(char *filename);
 
 /* constructors */
-node *mkpair(int oper, int nops, ...);
+node *mkpair(t_type type, node *car, node* cdr);
 node *mksym(char *s);
 node *mkprimitive(struct node * (*primitive) (struct node *));
 node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2);
@@ -129,6 +132,7 @@ void decref(node *n);
 
 /* evaluation */
 node *eval(node *p, env *e);
+node *evlis(node *list, env *env);
 bool istailrecur(node *expr, symbol s);
 void bind(node *args, node *params, env *fnenv, env *argenv);
 binding *bindnew(symbol name, node* node);
@@ -141,7 +145,6 @@ char *symname(symbol s);
 
 /* special forms */
 void pprint(node *node);
-bool empty(node *list);
 node *list_eq(node *l1, node *l2);
 node *cons(node *atom, node *list);
 

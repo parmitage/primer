@@ -1,8 +1,8 @@
 Add: fn (d, key, val) d ++ [[key, val]] end
 
 Get: fn (d, key)
-   if v != [] then Head(Tail(v))
-   else false
+   if v != false then Head(Tail(v))
+   else []
    where v: FindByFn(key, fn (x) x at 0 end, d)
 end
 

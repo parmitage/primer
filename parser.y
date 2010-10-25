@@ -103,9 +103,9 @@ SYMBOL                                                { $$ = mksym($1); }
 ;
 
 list:
-expr                                                  { $$ = mkpair(LIST, 1, $1); }
-| expr ',' list                                       { $$ = mkpair(LIST, 2, $1, $3); }
-| /* empty list */                                    { $$ = mkpair(LIST, 0); }
+expr                                                  { $$ = mkpair(t_pair, $1, NULL); }
+| expr ',' list                                       { $$ = mkpair(t_pair, $1, $3); }
+| /* empty list */                                    { $$ = mkpair(t_pair, NULL, NULL); }
 ;
 
 %%

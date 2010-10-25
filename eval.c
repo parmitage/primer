@@ -1,19 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include "main.h"
 #include "utils.h"
 #include "eval.h"
 #include "y.tab.h"
 
 /*
-  TODO redesign cons cells (and rename to t_cons)
+  TODO can pair use the type in node rather than in the pair struct (t_string becomes a type)?
+  TODO simplification of some pair 'length' checking code
+  TODO could evlis be simplified?
+  TODO separate init code out of main
   TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
   TODO hand written parser
   TODO REPL
   TODO reference counter
-  TODO proper tail recursion checks
+  TODO proper tail recursion check
   TODO proper build closure environment
   TODO make def an expression rather than a statement?
  */
@@ -96,14 +98,13 @@ node *eval(node *n, env *e)
       case t_lambda:
       {
          //env *ce = envnew(top);
-         //build_closure_env(n->opr.op[1], env, ce);
+         //build_closure_env(n->pair->cdr, env, ce);
          return mkclosure(n->ast->n1, n->ast->n2, n->ast->n3, e);
       }
 
       case t_operator:
       {
-         /* TODO this use of mkpair would be tidied up when we have proper cons cells */
-         return n->op->primitive(mkpair(-1, 2, eval(n->op->arg1, e), eval(n->op->arg2, e)));
+         return n->op->primitive(mkpair(-1, eval(n->op->arg1, e), eval(n->op->arg2, e)));
       }
 
       case t_cons:
@@ -181,44 +182,34 @@ node *eval(node *n, env *e)
 
       case t_pair:
       {
-         switch(n->opr.oper)
-         {
-            case LIST:
-            case STRING:
-            {
-               /* because we can store symbols in lists we evaluate the contents */
-               node *ret;
-               
-               switch (n->opr.nops)
-               {
-                  case 0:
-                     ret = mkpair(n->opr.oper, 0);
-                     break;
-                  case 1:
-                     ret = mkpair(n->opr.oper, 1, eval(n->opr.op[0], e));
-                     break;
-                  case 2:
-                     ret = mkpair(n->opr.oper, 2, eval(n->opr.op[0], e), eval(n->opr.op[1], e));
-                     break;
-               }
-
-               decref(n);
-               //incref(ret);
-               return ret;
-            }
-         }
+         /* because we can store symbols in lists we evaluate the contents */
+         node *ret = evlis(n, e);
+         decref(n);
+         //incref(ret);
+         return ret;
       }
    }
+}
+
+node *evlis(node *list, env *env)
+{
+   /* TODO this isn't quite right... */
+   if (!CAR(list))
+      return mkpair(list->pair->type, NULL, NULL);
+   else if (!CDR(list))
+      return mkpair(list->pair->type, eval(CAR(list), env), NULL);
+   else
+      return mkpair(list->pair->type, eval(CAR(list), env), evlis(CDR(list), env));
 }
 
 void bind(node *args, node *params, env *fnenv, env *argenv)
 {
    if (params != NULL)
    {		
-      if (params->opr.nops > 1)
+      if (CDR(params))
          bind(cdr(args), cdr(params), fnenv, argenv);
 		
-      if (params->opr.nops > 0)
+      if (CAR(params))
          extend(fnenv, bindnew(car(args)->ival, eval(car(params), argenv)));
    }
 }
@@ -272,11 +263,11 @@ void decref(node *n)
       /* DEBUG */
       cnt_free++;
 
-      if (n->type == t_pair && (n->opr.oper == LIST || n->opr.oper == STRING))
-      {
-         for (int i = 0; i < n->opr.nops; i++)
-            decref(n->opr.op[i]);
-      }
+      /* if (n->type == t_pair) */
+      /* { */
+      /*    for (int i = 0; i < n->pair->nops; i++) */
+      /*       decref(n->pair->op[i]); */
+      /* } */
 
       //free(n);
    }
@@ -366,14 +357,16 @@ bool istailrecur(node *expr, symbol s)
       case t_char:
       case t_symbol:
          return true;
+
+         /* TODO this is completely wrong! */
       case t_pair:
-         switch(expr->opr.oper)
+         switch(expr->pair->type)
          {
-            case APPLY:
-               return expr->opr.op[0]->ival == s;
-            case IF:
-               return istailrecur(expr->opr.op[1], s) &&
-                  istailrecur(expr->opr.op[2], s);
+            /* case APPLY: */
+            /*    return expr->pair->car->ival == s; */
+            /* case IF: */
+            /*    return istailrecur(expr->pair->cdr, s) && */
+            /*       istailrecur(expr->pair->op[2], s); */
             default:
                return false;
          }
@@ -449,9 +442,9 @@ node* str_to_node(char* value)
    int len = strlen(value);
 
    if (len > 1)
-      return mkpair(STRING, 2, mkchar(value[0]), str_to_node(value + 1));
+      return mkpair(t_string, mkchar(value[0]), str_to_node(value + 1));
    else
-      return mkpair(STRING, 1, mkchar(value[0]));
+      return mkpair(t_string, mkchar(value[0]), NULL);
 }
 
 char *node_to_str(node *node)
@@ -461,10 +454,10 @@ char *node_to_str(node *node)
 
    while (node != NULL)
    {
-      if (node->opr.nops > 0)
+      if (CAR(node))
       {
-         str[i] = node->opr.op[0]->ival;
-         node = node->opr.op[1];
+         str[i] = node->pair->car->ival;
+         node = node->pair->cdr;
          ++i;
       }
       else
@@ -485,26 +478,16 @@ node *mksym(char* s)
    return p;
 }
 
-node *mkpair(int oper, int nops, ...)
+node *mkpair(t_type type, node *car, node* cdr)
 {
    node *p = prialloc();
    p->type = t_pair;
    p->lineno = lineno;
    p->rc = 1;
-   p->opr.oper = oper;
-   p->opr.nops = nops;
-
-   va_list ap;
-   va_start(ap, nops);
-	
-   for (int i = 0; i < nops; i++)
-   {
-      node *arg = va_arg(ap, node*);
-      p->opr.op[i] = arg;
-   }
-	
-   va_end(ap);
-	
+   p->pair = (struct pair*) malloc(sizeof(struct pair));
+   p->pair->type = type;
+   p->pair->car = car;
+   p->pair->cdr = cdr;	
    return p;
 }
 
@@ -552,13 +535,13 @@ node *car(node *node)
 {
    struct node *ret;
 
-   if (node->opr.nops > 0)
+   if (CAR(node))
    {
-      ret = node->opr.op[0];
+      ret = node->pair->car;
       incref(ret);
    }
    else
-      ret = mkpair(LIST, 0);
+      ret = mkpair(t_pair, NULL, NULL);
 
    decref(node);
    return ret;
@@ -566,41 +549,29 @@ node *car(node *node)
 
 node *cdr(node *node)
 {
+   /* TODO could this be simplified? */
    struct node *ret;
 
-   switch (node->opr.nops)
-   {
-      case 0:
-      case 1:
-         ret = mkpair(LIST, 0);
-         break;
-      case 2:
-         ret = node->opr.op[1];
-         incref(ret);
-         break;
-   }
+   if (CDR(node))
+      ret = CDR(node);
+   else
+      ret = mkpair(t_pair, NULL, NULL);
 
-   decref(node);
    return ret;
-}
-
-bool empty(node *list)
-{
-   return list->type == t_pair && list->opr.nops == 0;
 }
 
 node *len(node *node)
 {
-   node = node->opr.op[0];
+   node = node->pair->car;
    ASSERT(node->type, t_pair, "argument to length must be a list");
 
    int n = 0;
    struct node *iter = node;
 
-   while (iter != NULL && iter->opr.nops > 0)
+   while (iter != NULL && CAR(iter))
    {
       n += 1;
-      iter = iter->opr.op[1];
+      iter = iter->pair->cdr;
    }
 
    decref(node);
@@ -610,8 +581,8 @@ node *len(node *node)
 
 node *at(node *args)
 {
-   node *list = args->opr.op[0];
-   int index = args->opr.op[1]->ival;
+   node *list = args->pair->car;
+   int index = args->pair->cdr->ival;
 
    int n = 0;
    bool found = false;
@@ -620,7 +591,7 @@ node *at(node *args)
    {
       if (list == NULL || index < 0)
       {
-         return mkpair(LIST, 0);
+         return mkpair(t_pair, NULL, NULL);
          found = true;
       }
       else if (index == n)
@@ -638,45 +609,44 @@ node *at(node *args)
 
 node *cons(node *atom, node *list)
 {
-   if (empty(list))
-      return mkpair(LIST, 1, atom);
+   if (EMPTY(list))
+      return mkpair(t_pair, atom, NULL);
    else
-      return mkpair(LIST, 2, atom, list);
+      return mkpair(t_pair, atom, list);
 }
 
 node *append(node *args)
 {
-   node *list1 = args->opr.op[0];
-   node *list2 = args->opr.op[1];
+   node *list1 = args->pair->car;
+   node *list2 = args->pair->cdr;
 
-   if (empty(list2))
+   if (EMPTY(list2))
       return list1;
 
-   if (empty(list1))
+   if (EMPTY(list1))
       return list2;
 
    node *r = list1;
    node *n = list1;
 	
-   while(n->opr.op[1] != NULL && !empty(n->opr.op[1]))
+   while(n->pair->cdr != NULL && !EMPTY(n->pair->cdr))
    {
-      n = n->opr.op[1];
+      n = n->pair->cdr;
    }
 	
-   n->opr.nops = 2;
-   n->opr.op[1] = list2;
+   n->pair->cdr = list2;
    
    return r;
 }
 
 node *range(node *args)
 {
-   node *s = args->opr.op[0];
-   node *e = args->opr.op[1];
+   node *s = args->pair->car;
+   node *e = args->pair->cdr;
 
    int from = s->ival;
    int to = e->ival;
-   node *list = mkpair(LIST, 0);
+   node *list = mkpair(t_pair, NULL, NULL);
 
    for (int i = to; i >= from; --i)
       list = cons(mkint(i), list);
@@ -709,17 +679,17 @@ void pprint(node *node)
          printf("#<closure>");
          break;
       case t_pair:
-         switch (node->opr.oper)
+         switch (node->pair->type)
          {
-            case STRING:
+            case t_string:
                printf("\"");
 
                while (node != NULL)
                {
-                  if (node->opr.nops > 0)
+                  if (CAR(node))
                   {
-                     printf("%c", node->opr.op[0]->ival);
-                     node = node->opr.op[1];
+                     printf("%c", node->pair->car->ival);
+                     node = node->pair->cdr;
                   }
                   else
                      node = NULL;
@@ -728,17 +698,17 @@ void pprint(node *node)
                printf("\"");
                break;
 		
-            case LIST:
+            case t_pair:
                printf("[");
            
                while (node != NULL)
                {
-                  if (node->opr.nops > 0)
+                  if (CAR(node))
                   {
-                     pprint(node->opr.op[0]);
-                     if (node->opr.nops > 1)
+                     pprint(node->pair->car);
+                     if (CDR(node))
                         printf(",");
-                     node = node->opr.op[1];
+                     node = node->pair->cdr;
                   }
                   else
                      node = NULL;
@@ -757,15 +727,15 @@ void pprint(node *node)
 
 node *show(node *args)
 {
-   pprint(args->opr.op[0]);
+   pprint(args->pair->car);
    printf("\n");
-   return args->opr.op[0];
+   return args->pair->car;
 }
 
 node *add(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    ASSERT_NUM(x, "left operand to + must be numeric");
    ASSERT_NUM(y, "right operand to + must be numeric");
@@ -790,8 +760,8 @@ node *add(node *args)
 
 node *sub(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    ASSERT_NUM(x, "left operand to - must be numeric");
    ASSERT_NUM(y, "right operand to - must be numeric");
@@ -815,7 +785,7 @@ node *sub(node *args)
 
 node *neg(node *args)
 {
-   node *x = args->opr.op[0];
+   node *x = args->pair->car;
 
    ASSERT_NUM(x, "operand to - must be numeric");
 
@@ -838,8 +808,8 @@ node *neg(node *args)
 
 node *mul(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
    
    ASSERT_NUM(x, "left operand to * must be numeric");
    ASSERT_NUM(y, "right operand to * must be numeric");
@@ -863,8 +833,8 @@ node *mul(node *args)
 
 node *dvd(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
    
    ASSERT_NUM(x, "left operand to / must be numeric");
    ASSERT_NUM(y, "right operand to / must be numeric");
@@ -888,8 +858,8 @@ node *dvd(node *args)
 
 node *lt(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
@@ -901,8 +871,8 @@ node *lt(node *args)
 
 node *gt(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    node *ret = EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
@@ -914,8 +884,8 @@ node *gt(node *args)
 
 node *lte(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
    node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
    //decref(x);
@@ -925,8 +895,8 @@ node *lte(node *args)
 
 node *gte(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
    node *ret = EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
    //decref(x);
@@ -936,19 +906,25 @@ node *gte(node *args)
 
 node *list_eq(node *l1, node *l2)
 {
-   if (l1->opr.nops == 0 && l2->opr.nops == 0)
+   if (EMPTY(l1) && EMPTY(l2))
       return NODE_BOOL_TRUE;
 
-   if (l1->opr.nops != l2->opr.nops)
+   /* TODO can this be simplified? */
+   if ((CAR(l1) && EMPTY(l2)) ||
+       (EMPTY(l1) && CAR(l2)) ||
+       (CDR(l1) && !CDR(l2)) ||
+       (!CDR(l1) && CDR(l2)))
       return NODE_BOOL_FALSE;
 	
    incref(l1); //Compensate for the unwanted decref eq is
    incref(l2); //about to perform. Not 100% sure about this one.
 
-   if (eq(mkpair(-1, 2, l1->opr.op[0], l2->opr.op[0]))->ival == true)
+   /* TODO break eq down into operator version and private/interpreter version
+      so that it can be more conveniently be called by C functions */
+   if (eq(mkpair(-1, l1->pair->car, l2->pair->car))->ival == true)
    {
-      if (l1->opr.nops == 2 && l2->opr.nops == 2)
-         return list_eq(l1->opr.op[1], l2->opr.op[1]);
+      if (CDR(l1) && CDR(l2))
+         return list_eq(l1->pair->cdr, l2->pair->cdr);
       else
          return NODE_BOOL_TRUE;
    }
@@ -958,8 +934,8 @@ node *list_eq(node *l1, node *l2)
 
 node *eq(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
    node *ret;
 
    if (x->type != y->type)
@@ -988,8 +964,8 @@ node *neq(node *args)
 
 node *and(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    ASSERT(x->type, t_bool, "left operand to and must be boolean");
    ASSERT(y->type, t_bool, "right operand to and must be boolean");
@@ -1008,8 +984,8 @@ node *and(node *args)
 
 node *or(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    ASSERT(x->type, t_bool, "left operand to or must be boolean");
    ASSERT(y->type, t_bool, "right operand to or must be boolean");
@@ -1028,7 +1004,7 @@ node *or(node *args)
 
 node *not(node *args)
 {
-   node *x = args->opr.op[0];
+   node *x = args->pair->car;
 
    ASSERT(x->type, t_bool, "operand to not must be boolean");
 
@@ -1045,8 +1021,8 @@ node *not(node *args)
 
 node *mod(node *args)
 {
-   node *x = args->opr.op[0];
-   node *y = args->opr.op[1];
+   node *x = args->pair->car;
+   node *y = args->pair->cdr;
 
    ASSERT(x->type, t_int, "left operand to mod must be integer");
    ASSERT(y->type, t_int, "right operand to mod must be integer");
@@ -1060,14 +1036,14 @@ node *mod(node *args)
 
 node *type(node *args)
 {
-   node *x = args->opr.op[0];
+   node *x = args->pair->car;
    return mkint(x->type);
 }
 
 node *as(node *args)
 {
-   node *from = args->opr.op[0];
-   node *to = args->opr.op[1];
+   node *from = args->pair->car;
+   node *to = args->pair->cdr;
    int target = to->ival;
    char buffer[10];
    int ival;
@@ -1172,7 +1148,7 @@ node *as(node *args)
 
       case t_pair:
       {
-         if (from->opr.oper == STRING)
+         if (from->pair->type == t_string)
          {
             char *str = node_to_str(from);
 
