@@ -126,6 +126,10 @@ node *eval(node *n, env *e)
       {
          symbol fsym = n->ast->n1->ival;
          node *fn = eval(n->ast->n1, e);
+
+         if (fn->type != t_closure)
+            error("attempt to apply non function type");
+
          env *ext = envnew(fn->fn->env);
 
          /* parameters */
@@ -533,11 +537,13 @@ node *mkast(t_type type, node *n1, node *n2, node *n3)
 
 node *car(node *node)
 {
+   ASSERT(node->type, t_pair, "head can only be applied to lists");
+
    struct node *ret;
 
    if (CAR(node))
    {
-      ret = node->pair->car;
+      ret = CAR(node);
       incref(ret);
    }
    else
@@ -549,6 +555,8 @@ node *car(node *node)
 
 node *cdr(node *node)
 {
+   ASSERT(node->type, t_pair, "tail can only be applied to lists");
+
    /* TODO could this be simplified? */
    struct node *ret;
 
@@ -563,7 +571,7 @@ node *cdr(node *node)
 node *len(node *node)
 {
    node = node->pair->car;
-   ASSERT(node->type, t_pair, "argument to length must be a list");
+   ASSERT(node->type, t_pair, "length can only be applied to lists");
 
    int n = 0;
    struct node *iter = node;
@@ -583,6 +591,9 @@ node *at(node *args)
 {
    node *list = args->pair->car;
    int index = args->pair->cdr->ival;
+
+   ASSERT(list->type, t_pair, "left operand to at mut be a list");
+   ASSERT(args->pair->cdr->type, t_int, "right operand to at must be an integer");
 
    int n = 0;
    bool found = false;
@@ -609,6 +620,8 @@ node *at(node *args)
 
 node *cons(node *atom, node *list)
 {
+   ASSERT(list->type, t_pair, "right operand to cons must be a list");
+
    if (EMPTY(list))
       return mkpair(t_pair, atom, NULL);
    else
@@ -619,6 +632,9 @@ node *append(node *args)
 {
    node *list1 = args->pair->car;
    node *list2 = args->pair->cdr;
+
+   ASSERT(list1->type, t_pair, "left operand to append must be a list");
+   ASSERT(list2->type, t_pair, "right operand to append must be a list");
 
    if (EMPTY(list2))
       return list1;
@@ -643,6 +659,9 @@ node *range(node *args)
 {
    node *s = args->pair->car;
    node *e = args->pair->cdr;
+
+   ASSERT(s->type, t_int, "left operand to range must be an integer");
+   ASSERT(e->type, t_int, "right operand to range must be an integer");
 
    int from = s->ival;
    int to = e->ival;
@@ -674,6 +693,9 @@ void pprint(node *node)
          break;
       case t_symbol:
          printf("%s", symname(node->ival));
+         break;
+      case LAMBDA:
+         printf("#<lambda>");
          break;
       case t_closure:
          printf("#<closure>");
@@ -715,10 +737,6 @@ void pprint(node *node)
                }
 					
                printf("]");
-               break;
-
-            case LAMBDA:
-               printf("#<lambda>");
                break;
          }
          break;
@@ -920,7 +938,7 @@ node *list_eq(node *l1, node *l2)
    incref(l2); //about to perform. Not 100% sure about this one.
 
    /* TODO break eq down into operator version and private/interpreter version
-      so that it can be more conveniently be called by C functions */
+      so that it can be more conveniently called by C functions */
    if (eq(mkpair(-1, l1->pair->car, l2->pair->car))->ival == true)
    {
       if (CDR(l1) && CDR(l2))
