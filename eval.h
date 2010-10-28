@@ -48,9 +48,13 @@ typedef struct closure {
 } closure;
 
 typedef struct operator {
-   struct node * (*primitive) (struct node *);
+   int arity;
    struct node *arg1;
    struct node *arg2;
+   union {
+      struct node * (*op) (struct node *);
+      struct node * (*binop) (struct node *, struct node *);
+   };
 } operator;
 
 typedef struct ast {
@@ -108,7 +112,8 @@ node *parse(char *filename);
 node *mkpair(t_type type, node *car, node* cdr);
 node *mksym(char *s);
 node *mkprimitive(struct node * (*primitive) (struct node *));
-node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2);
+node *mkoperator(struct node * (*op) (struct node *), node *arg1);
+node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2);
 node *mklambda(node *params, node *body, node *where);
 node *mkclosure(node *params, node *body, node *where, env *e);
 node *mkint(int value);
@@ -152,26 +157,26 @@ node *cons(node *atom, node *list);
 node *car(node *node);
 node *cdr(node *node);
 node *len(node *node);
-node *at(node *args);
-node *add(node *args);
-node *sub(node *args);
-node *neg(node *args);
-node *mul(node *args);
-node *dvd(node *args);
-node *lt(node *args);
-node *gt(node *args);
-node *lte(node *args);
-node *gte(node *args);
-node *eq(node *args);
-node *neq(node *args);
-node *and(node *args);
-node *or(node *args);
-node *not(node *args);
-node *mod(node *args);
-node *type(node *args);
-node *as(node *args);
-node *append(node *args);
-node *range(node *args);
+node *at(node *x, node *y);
+node *add(node *x, node *y);
+node *sub(node *x, node *y);
+node *neg(node *x);
+node *mul(node *x, node *y);
+node *dvd(node *x, node *y);
+node *lt(node *x, node *y);
+node *gt(node *x, node *y);
+node *lte(node *x, node *y);
+node *gte(node *x, node *y);
+node *eq(node *x, node *y);
+node *neq(node *x, node *y);
+node *and(node *x, node *y);
+node *or(node *x, node *y);
+node *not(node *x);
+node *mod(node *x, node *y);
+node *type(node *x);
+node *as(node *x, node *y);
+node *append(node *x, node *y);
+node *range(node *x, node *y);
 node *show(node *args);
 
 /* utils */

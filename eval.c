@@ -104,7 +104,10 @@ node *eval(node *n, env *e)
 
       case t_operator:
       {
-         return n->op->primitive(mkpair(-1, eval(n->op->arg1, e), eval(n->op->arg2, e)));
+         if (n->op->arity == 2)
+            return n->op->binop(eval(n->op->arg1, e), eval(n->op->arg2, e));
+         else
+            return n->op->op(eval(n->op->arg1, e));
       }
 
       case t_cons:
@@ -509,14 +512,29 @@ node *mkclosure(node *args, node *body, node *where, env *env)
    return p;
 }
 
-node *mkoperator(struct node * (*op) (struct node *), node *arg1, node *arg2)
+node *mkoperator(struct node * (*op) (struct node *), node *arg1)
 {
    node *p = prialloc();
    p->type = t_operator;
    p->lineno = lineno;
    p->rc = -1;
    p->op = (struct operator*)malloc(sizeof(struct operator));
-   p->op->primitive = op;
+   p->op->op = op;
+   p->op->arity = 1;
+   p->op->arg1 = arg1;
+   p->op->arg2 = NULL;
+   return p;
+}
+
+node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2)
+{
+   node *p = prialloc();
+   p->type = t_operator;
+   p->lineno = lineno;
+   p->rc = -1;
+   p->op = (struct operator*)malloc(sizeof(struct operator));
+   p->op->binop = binop;
+   p->op->arity = 2;
    p->op->arg1 = arg1;
    p->op->arg2 = arg2;
    return p;
@@ -570,7 +588,6 @@ node *cdr(node *node)
 
 node *len(node *node)
 {
-   node = node->pair->car;
    ASSERT(node->type, t_pair, "length can only be applied to lists");
 
    int n = 0;
@@ -587,13 +604,13 @@ node *len(node *node)
    return mkint(n);
 }
 
-node *at(node *args)
+node *at(node *arg1, node *arg2)
 {
-   node *list = args->pair->car;
-   int index = args->pair->cdr->ival;
+   node *list = arg1;
+   int index = arg2->ival;
 
-   ASSERT(list->type, t_pair, "left operand to at mut be a list");
-   ASSERT(args->pair->cdr->type, t_int, "right operand to at must be an integer");
+   ASSERT(arg1->type, t_pair, "left operand to at mut be a list");
+   ASSERT(arg2->type, t_int, "right operand to at must be an integer");
 
    int n = 0;
    bool found = false;
@@ -628,11 +645,8 @@ node *cons(node *atom, node *list)
       return mkpair(t_pair, atom, list);
 }
 
-node *append(node *args)
+node *append(node *list1, node *list2)
 {
-   node *list1 = args->pair->car;
-   node *list2 = args->pair->cdr;
-
    ASSERT(list1->type, t_pair, "left operand to append must be a list");
    ASSERT(list2->type, t_pair, "right operand to append must be a list");
 
@@ -655,11 +669,8 @@ node *append(node *args)
    return r;
 }
 
-node *range(node *args)
+node *range(node *s, node *e)
 {
-   node *s = args->pair->car;
-   node *e = args->pair->cdr;
-
    ASSERT(s->type, t_int, "left operand to range must be an integer");
    ASSERT(e->type, t_int, "right operand to range must be an integer");
 
@@ -745,16 +756,13 @@ void pprint(node *node)
 
 node *show(node *args)
 {
-   pprint(args->pair->car);
+   pprint(args);
    printf("\n");
-   return args->pair->car;
+   return args;
 }
 
-node *add(node *args)
+node *add(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    ASSERT_NUM(x, "left operand to + must be numeric");
    ASSERT_NUM(y, "right operand to + must be numeric");
 
@@ -776,11 +784,8 @@ node *add(node *args)
    return ret;
 }
 
-node *sub(node *args)
+node *sub(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    ASSERT_NUM(x, "left operand to - must be numeric");
    ASSERT_NUM(y, "right operand to - must be numeric");
 
@@ -801,10 +806,8 @@ node *sub(node *args)
    return ret;
 }
 
-node *neg(node *args)
+node *neg(node *x)
 {
-   node *x = args->pair->car;
-
    ASSERT_NUM(x, "operand to - must be numeric");
 
    node *ret;
@@ -824,11 +827,8 @@ node *neg(node *args)
    return ret;
 }
 
-node *mul(node *args)
+node *mul(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-   
    ASSERT_NUM(x, "left operand to * must be numeric");
    ASSERT_NUM(y, "right operand to * must be numeric");
 
@@ -849,11 +849,8 @@ node *mul(node *args)
    return ret;
 }
 
-node *dvd(node *args)
+node *dvd(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-   
    ASSERT_NUM(x, "left operand to / must be numeric");
    ASSERT_NUM(y, "right operand to / must be numeric");
 
@@ -874,11 +871,8 @@ node *dvd(node *args)
    return ret;
 }
 
-node *lt(node *args)
+node *lt(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
    //decref(x);
@@ -887,11 +881,8 @@ node *lt(node *args)
    return ret;
 }
 
-node *gt(node *args)
+node *gt(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    node *ret = EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
    //decref(x);
@@ -900,10 +891,8 @@ node *gt(node *args)
    return ret;
 }
 
-node *lte(node *args)
+node *lte(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
    node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
    //decref(x);
@@ -911,10 +900,8 @@ node *lte(node *args)
    return ret;
 }
 
-node *gte(node *args)
+node *gte(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
    node *ret = EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
    //decref(x);
@@ -937,9 +924,7 @@ node *list_eq(node *l1, node *l2)
    incref(l1); //Compensate for the unwanted decref eq is
    incref(l2); //about to perform. Not 100% sure about this one.
 
-   /* TODO break eq down into operator version and private/interpreter version
-      so that it can be more conveniently called by C functions */
-   if (eq(mkpair(-1, l1->pair->car, l2->pair->car))->ival == true)
+   if (eq(l1->pair->car, l2->pair->car)->ival == true)
    {
       if (CDR(l1) && CDR(l2))
          return list_eq(l1->pair->cdr, l2->pair->cdr);
@@ -950,10 +935,8 @@ node *list_eq(node *l1, node *l2)
    return NODE_BOOL_FALSE;
 }
 
-node *eq(node *args)
+node *eq(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
    node *ret;
 
    if (x->type != y->type)
@@ -975,16 +958,13 @@ node *eq(node *args)
    return ret;
 }
 
-node *neq(node *args)
+node *neq(node *x, node *y)
 {
-   return eq(args)->ival == true ? NODE_BOOL_FALSE : NODE_BOOL_TRUE;
+   return eq(x, y)->ival == true ? NODE_BOOL_FALSE : NODE_BOOL_TRUE;
 }
 
-node *and(node *args)
+node *and(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    ASSERT(x->type, t_bool, "left operand to and must be boolean");
    ASSERT(y->type, t_bool, "right operand to and must be boolean");
 
@@ -1000,11 +980,8 @@ node *and(node *args)
    return ret;
 }
 
-node *or(node *args)
+node *or(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    ASSERT(x->type, t_bool, "left operand to or must be boolean");
    ASSERT(y->type, t_bool, "right operand to or must be boolean");
 
@@ -1020,10 +997,8 @@ node *or(node *args)
    return ret;
 }
 
-node *not(node *args)
+node *not(node *x)
 {
-   node *x = args->pair->car;
-
    ASSERT(x->type, t_bool, "operand to not must be boolean");
 
    node *ret;
@@ -1037,11 +1012,8 @@ node *not(node *args)
    return ret;
 }
 
-node *mod(node *args)
+node *mod(node *x, node *y)
 {
-   node *x = args->pair->car;
-   node *y = args->pair->cdr;
-
    ASSERT(x->type, t_int, "left operand to mod must be integer");
    ASSERT(y->type, t_int, "right operand to mod must be integer");
 
@@ -1052,16 +1024,13 @@ node *mod(node *args)
    return retval;
 }
 
-node *type(node *args)
+node *type(node *x)
 {
-   node *x = args->pair->car;
    return mkint(x->type);
 }
 
-node *as(node *args)
+node *as(node *from, node *to)
 {
-   node *from = args->pair->car;
-   node *to = args->pair->cdr;
    int target = to->ival;
    char buffer[10];
    int ival;
