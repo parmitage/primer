@@ -173,7 +173,7 @@ node *and(node *x, node *y);
 node *or(node *x, node *y);
 node *not(node *x);
 node *mod(node *x, node *y);
-node *type(node *x);
+node *is(node *exp, node *type);
 node *as(node *x, node *y);
 node *append(node *x, node *y);
 node *range(node *x, node *y);

@@ -183,12 +183,3 @@ Odd: fn (n) n mod 2 != 0 end
 
 ### return true if n is false
 Even: fn (n) n mod 2 == 0 end
-
-### test the type of a
-IsInt: fn (a) Type(a) == int end
-IsFloat: fn (a) Type(a) == float end
-IsBool: fn (a) Type(a) == bool end
-IsChar: fn (a) Type(a) == char end
-IsList: fn (a) Type(a) == 5 end
-IsFn: fn (a) Type(a) == 7 end
-IsString: fn (a) IsList(a) and All(fn (c) IsChar(c) end, a) end

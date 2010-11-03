@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token HEAD TAIL SHOW TYPE AS LENGTH AT CONS WHERE RANGE
+%token HEAD TAIL SHOW TYPE IS AS LENGTH AT CONS WHERE RANGE
 
 %nonassoc ELSE
 %left PAREN
@@ -35,7 +35,7 @@
 %left AND OR APPEND
 %left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
-%left '*' '/' MOD AT AS
+%left '*' '/' MOD AT AS IS
 %right CONS
 %nonassoc UMINUS
 
@@ -71,7 +71,6 @@ expr:
 | identifier '(' list ')'                             { $$ = mkast(t_apply, $1, $3, NULL); }
 | IF expr THEN expr ELSE expr                         { $$ = mkast(t_cond, $2, $4, $6); }
 | expr CONS expr                                      { $$ = mkast(t_cons, $1, $3, NULL); }
-| TYPE '(' expr ')'                                   { $$ = mkoperator(type, $3); }
 | SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3); }
 | LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3); }
 | HEAD '(' expr ')'                                   { $$ = mkast(t_car, $3, NULL, NULL); }
@@ -94,6 +93,7 @@ expr:
 | expr RANGE expr                                     { $$ = mkbinoperator(range, $1, $3); }
 | expr AT expr                                        { $$ = mkbinoperator(at, $1, $3); }
 | expr AS expr                                        { $$ = mkbinoperator(as, $1, $3); }
+| expr IS expr                                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS                               { $$ = mkoperator(neg, $2); }
 | '[' list ']'                                        { $$ = $2; }
 ;

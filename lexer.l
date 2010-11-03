@@ -29,6 +29,7 @@ void yyerror(char *);
 "true"                                            return TRUE;
 "false"                                           return FALSE;
 "end"                                             return END;
+"is"                                              return IS;
 "as"                                              return AS;
 "at"                                              return AT;
 "::"                                              return CONS;

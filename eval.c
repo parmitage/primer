@@ -15,9 +15,8 @@
   TODO hand written parser
   TODO REPL
   TODO reference counter
-  TODO proper tail recursion check
-  TODO proper build closure environment
-  TODO make def an expression rather than a statement?
+  TODO tail recursion check
+  TODO build closure environment
  */
 
 int main(int argc, char **argv)
@@ -44,7 +43,9 @@ int main(int argc, char **argv)
    extend(top, bindnew(intern("float"), mkint(t_float)));
    extend(top, bindnew(intern("bool"), mkint(t_bool)));
    extend(top, bindnew(intern("char"), mkint(t_char)));
+   extend(top, bindnew(intern("list"), mkint(t_pair)));
    extend(top, bindnew(intern("string"), mkint(t_string)));
+   extend(top, bindnew(intern("lambda"), mkint(t_closure)));
 
    lineno = 1;
 
@@ -609,7 +610,7 @@ node *at(node *arg1, node *arg2)
    node *list = arg1;
    int index = arg2->ival;
 
-   ASSERT(arg1->type, t_pair, "left operand to at mut be a list");
+   ASSERT(arg1->type, t_pair, "left operand to at must be a list");
    ASSERT(arg2->type, t_int, "right operand to at must be an integer");
 
    int n = 0;
@@ -1024,9 +1025,9 @@ node *mod(node *x, node *y)
    return retval;
 }
 
-node *type(node *x)
+node *is(node *exp, node *type)
 {
-   return mkint(x->type);
+   return mkbool(exp->type == type->ival);
 }
 
 node *as(node *from, node *to)
