@@ -21,6 +21,9 @@ parser:
 utils: utils.c utils.h
 	$(CC) $(DBG) $(CFLAGS) -c utils.c
 
+docs: README.md
+	pandoc README.md -o index.html -c doc.css
+
 clean:
 	rm lex.yy.c y.tab.c y.tab.h *.o primer
 

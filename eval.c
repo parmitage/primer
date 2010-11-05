@@ -53,7 +53,7 @@ int main(int argc, char **argv)
       eval(loadlib(arg_stdlib), top);
 
    eval(parse(arg_fname), top);
-   envdel(top);
+   //envdel(top);
 
    trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
          cnt_inc, cnt_dec, cnt_alloc, cnt_free);
@@ -147,8 +147,8 @@ node *eval(node *n, env *e)
          /* function body */
          if (istailrecur(fn->fn->body, fsym))
          {
-            if (tco_env != NULL)
-               envdel(tco_env);
+            //if (tco_env != NULL)
+            //   envdel(tco_env);
                
             n = fn->fn->body;
             e = tco_env = ext;
@@ -193,7 +193,7 @@ node *eval(node *n, env *e)
          /* because we can store symbols in lists we evaluate the contents */
          node *ret = evlis(n, e);
          decref(n);
-         //incref(ret);
+         incref(ret);
          return ret;
       }
    }
@@ -243,7 +243,7 @@ env *envnew(env *parent)
 
 void incref(node *n)
 {
-   SKIP_REF_COUNT
+   SKIP_REF_COUNT;
 
    n->rc++;
 
@@ -256,28 +256,24 @@ void incref(node *n)
 
 void decref(node *n)
 {
-   SKIP_REF_COUNT
+   SKIP_REF_COUNT;
 
-   n->rc--;
-
-   /* DEBUG */
-   cnt_dec++;
-
-   //printf("decref to %i for ", n->rc);
-   //show(n);
-
-   if (n->rc == 0)
+   if (n->type == t_pair)
    {
-      /* DEBUG */
-      cnt_free++;
+      cnt_dec++;
 
-      /* if (n->type == t_pair) */
-      /* { */
-      /*    for (int i = 0; i < n->pair->nops; i++) */
-      /*       decref(n->pair->op[i]); */
-      /* } */
+      while (n != NULL && n->pair != NULL && n->pair->car != NULL)
+      {
+         n->pair->car->rc--;
 
-      //free(n);
+         if (n->pair->car->rc == 0)
+         {
+            free(n->pair->car);
+            cnt_free++;
+         }
+
+         n = n->pair->cdr;
+      }
    }
 }
 
@@ -779,9 +775,8 @@ node *add(node *x, node *y)
          break;
    }
 
-   // decref(args)
-   // decref(x);
-   // decref(y);
+   decref(x);
+   decref(y);
    return ret;
 }
 
@@ -845,8 +840,9 @@ node *mul(node *x, node *y)
          break;
    }
 
-   //decref(x);
-   //decref(y);
+   decref(x);
+   decref(y);
+   
    return ret;
 }
 
@@ -876,8 +872,8 @@ node *lt(node *x, node *y)
 {
    node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
-   //decref(x);
-   //decref(y);
+   decref(x);
+   decref(y);
 
    return ret;
 }
@@ -886,8 +882,8 @@ node *gt(node *x, node *y)
 {
    node *ret = EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 
-   //decref(x);
-   //decref(y);
+   decref(x);
+   decref(y);
 
    return ret;
 }
@@ -896,8 +892,8 @@ node *lte(node *x, node *y)
 {
    node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
-   //decref(x);
-   //decref(y);
+   decref(x);
+   decref(y);
    return ret;
 }
 
@@ -905,8 +901,8 @@ node *gte(node *x, node *y)
 {
    node *ret = EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    
-   //decref(x);
-   //decref(y);
+   decref(x);
+   decref(y);
    return ret;
 }
 

@@ -101,7 +101,7 @@ The Primer standard library, found in __Library.pri__, defines several useful fu
     Map(Double, [1,2,3,4,5])                # [2,4,6,8,10]
     FoldL(Add, 0, [1,2,3,4,5])              # ((((0+1)+2)+3)+4)+5 -> 15
     FoldR(Add, 0, [1,2,3,4,5])              # 1+(2+(3+(4+(5+0)))) -> 15
-    Filter(odd, [1,2,3,2,4,5,6])            # [1,3,5]
+    Filter(Odd, [1,2,3,2,4,5,6])            # [1,3,5]
     Zip(l1, [4,5,6])                        # [[1,4],[2,5],[3,6]]
     Reverse("hello")                        # "olleh"
     Intersperse('A', l1)                    # [1,'A',2,'A',3]
@@ -117,7 +117,12 @@ The Primer standard library, found in __Library.pri__, defines several useful fu
     Product([1,2,3,4,5])                    # 120
     Sort([4,2,8,1])                         # [1,2,4,8]
 
+The __is__ operator tests the type of a value.
+
+    123.45 is string                        # false
+    123.45 is float                         # true
+
 The __as__ operator converts between types.
 
-    Show(123.45 as string)                  # "123.45"
-    Show("123.45" as float)                 # 123.45
+    123.45 as string                        # "123.45"
+    "123.45" as float                       # 123.45
