@@ -1,24 +1,28 @@
-html {
-
-color: #222;
+html
+{
+    color: #222;
+    font-size: 120%;
 }
 
-body {
-background: white;
-font-family: verdana, "trebuchet ms", "Helvetica Neue", Helvetica, Arial, sans-serif;
-line-height: 140%;
-font-size: 120%;
-width: 900px;
-padding: 10px 30px;
+body
+{
+    background: white;
+    font-family: verdana, "trebuchet ms", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 140%;
+    width: 900px;
+    padding: 10px 30px;
 }
 
-pre {
-font-family: monospace;
-border: 1px dashed black;
-margin-right: 10px;
-padding: 10px;
-}
-
-h1 {
-font-size: 18pt;
+pre
+{
+    font-family: Monaco, Courier New;
+    font-size: 120%;
+    line-height: 120%;
+    position: relative;
+    border: 1px solid black;
+    background: #eeeeff;
+    padding: 15px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border-radius: 5px;
 }
