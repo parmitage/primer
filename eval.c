@@ -853,7 +853,7 @@ node *dvd(node *x, node *y)
 
    node *ret;
 
-   switch (NUMERIC_RETURN_TYPE(x, y))
+   switch (DIVIDE_RETURN_TYPE(x, y))
    {
       case t_int:
          ret = mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
@@ -1033,6 +1033,9 @@ node *as(node *from, node *to)
    int ival;
    float fval;
 
+   if (from->type == target)
+      return from;
+
    switch (from->type)
    {
       case t_int:
@@ -1077,7 +1080,9 @@ node *as(node *from, node *to)
             }
 
             case t_int:
-               error("conversion from float to int not supported");
+            {
+               return mkint((int)from->fval);
+            }
 
             default:
                error("conversion from float to unsupported type");

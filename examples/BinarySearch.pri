@@ -1,13 +1,15 @@
 BinarySearch: fn (xs, x)
    Inner(xs, x, 0, Length(xs) - 1)
    where Inner: fn (xs, x, s, e)
-            if s <= e then
-               if x == val then idx
-               else if x < val then Inner(xs, x, s, e - 1)
-               else Inner(xs, x, s + 1, e)
+            if s <= e
+            then if x == val
+                 then idx
+                 else if x < val
+                      then Inner(xs, x, s, e - 1)
+                      else Inner(xs, x, s + 1, e)
             else false
             where diff: e - s
-                  mid: diff / 2
+                  mid: diff / 2 as int
                   idx: s + mid
                   val: xs at idx
          end         

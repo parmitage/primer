@@ -8,8 +8,13 @@
 #define CAR(p) (p != NULL && p->pair->car != NULL ? p->pair->car : NULL)
 #define CDR(p) (p != NULL && p->pair->cdr != NULL ? p->pair->cdr : NULL)
 #define EMPTY(p) (p == NULL || p->pair->car == NULL)
+
 #define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
 #define NUMERIC_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float ? t_float : t_int)
+#define DIVIDE_RETURN_TYPE(x, y) (x->type == t_float || y->type == t_float || \
+                                  (x->type == t_int && y->type == t_int \
+                                   && x->ival % y->ival != 0) ? t_float : t_int)
+
 #define ASSERT(x, t, m) if (x != t) error(m)
 #define ASSERT_NUM(x, m) if (!(x->type == t_int || x->type == t_float || x->type == t_char)) error(m)
 
