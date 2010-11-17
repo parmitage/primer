@@ -22,10 +22,12 @@ utils: utils.c utils.h
 	$(CC) $(DBG) $(CFLAGS) -c utils.c
 
 docs:
-	pandoc README.md -o index.html -c doc.css
+	pandoc readme.md -o index.html -c doc.css
 
 clean:
 	rm lex.yy.c y.tab.c y.tab.h *.o primer
+	rm *.html
 
 cleanwin:
 	del lex.yy.c y.tab.c y.tab.h *.o primer.exe
+	del *.html

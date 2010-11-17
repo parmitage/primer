@@ -112,21 +112,72 @@ Tail-recursive functions are optimised as in this accumulator version of Count.
 
 Primer has a modest standard library which can be found in __Library.pri__.
 
-    Map(Double, [1,2,3,4,5])                # [2,4,6,8,10]
-    FoldL(Add, 0, [1,2,3,4,5])              # ((((0+1)+2)+3)+4)+5 -> 15
-    FoldR(Add, 0, [1,2,3,4,5])              # 1+(2+(3+(4+(5+0)))) -> 15
+__Map__ applies a function to every element in a list and returns a new list containing the transformed values.
+
+    Map(fn (x) 2 * x end, [1,2,3,4,5])      # ==> [2,4,6,8,10]
+
+__FoldL__ and __FoldR__ uses a two parameter function to combine successive list elements.
+
+    Add = fn (x, y) x + y end
+    FoldL(Add, 0, [1,2,3,4,5])              # ==> ((((0+1)+2)+3)+4)+5 = 15
+    FoldR(Add, 0, [1,2,3,4,5])              # ==> 1+(2+(3+(4+(5+0)))) = 15
+
+__Filter__ applies a predicate function to each element of a list returning those elements for which the function returns true.
+
     Filter(Odd, [1,2,3,2,4,5,6])            # [1,3,5]
+
+__Zip__ takes two lists and combines them pairwise to return a new list of 2-tuples.
+
     Zip(l1, [4,5,6])                        # [[1,4],[2,5],[3,6]]
+
+__Reverse__ returns a new list in reverse order.
+
     Reverse("hello")                        # "olleh"
+
+__Intersperse__ takes an atom and a list and returns a new list with the atom interspersed between the original list elements.
+
     Intersperse('A', l1)                    # [1,'A',2,'A',3]
+
+__Take__ returns the first n items from a list.
+
     Take(2, l1)                             # [1,2]
+
+__Drop__ returns a list without its first n items.
+
     Drop(1, l1)                             # [2,3]
+
+__TakeWhile__ evaluates each item in a list in turn using a supplied function and returns the items from the list until the function returns false.
+
     TakeWhile(Even, l1)                     # []
+
+__DropWhile__ evaluates each item in a list in turn using a supplied function and drops the items from the list until the function returns false.
+
     DropWhile(Odd, l1)                      # [2,3]
+
+__Any__ returns true if any items in a list passes the supplied predicate function otherwise it returns false.
+
     Any(Even, [1,2,3,4])                    # true
+
+__All__ returns true if all items in a list passes the supplied predicate function otherwise it returns false.
+
     All(Odd, [3,4,5,6])                     # false
+
+__Min__ returns the smallest item in a list. It requires that the list contains items which can be compared.
+
     Min([7,2,4,5,3,8,6])                    # 2
+
+__Max__ returns the largest item in a list. It requires that the list contains items which can be compared.
+
     Max([7,2,4,5,3,8,6])                    # 8
+
+__Sum__ returns the sum of the items in the list. It requires that the items in the list are numeric.
+
     Sum([1,2,3,4,5])                        # 15
+
+__Product__ returns the product of the items in the list. It requires that the items in the list are numeric.
+
     Product([1,2,3,4,5])                    # 120
+
+__Sort__ is an implementation of the Quicksort algorithm.
+
     Sort([4,2,8,1])                         # [1,2,4,8]
