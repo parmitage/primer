@@ -147,8 +147,8 @@ node *eval(node *n, env *e)
          /* function body */
          if (istailrecur(fn->fn->body, fsym))
          {
-            //if (tco_env != NULL)
-            //   envdel(tco_env);
+            if (tco_env != NULL)
+               envdel(tco_env);
                
             n = fn->fn->body;
             e = tco_env = ext;
@@ -157,7 +157,7 @@ node *eval(node *n, env *e)
          else
          {
             node *ret = eval(fn->fn->body, ext);
-            //e = envdel(ext);
+            e = envdel(ext);
             return ret;
          }
       }
@@ -258,23 +258,31 @@ void decref(node *n)
 {
    SKIP_REF_COUNT;
 
-   if (n->type == t_pair)
+   cnt_dec++;
+
+   n->rc--;
+
+   pprint(n);
+   printf("rc=%i\n", n->rc);
+
+   if (n->rc == 0)
    {
-      cnt_dec++;
-
-      while (n != NULL && n->pair != NULL && n->pair->car != NULL)
-      {
-         n->pair->car->rc--;
-
-         if (n->pair->car->rc == 0)
-         {
-            free(n->pair->car);
-            cnt_free++;
-         }
-
-         n = n->pair->cdr;
-      }
+      free(n);
+      cnt_free++;
    }
+
+      /* while (n != NULL && n->pair != NULL && n->pair->car != NULL) */
+      /* { */
+      /*    n->pair->car->rc--; */
+
+      /*    if (n->pair->car->rc == 0) */
+      /*    { */
+      /*       free(n->pair->car); */
+      /*       cnt_free++; */
+      /*    } */
+
+      /*    n = n->pair->cdr; */
+      /* } */
 }
 
 env *envdel(env *e)
@@ -351,8 +359,6 @@ binding* envlookup(env *e, symbol sym)
 
 bool istailrecur(node *expr, symbol s)
 {
-/* TODO more cases that need special handling... */
-   
    switch (expr->type)
    {
       case t_int:
@@ -361,19 +367,11 @@ bool istailrecur(node *expr, symbol s)
       case t_char:
       case t_symbol:
          return true;
-
-         /* TODO this is completely wrong! */
-      case t_pair:
-         switch(expr->pair->type)
-         {
-            /* case APPLY: */
-            /*    return expr->pair->car->ival == s; */
-            /* case IF: */
-            /*    return istailrecur(expr->pair->cdr, s) && */
-            /*       istailrecur(expr->pair->op[2], s); */
-            default:
-               return false;
-         }
+      case t_apply:
+         return expr->ast->n1->ival == s;
+      case t_cond:
+         return istailrecur(expr->ast->n2, s)
+            && istailrecur(expr->ast->n3, s);
       default:
          return false;
    }
@@ -397,6 +395,13 @@ node *mkint(int value)
    p->ival = value;
    p->lineno = lineno;
    p->rc = 1;
+   return p;
+}
+
+node *mkint_literal(int value)
+{
+   node *p = mkint(value);
+   p->rc = -1;
    return p;
 }
 
@@ -564,7 +569,7 @@ node *car(node *node)
    else
       ret = mkpair(t_pair, NULL, NULL);
 
-   decref(node);
+   //decref(node);
    return ret;
 }
 
@@ -777,6 +782,7 @@ node *add(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 
@@ -799,6 +805,7 @@ node *sub(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 
@@ -865,6 +872,7 @@ node *dvd(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 

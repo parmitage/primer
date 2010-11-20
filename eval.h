@@ -122,6 +122,7 @@ node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node 
 node *mklambda(node *params, node *body, node *where);
 node *mkclosure(node *params, node *body, node *where, env *e);
 node *mkint(int value);
+node *mkint_literal(int value);
 node *mkfloat(float value);
 node *mkbool(int value);
 node *mkchar(char value);

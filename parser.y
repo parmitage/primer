@@ -59,7 +59,7 @@ expr ':' expr                                         { $$ = mkast(t_def, $1, $3
 
 expr:
 '(' expr ')'                                          { $$ = $2; }
-| INTEGER                                             { $$ = mkint($1); }
+| INTEGER                                             { $$ = mkint_literal($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
 | TRUE                                                { $$ = NODE_BOOL_TRUE; }
