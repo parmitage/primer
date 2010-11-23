@@ -140,6 +140,7 @@ char *node_to_str(node *node);
 struct node *prialloc();
 void incref(node *n);
 void decref(node *n);
+node *literally(node *n);
 
 /* evaluation */
 node *eval(node *p, env *e);

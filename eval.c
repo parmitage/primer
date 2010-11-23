@@ -366,6 +366,7 @@ bool istailrecur(node *expr, symbol s)
       case t_bool:
       case t_char:
       case t_symbol:
+      case t_pair:
          return true;
       case t_apply:
          return expr->ast->n1->ival == s;
@@ -388,6 +389,12 @@ struct node *prialloc()
    return p;
 }
 
+inline node *literally(node *n)
+{
+   n->rc = -1;
+   return n;
+}
+
 node *mkint(int value)
 {
    node *p = prialloc();
@@ -395,13 +402,6 @@ node *mkint(int value)
    p->ival = value;
    p->lineno = lineno;
    p->rc = 1;
-   return p;
-}
-
-node *mkint_literal(int value)
-{
-   node *p = mkint(value);
-   p->rc = -1;
    return p;
 }
 
@@ -451,9 +451,9 @@ node* str_to_node(char* value)
    int len = strlen(value);
 
    if (len > 1)
-      return mkpair(t_string, mkchar(value[0]), str_to_node(value + 1));
+      return mkpair(t_string, literally(mkchar(value[0])), str_to_node(value + 1));
    else
-      return mkpair(t_string, mkchar(value[0]), NULL);
+      return mkpair(t_string, literally(mkchar(value[0])), NULL);
 }
 
 char *node_to_str(node *node)
@@ -641,10 +641,14 @@ node *cons(node *atom, node *list)
 {
    ASSERT(list->type, t_pair, "right operand to cons must be a list");
 
+   node *ret;
+
    if (EMPTY(list))
-      return mkpair(t_pair, atom, NULL);
+      ret = mkpair(t_pair, atom, NULL);
    else
-      return mkpair(t_pair, atom, list);
+      ret = mkpair(t_pair, atom, list);
+
+   return ret;
 }
 
 node *append(node *list1, node *list2)
@@ -685,6 +689,7 @@ node *range(node *s, node *e)
 
    decref(s);
    decref(e);
+
    return list;
 }
 
@@ -902,6 +907,7 @@ node *lte(node *x, node *y)
    
    decref(x);
    decref(y);
+
    return ret;
 }
 
