@@ -53,7 +53,7 @@ int main(int argc, char **argv)
       eval(loadlib(arg_stdlib), top);
 
    eval(parse(arg_fname), top);
-   //envdel(top);
+   envdel(top);
 
    trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
          cnt_inc, cnt_dec, cnt_alloc, cnt_free);
@@ -82,10 +82,7 @@ node *eval(node *n, env *e)
          binding *b = envlookup(e, n->ival);
 			
          if (b != NULL)
-         {
-            incref(b->node);
             return eval(b->node, e);
-         }
          else
             error("unbound symbol");
       }
@@ -192,8 +189,6 @@ node *eval(node *n, env *e)
       {
          /* because we can store symbols in lists we evaluate the contents */
          node *ret = evlis(n, e);
-         decref(n);
-         incref(ret);
          return ret;
       }
    }
@@ -245,10 +240,19 @@ void incref(node *n)
 {
    SKIP_REF_COUNT;
 
+   if (n == NULL)
+      return;
+
    n->rc++;
 
    /* DEBUG */
    cnt_inc++;
+
+   if (n->type == t_pair)
+   {
+      //incref(n->pair->car);
+      //incref(n->pair->cdr);
+   }
 
    //printf("incref to %i for ", n->rc);
    //show(n);
@@ -258,31 +262,26 @@ void decref(node *n)
 {
    SKIP_REF_COUNT;
 
+   if (n == NULL)
+      return;
+
    cnt_dec++;
 
    n->rc--;
 
-   pprint(n);
-   printf("rc=%i\n", n->rc);
+   //pprint(n); fflush(stdout); printf("rc=%i\n", n->rc); fflush(stdout);
+
+   if (n->type == t_pair)
+   {
+      decref(n->pair->car);
+      decref(n->pair->cdr);
+   }
 
    if (n->rc == 0)
    {
       free(n);
       cnt_free++;
    }
-
-      /* while (n != NULL && n->pair != NULL && n->pair->car != NULL) */
-      /* { */
-      /*    n->pair->car->rc--; */
-
-      /*    if (n->pair->car->rc == 0) */
-      /*    { */
-      /*       free(n->pair->car); */
-      /*       cnt_free++; */
-      /*    } */
-
-      /*    n = n->pair->cdr; */
-      /* } */
 }
 
 env *envdel(env *e)
@@ -344,6 +343,8 @@ binding* envlookup(env *e, symbol sym)
             /* { */
             /*    extend(top, b); */
             /* } */
+
+            incref(b->node);
             return b;
          }
 
@@ -496,7 +497,7 @@ node *mkpair(t_type type, node *car, node* cdr)
    p->pair = (struct pair*) malloc(sizeof(struct pair));
    p->pair->type = type;
    p->pair->car = car;
-   p->pair->cdr = cdr;	
+   p->pair->cdr = cdr;
    return p;
 }
 
@@ -564,12 +565,10 @@ node *car(node *node)
    if (CAR(node))
    {
       ret = CAR(node);
-      incref(ret);
    }
    else
       ret = mkpair(t_pair, NULL, NULL);
 
-   //decref(node);
    return ret;
 }
 
@@ -616,17 +615,18 @@ node *at(node *arg1, node *arg2)
 
    int n = 0;
    bool found = false;
+   node *ret;
 
    while (!found)
    {
       if (list == NULL || index < 0)
       {
-         return mkpair(t_pair, NULL, NULL);
+         ret = mkpair(t_pair, NULL, NULL);
          found = true;
       }
       else if (index == n)
       {
-         return car(list);
+         ret = car(list);
          found = true;
       }
       else
@@ -635,6 +635,11 @@ node *at(node *arg1, node *arg2)
          ++n;
       }
    }
+
+   decref(arg1);
+   decref(arg2);
+
+   return ret;
 }
 
 node *cons(node *atom, node *list)
@@ -644,7 +649,10 @@ node *cons(node *atom, node *list)
    node *ret;
 
    if (EMPTY(list))
+   {
       ret = mkpair(t_pair, atom, NULL);
+      decref(list);
+   }
    else
       ret = mkpair(t_pair, atom, list);
 
@@ -685,7 +693,7 @@ node *range(node *s, node *e)
    node *list = mkpair(t_pair, NULL, NULL);
 
    for (int i = to; i >= from; --i)
-      list = cons(mkint(i), list);
+      list = cons(literally(mkint(i)), list);
 
    decref(s);
    decref(e);
@@ -917,6 +925,7 @@ node *gte(node *x, node *y)
    
    decref(x);
    decref(y);
+
    return ret;
 }
 
@@ -988,6 +997,7 @@ node *and(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 
@@ -1005,6 +1015,7 @@ node *or(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return ret;
 }
 
@@ -1020,6 +1031,7 @@ node *not(node *x)
       ret = NODE_BOOL_TRUE;
 
    decref(x);
+
    return ret;
 }
 
@@ -1032,6 +1044,7 @@ node *mod(node *x, node *y)
 
    decref(x);
    decref(y);
+
    return retval;
 }
 
@@ -1046,6 +1059,7 @@ node *as(node *from, node *to)
    char buffer[10];
    int ival;
    float fval;
+   node *ret;
 
    if (from->type == target)
       return from;
@@ -1060,26 +1074,31 @@ node *as(node *from, node *to)
             {
                ival = from->ival;
                sprintf(buffer, "%d", ival);
-               return str_to_node(buffer);
+               ret = str_to_node(buffer);
+               break;
             }
             
             case t_float:
             {
                fval = from->ival;
-               return mkfloat(fval);
+               ret = mkfloat(fval);
+               break;
             }
 
             case t_bool:
             {
                if (from->ival <= 0)
-                  return NODE_BOOL_FALSE;
+                  ret = NODE_BOOL_FALSE;
                else
-                  return NODE_BOOL_TRUE;
+                  ret = NODE_BOOL_TRUE;
+               break;
             }
 
             default:
                error("conversion from integer to unsupported type");
+               break;
          }
+         break;
       }
 
       case t_float:
@@ -1090,17 +1109,21 @@ node *as(node *from, node *to)
             {
                fval = from->fval;
                sprintf(buffer, "%g", fval);
-               return str_to_node(buffer);
+               ret = str_to_node(buffer);
+               break;
             }
 
             case t_int:
             {
-               return mkint((int)from->fval);
+               ret = mkint((int)from->fval);
+               break;
             }
 
             default:
                error("conversion from float to unsupported type");
+               break;
          }
+         break;
       }
 
       case t_bool:
@@ -1108,17 +1131,22 @@ node *as(node *from, node *to)
          switch (target)
          {
             case t_int:
-               return mkint(from->ival);
+               ret = mkint(from->ival);
+               break;
 
             case t_float:
-               return mkfloat(from->ival);
+               ret = mkfloat(from->ival);
+               break;
 
             case t_string:
-               return str_to_node(from->ival > 0 ? "true" : "false");
+               ret = str_to_node(from->ival > 0 ? "true" : "false");
+               break;
 
             default:
                error("cast from bool to unsupported type");
+               break;
          }
+         break;
       }
 
       case t_char:
@@ -1129,24 +1157,29 @@ node *as(node *from, node *to)
             {
                ival = from->ival;
                sprintf(buffer, "%c", ival);
-               return str_to_node(buffer);
+               ret = str_to_node(buffer);
+               break;
             }
 
             case t_int:
             {
                ival = from->ival;
-               return mkint(ival);
+               ret = mkint(ival);
+               break;
             }
 
             case t_float:
             {
                fval = from->ival;
-               return mkfloat(fval);
+               ret = mkfloat(fval);
+               break;
             }
 
             default:
                error("attempted cast from char to unsupported type");
+               break;
          }
+         break;
       }
 
       case t_pair:
@@ -1160,32 +1193,44 @@ node *as(node *from, node *to)
                case t_int:
                {
                   ival = atoi(str);
-                  return mkint(ival);
+                  ret = mkint(ival);
+                  break;
                }
 
                case t_float:
                {
                   fval = atof(str);
-                  return mkfloat(fval);
+                  ret = mkfloat(fval);
+                  break;
                }
 
                case t_char:
                {
                   ival = atoi(str);
-                  return mkchar(str[0]);
+                  ret = mkchar(str[0]);
+                  break;
                }
 
                default:
                   error("attempted cast from string to unsupported type");
+                  break;
             }
          }
          else
             error("lists can not be cast to other types");
+
+         break;
       }
 
       default:
          error("cast from unsupported type");
+         break;
    }
+
+   decref(from);
+   decref(to);
+
+   return ret;
 }
 
 node *loadlib(char *name)
