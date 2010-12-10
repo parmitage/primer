@@ -1,22 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "main.h"
 #include "utils.h"
 #include "eval.h"
 #include "y.tab.h"
 
 /*
-  TODO can pair use the type in node rather than in the pair struct (t_string becomes a type)?
   TODO simplification of some pair 'length' checking code
-  TODO could evlis be simplified?
   TODO separate init code out of main
-  TODO separate out ast nodes from runtime data structures (closures, lists, etc)?
+  TODO entirely separate out ast nodes from runtime data structures
   TODO hand written parser
   TODO REPL
   TODO reference counter
-  TODO tail recursion check
-  TODO build closure environment
+  TODO better tail recursion check
+  TODO precise closure environments
  */
 
 int main(int argc, char **argv)
@@ -28,6 +27,8 @@ int main(int argc, char **argv)
       usage();
       return -1;
    }
+
+   srand((unsigned)(time(0)));
 
    NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
    NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
@@ -196,13 +197,61 @@ node *eval(node *n, env *e)
 
 node *evlis(node *list, env *env)
 {
-   /* TODO this isn't quite right... */
-   if (!CAR(list))
-      return mkpair(list->pair->type, NULL, NULL);
-   else if (!CDR(list))
-      return mkpair(list->pair->type, eval(CAR(list), env), NULL);
+   /* This is basically McCarthy's original evlis function with a small but
+      significant optimisation to avoid evaluating if unecessary. */
+
+   node *iter = list;
+   bool primitive = true;
+
+   /* NOTE that a potential further optimisation would be to annotate lists
+      with some metadata to say that they require no runtime checking. This
+      would most likely require a change to the reprentation of lists, perhaps
+      by giving them a header. This header could also be used to store other
+      information such as if the list were a string, thus saving space in every
+      cons cell. However, such a design would mean changes to all list
+      processing code. */
+
+   /* Analyse a list to see if it needs to be evaluated. If a list contains
+      symbols or unevaluated functions then it must be evaluated before use.
+      If we can avoid evaluating the list contents then we can reduce consing
+      by several orders of magnitude in list heavy programs. */
+   while (iter != NULL)
+   {
+      if (CAR(iter))
+      {
+         node *n = CAR(iter);
+
+         if (n->type == t_int || n->type == t_float ||
+             n->type == t_char || n->type == t_bool ||
+             (n->type == t_pair && n->pair->type == t_string))
+         {
+            iter = iter->pair->cdr;
+         }
+         else
+         {
+            iter = NULL;
+            primitive = false;
+         }
+            
+      }
+      else
+         iter = NULL;
+   }
+
+   if (primitive)
+   {
+      incref(list);
+      return list;
+   }
    else
-      return mkpair(list->pair->type, eval(CAR(list), env), evlis(CDR(list), env));
+   {
+      if (!CAR(list))
+         return mkpair(list->pair->type, NULL, NULL);
+      else if (!CDR(list))
+         return mkpair(list->pair->type, eval(CAR(list), env), NULL);
+      else
+         return mkpair(list->pair->type, eval(CAR(list), env), evlis(CDR(list), env));
+   }
 }
 
 void bind(node *args, node *params, env *fnenv, env *argenv)
@@ -253,9 +302,6 @@ void incref(node *n)
       //incref(n->pair->car);
       //incref(n->pair->cdr);
    }
-
-   //printf("incref to %i for ", n->rc);
-   //show(n);
 }
 
 void decref(node *n)
@@ -271,16 +317,17 @@ void decref(node *n)
 
    //pprint(n); fflush(stdout); printf("rc=%i\n", n->rc); fflush(stdout);
 
-   if (n->type == t_pair)
-   {
-      decref(n->pair->car);
-      decref(n->pair->cdr);
-   }
-
    if (n->rc == 0)
    {
-      free(n);
       cnt_free++;
+
+      if (n->type == t_pair)
+      {
+         decref(n->pair->car);
+         decref(n->pair->cdr);
+      }
+
+      free(n);      
    }
 }
 
@@ -603,6 +650,16 @@ node *len(node *node)
    decref(node);
 
    return mkint(n);
+}
+
+node *rnd(node *node)
+{
+   ASSERT(node->type, t_int, "rnd requires an integer parameter");
+   int limit = node->ival;
+
+   decref(node);
+
+   return mkint(rand() % node->ival);
 }
 
 node *at(node *arg1, node *arg2)
@@ -935,10 +992,8 @@ node *list_eq(node *l1, node *l2)
       return NODE_BOOL_TRUE;
 
    /* TODO can this be simplified? */
-   if ((CAR(l1) && EMPTY(l2)) ||
-       (EMPTY(l1) && CAR(l2)) ||
-       (CDR(l1) && !CDR(l2)) ||
-       (!CDR(l1) && CDR(l2)))
+   if ((CAR(l1) && EMPTY(l2)) || (EMPTY(l1) && CAR(l2)) ||
+       (CDR(l1) && !CDR(l2)) || (!CDR(l1) && CDR(l2)))
       return NODE_BOOL_FALSE;
 	
    incref(l1); //Compensate for the unwanted decref eq is
@@ -1046,6 +1101,36 @@ node *mod(node *x, node *y)
    decref(y);
 
    return retval;
+}
+
+node *b_or(node *x, node *y)
+{
+   return mkint(x->ival | y->ival);
+}
+
+node *b_and(node *x, node *y)
+{
+   return mkint(x->ival & y->ival);
+}
+
+node *b_xor(node *x, node *y)
+{
+   return mkint(x->ival | y->ival);
+}
+
+node *b_not(node *x)
+{
+   return mkint(~x->ival);
+}
+
+node *b_lshift(node *x, node *y)
+{
+   return mkint(x->ival << y->ival);
+}
+
+node *b_rshift(node *x, node *y)
+{
+   return mkint(x->ival >> y->ival);
 }
 
 node *is(node *exp, node *type)

@@ -155,6 +155,15 @@ Sort: fn (xs)
         Gte: fn (a) a >= Head(xs) end
 end
 
+### sort the elements of xs by means of a selector function
+SortBy: fn (xs, f)
+  if Head(xs) != []
+  then SortBy(Filter(Lt, Tail(xs)), f) ++ [Head(xs)] ++ SortBy(Filter(Gte, Tail(xs)), f)
+  else []
+  where Lt: fn (a) f(a) < f(Head(xs)) end
+        Gte: fn (a) f(a) >= f(Head(xs)) end
+end
+
 ### combine the elements of xs and ys pairwise
 Zip: fn (xs, ys)
    if Head(xs) != [] and Head(ys) != [] then
@@ -183,3 +192,23 @@ Odd: fn (n) n mod 2 != 0 end
 
 ### return true if n is false
 Even: fn (n) n mod 2 == 0 end
+
+### run f n times collecting the results
+Collect: fn (f, n)
+   Inner(f, 0)
+   where Inner: fn (f, c)
+            if c < n
+            then f() :: Inner(f, c + 1)
+            else []
+         end
+end
+
+### map a function over a list two elements at a time
+MapPair: fn (f, xs)
+   if Length(xs) >= 2
+   then f(Head(xs), xs at 1) :: MapPair(f, Drop(2, xs))
+   else []
+end
+
+### is bit b set in integer n
+BitSet: fn (n, b) (n & (1 << b)) > 0 end

@@ -27,15 +27,17 @@
 %token <fval> FLOAT
 %token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token HEAD TAIL SHOW TYPE IS AS LENGTH AT CONS WHERE RANGE
+%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS WHERE RANGE
+%token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
 
 %nonassoc ELSE
 %left PAREN
-%left NOT
+%left NOT B_NOT
 %left AND OR APPEND
 %left GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
 %left '*' '/' MOD AT AS IS
+%left B_AND B_OR B_XOR B_LSHIFT B_RSHIFT
 %right CONS
 %nonassoc UMINUS
 
@@ -75,6 +77,7 @@ expr:
 | LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3); }
 | HEAD '(' expr ')'                                   { $$ = mkast(t_car, $3, NULL, NULL); }
 | TAIL '(' expr ')'                                   { $$ = mkast(t_cdr, $3, NULL, NULL); }
+| RND '(' expr ')'                                    { $$ = mkoperator(rnd, $3); }
 | expr '+' expr                                       { $$ = mkbinoperator(add, $1, $3); }
 | expr '-' expr                                       { $$ = mkbinoperator(sub, $1, $3); }
 | expr '*' expr                                       { $$ = mkbinoperator(mul, $1, $3); }
@@ -87,6 +90,12 @@ expr:
 | expr EQ expr                                        { $$ = mkbinoperator(eq, $1, $3); }
 | expr AND expr                                       { $$ = mkbinoperator(and, $1, $3); }
 | expr OR expr                                        { $$ = mkbinoperator(or, $1, $3); }
+| expr B_AND expr                                     { $$ = mkbinoperator(b_and, $1, $3); }
+| expr B_OR expr                                      { $$ = mkbinoperator(b_or, $1, $3); }
+| expr B_XOR expr                                     { $$ = mkbinoperator(b_xor, $1, $3); }
+| B_NOT expr                                          { $$ = mkoperator(b_not, $2); }
+| expr B_LSHIFT expr                                  { $$ = mkbinoperator(b_lshift, $1, $3); }
+| expr B_RSHIFT expr                                  { $$ = mkbinoperator(b_rshift, $1, $3); }
 | NOT expr                                            { $$ = mkoperator(not, $2); }
 | expr MOD expr                                       { $$ = mkbinoperator(mod, $1, $3); }
 | expr APPEND expr                                    { $$ = mkbinoperator(append, $1, $3); }

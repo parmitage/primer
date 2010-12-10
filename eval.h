@@ -160,16 +160,23 @@ void pprint(node *node);
 node *list_eq(node *l1, node *l2);
 node *cons(node *atom, node *list);
 
-/* primitive operators */
+/* list operators */
 node *car(node *node);
 node *cdr(node *node);
 node *len(node *node);
 node *at(node *x, node *y);
+node *append(node *x, node *y);
+node *range(node *x, node *y);
+
+/* math operators */
 node *add(node *x, node *y);
 node *sub(node *x, node *y);
 node *neg(node *x);
 node *mul(node *x, node *y);
 node *dvd(node *x, node *y);
+node *mod(node *x, node *y);
+
+/* logic operators */
 node *lt(node *x, node *y);
 node *gt(node *x, node *y);
 node *lte(node *x, node *y);
@@ -179,11 +186,21 @@ node *neq(node *x, node *y);
 node *and(node *x, node *y);
 node *or(node *x, node *y);
 node *not(node *x);
-node *mod(node *x, node *y);
+
+/* bitwise operators */
+node *b_or(node *x, node *y);
+node *b_and(node *x, node *y);
+node *b_xor(node *x, node *y);
+node *b_not(node *x);
+node *b_lshift(node *x, node *y);
+node *b_rshift(node *x, node *y);
+
+/* type operators */
 node *is(node *exp, node *type);
 node *as(node *x, node *y);
-node *append(node *x, node *y);
-node *range(node *x, node *y);
+
+/* primitive functions */
+node *rnd(node *node);
 node *show(node *args);
 
 /* utils */
