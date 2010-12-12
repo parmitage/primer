@@ -26,6 +26,12 @@ pre
     border-radius: 5px;
 }
 
+h1
+{
+    line-height: 130%;
+    text-align: center;
+}
+
 h2
 {
     margin-top: 40px;
