@@ -1,8 +1,9 @@
 #ifndef __EVAL_H__
 #define __EVAL_H__
 
-#include "main.h"
+typedef enum { false = 0, true = 1 } bool;
 
+#define when(pred, expr) if (pred) expr
 #define MAX_SYMBOLS 1000
 
 #define CAR(p) (p != NULL && p->pair->car != NULL ? p->pair->car : NULL)
@@ -17,8 +18,6 @@
 
 #define ASSERT(x, t, m) if (x != t) error(m)
 #define ASSERT_NUM(x, m) if (!(x->type == t_int || x->type == t_float || x->type == t_char)) error(m)
-
-#define SKIP_REF_COUNT if (!refctr || n == NULL || n->rc == -1) return;
 
 typedef enum {
    t_int,
@@ -70,8 +69,6 @@ typedef struct ast {
 
 typedef struct node {
    t_type type;
-   int lineno;
-   int rc;
    union {
       int ival;
       float fval;
@@ -98,17 +95,9 @@ typedef struct env {
 
 node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp;
 env *top, *tco_env;
-int lineno;
-symbol wildcard;
 
 /* not a real type */
 #define t_string 9999
-
-/* memory manager statistics */
-static long cnt_alloc = 0;
-static long cnt_free = 0;
-static long cnt_inc = 0;
-static long cnt_dec = 0;
 
 /* abstract syntax tree */
 node *parse(char *filename);
@@ -138,9 +127,6 @@ char *node_to_str(node *node);
 
 /* memory management */
 struct node *prialloc();
-void incref(node *n);
-void decref(node *n);
-node *literally(node *n);
 
 /* evaluation */
 node *eval(node *p, env *e);
@@ -204,7 +190,9 @@ node *rnd(node *node);
 node *show(node *args);
 
 /* utils */
+void init();
 node *loadlib(char *name);
 void error(char *msg);
+bool fexists(const char *path);
 
 #endif

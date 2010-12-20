@@ -2,44 +2,36 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "main.h"
-#include "utils.h"
 #include "eval.h"
 #include "y.tab.h"
 
-/*
-  TODO simplification of some pair 'length' checking code
-  TODO separate init code out of main
-  TODO entirely separate out ast nodes from runtime data structures
-  TODO hand written parser
-  TODO REPL
-  TODO reference counter
-  TODO better tail recursion check
-  TODO precise closure environments
- */
-
 int main(int argc, char **argv)
 {
-   defaults();
-
-   if (args(argc, argv) == -1)
+   if (argc != 2)
    {
-      usage();
+      printf("usage: primer Program.pri\n");
       return -1;
    }
 
+   init();
+   eval(loadlib("Library"), top);
+   eval(parse(argv[1]), top);
+
+   return 0;
+}
+
+void init()
+{
    srand((unsigned)(time(0)));
 
-   NODE_BOOL_TRUE = mkbool(true); NODE_BOOL_TRUE->rc = -1;
-   NODE_BOOL_FALSE = mkbool(false); NODE_BOOL_FALSE->rc = -1;
+   NODE_BOOL_TRUE = mkbool(true);
+   NODE_BOOL_FALSE = mkbool(false);
 
    top = envnew(NULL);
 
-   /* character constants */
    extend(top, bindnew(intern("newline"), mkchar('\n')));
    extend(top, bindnew(intern("tab"), mkchar('\t')));
 
-   /* type names */
    extend(top, bindnew(intern("int"), mkint(t_int)));
    extend(top, bindnew(intern("float"), mkint(t_float)));
    extend(top, bindnew(intern("bool"), mkint(t_bool)));
@@ -47,19 +39,6 @@ int main(int argc, char **argv)
    extend(top, bindnew(intern("list"), mkint(t_pair)));
    extend(top, bindnew(intern("string"), mkint(t_string)));
    extend(top, bindnew(intern("lambda"), mkint(t_closure)));
-
-   lineno = 1;
-
-   if (arg_loadlib == true)
-      eval(loadlib(arg_stdlib), top);
-
-   eval(parse(arg_fname), top);
-   envdel(top);
-
-   trace("[inc=%ld, dec=%ld, alloc=%ld, free=%ld]",
-         cnt_inc, cnt_dec, cnt_alloc, cnt_free);
-
-   return 0;
 }
 
 node *eval(node *n, env *e)
@@ -96,8 +75,6 @@ node *eval(node *n, env *e)
 
       case t_lambda:
       {
-         //env *ce = envnew(top);
-         //build_closure_env(n->pair->cdr, env, ce);
          return mkclosure(n->ast->n1, n->ast->n2, n->ast->n3, e);
       }
 
@@ -188,7 +165,6 @@ node *eval(node *n, env *e)
 
       case t_pair:
       {
-         /* because we can store symbols in lists we evaluate the contents */
          node *ret = evlis(n, e);
          return ret;
       }
@@ -198,23 +174,14 @@ node *eval(node *n, env *e)
 node *evlis(node *list, env *env)
 {
    /* This is basically McCarthy's original evlis function with a small but
-      significant optimisation to avoid evaluating if unecessary. */
+      significant optimisation to avoid evaluating if unecessary: if a list
+      contains symbols or unevaluated functions then it must be evaluated
+      before use. If we can avoid evaluating the list contents then we can
+      reduce consing by several orders of magnitude in list heavy programs. */
 
    node *iter = list;
    bool primitive = true;
 
-   /* NOTE that a potential further optimisation would be to annotate lists
-      with some metadata to say that they require no runtime checking. This
-      would most likely require a change to the reprentation of lists, perhaps
-      by giving them a header. This header could also be used to store other
-      information such as if the list were a string, thus saving space in every
-      cons cell. However, such a design would mean changes to all list
-      processing code. */
-
-   /* Analyse a list to see if it needs to be evaluated. If a list contains
-      symbols or unevaluated functions then it must be evaluated before use.
-      If we can avoid evaluating the list contents then we can reduce consing
-      by several orders of magnitude in list heavy programs. */
    while (iter != NULL)
    {
       if (CAR(iter))
@@ -240,7 +207,6 @@ node *evlis(node *list, env *env)
 
    if (primitive)
    {
-      incref(list);
       return list;
    }
    else
@@ -285,71 +251,9 @@ env *envnew(env *parent)
    return e;
 }
 
-void incref(node *n)
-{
-   SKIP_REF_COUNT;
-
-   if (n == NULL)
-      return;
-
-   n->rc++;
-
-   /* DEBUG */
-   cnt_inc++;
-
-   if (n->type == t_pair)
-   {
-      //incref(n->pair->car);
-      //incref(n->pair->cdr);
-   }
-}
-
-void decref(node *n)
-{
-   SKIP_REF_COUNT;
-
-   if (n == NULL)
-      return;
-
-   cnt_dec++;
-
-   n->rc--;
-
-   //pprint(n); fflush(stdout); printf("rc=%i\n", n->rc); fflush(stdout);
-
-   if (n->rc == 0)
-   {
-      cnt_free++;
-
-      if (n->type == t_pair)
-      {
-         decref(n->pair->car);
-         decref(n->pair->cdr);
-      }
-
-      free(n);      
-   }
-}
-
 env *envdel(env *e)
 {
    env *parent = e->parent;
-   binding *b = e->bind;
-
-   if (refctr)
-   {
-      while (b != NULL)
-      {
-         node *n = b->node;
-         decref(n);
-         binding *temp = b;
-         b = b->prev;
-         free(temp);
-      }
-      
-      free(e);
-   }
-
    return parent;
 }
 
@@ -383,17 +287,7 @@ binding* envlookup(env *e, symbol sym)
       while (b != NULL)
       {
          if (sym == b->sym)
-         {
-            /* lift a binding into this env */
-            /* TODO need to clone the env in this new design... */
-            /* if (depth) */
-            /* { */
-            /*    extend(top, b); */
-            /* } */
-
-            incref(b->node);
             return b;
-         }
 
          b = b->prev;
       }
@@ -428,7 +322,6 @@ bool istailrecur(node *expr, symbol s)
 
 struct node *prialloc()
 {
-   cnt_alloc++;
    node *p;
 
    if ((p = (struct node*)malloc(sizeof(struct node))) == NULL)
@@ -437,19 +330,11 @@ struct node *prialloc()
    return p;
 }
 
-inline node *literally(node *n)
-{
-   n->rc = -1;
-   return n;
-}
-
 node *mkint(int value)
 {
    node *p = prialloc();
    p->type = t_int;
    p->ival = value;
-   p->lineno = lineno;
-   p->rc = 1;
    return p;
 }
 
@@ -458,8 +343,6 @@ node *mkfloat(float value)
    node *p = prialloc();
    p->type = t_float;
    p->fval = value;
-   p->lineno = lineno;
-   p->rc = 1;
    return p;
 }
 
@@ -468,8 +351,6 @@ node *mkbool(int value)
    node *p = prialloc();
    p->type = t_bool;
    p->ival = value;
-   p->lineno = lineno;
-   p->rc = 1;
    return p;
 }
 
@@ -477,9 +358,7 @@ node* mkchar(char c)
 {
    node *p = prialloc();
    p->type = t_char;
-   p->lineno = lineno;
    p->ival = c;
-   p->rc = 1;
    return p;
 }
 
@@ -499,9 +378,9 @@ node* str_to_node(char* value)
    int len = strlen(value);
 
    if (len > 1)
-      return mkpair(t_string, literally(mkchar(value[0])), str_to_node(value + 1));
+      return mkpair(t_string, mkchar(value[0]), str_to_node(value + 1));
    else
-      return mkpair(t_string, literally(mkchar(value[0])), NULL);
+      return mkpair(t_string, mkchar(value[0]), NULL);
 }
 
 char *node_to_str(node *node)
@@ -530,8 +409,6 @@ node *mksym(char* s)
    node *p = prialloc();
    p->type = t_symbol;
    p->ival = intern(s);
-   p->lineno = lineno;
-   p->rc = -1;
    return p;
 }
 
@@ -539,8 +416,6 @@ node *mkpair(t_type type, node *car, node* cdr)
 {
    node *p = prialloc();
    p->type = t_pair;
-   p->lineno = lineno;
-   p->rc = 1;
    p->pair = (struct pair*) malloc(sizeof(struct pair));
    p->pair->type = type;
    p->pair->car = car;
@@ -552,8 +427,6 @@ node *mkclosure(node *args, node *body, node *where, env *env)
 {
    node *p = prialloc();
    p->type = t_closure;
-   p->lineno = lineno;
-   p->rc = 1;
    p->fn = (struct closure*)malloc(sizeof(struct closure));
    p->fn->args = args;
    p->fn->body = body;
@@ -566,8 +439,6 @@ node *mkoperator(struct node * (*op) (struct node *), node *arg1)
 {
    node *p = prialloc();
    p->type = t_operator;
-   p->lineno = lineno;
-   p->rc = -1;
    p->op = (struct operator*)malloc(sizeof(struct operator));
    p->op->op = op;
    p->op->arity = 1;
@@ -580,8 +451,6 @@ node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node 
 {
    node *p = prialloc();
    p->type = t_operator;
-   p->lineno = lineno;
-   p->rc = -1;
    p->op = (struct operator*)malloc(sizeof(struct operator));
    p->op->binop = binop;
    p->op->arity = 2;
@@ -594,8 +463,6 @@ node *mkast(t_type type, node *n1, node *n2, node *n3)
 {
    node *p = prialloc();
    p->type = type;
-   p->lineno = lineno;
-   p->rc = -1;
    p->ast = (struct ast*)malloc(sizeof(struct ast));
    p->ast->n1 = n1;
    p->ast->n2 = n2;
@@ -607,31 +474,20 @@ node *car(node *node)
 {
    ASSERT(node->type, t_pair, "head can only be applied to lists");
 
-   struct node *ret;
-
    if (CAR(node))
-   {
-      ret = CAR(node);
-   }
+      return CAR(node);
    else
-      ret = mkpair(t_pair, NULL, NULL);
-
-   return ret;
+      return mkpair(t_pair, NULL, NULL);
 }
 
 node *cdr(node *node)
 {
    ASSERT(node->type, t_pair, "tail can only be applied to lists");
 
-   /* TODO could this be simplified? */
-   struct node *ret;
-
    if (CDR(node))
-      ret = CDR(node);
+      return CDR(node);
    else
-      ret = mkpair(t_pair, NULL, NULL);
-
-   return ret;
+      return mkpair(t_pair, NULL, NULL);
 }
 
 node *len(node *node)
@@ -647,8 +503,6 @@ node *len(node *node)
       iter = iter->pair->cdr;
    }
 
-   decref(node);
-
    return mkint(n);
 }
 
@@ -656,9 +510,6 @@ node *rnd(node *node)
 {
    ASSERT(node->type, t_int, "rnd requires an integer parameter");
    int limit = node->ival;
-
-   decref(node);
-
    return mkint(rand() % node->ival);
 }
 
@@ -693,9 +544,6 @@ node *at(node *arg1, node *arg2)
       }
    }
 
-   decref(arg1);
-   decref(arg2);
-
    return ret;
 }
 
@@ -703,17 +551,10 @@ node *cons(node *atom, node *list)
 {
    ASSERT(list->type, t_pair, "right operand to cons must be a list");
 
-   node *ret;
-
    if (EMPTY(list))
-   {
-      ret = mkpair(t_pair, atom, NULL);
-      decref(list);
-   }
+      return mkpair(t_pair, atom, NULL);
    else
-      ret = mkpair(t_pair, atom, list);
-
-   return ret;
+      return mkpair(t_pair, atom, list);
 }
 
 node *append(node *list1, node *list2)
@@ -750,10 +591,7 @@ node *range(node *s, node *e)
    node *list = mkpair(t_pair, NULL, NULL);
 
    for (int i = to; i >= from; --i)
-      list = cons(literally(mkint(i)), list);
-
-   decref(s);
-   decref(e);
+      list = cons(mkint(i), list);
 
    return list;
 }
@@ -838,22 +676,13 @@ node *add(node *x, node *y)
    ASSERT_NUM(x, "left operand to + must be numeric");
    ASSERT_NUM(y, "right operand to + must be numeric");
 
-   node *ret;
-
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         ret = mkint(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
-         break;
+         return mkint(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
       case t_float:
-         ret = mkfloat(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
-         break;
+         return mkfloat(EXTRACT_NUMBER(x) + EXTRACT_NUMBER(y));
    }
-
-   decref(x);
-   decref(y);
-
-   return ret;
 }
 
 node *sub(node *x, node *y)
@@ -861,43 +690,26 @@ node *sub(node *x, node *y)
    ASSERT_NUM(x, "left operand to - must be numeric");
    ASSERT_NUM(y, "right operand to - must be numeric");
 
-   node *ret;
-
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         ret = mkint(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
-         break;
+         return mkint(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
       case t_float:
-         ret = mkfloat(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
-         break;
+         return mkfloat(EXTRACT_NUMBER(x) - EXTRACT_NUMBER(y));
    }
-
-   decref(x);
-   decref(y);
-
-   return ret;
 }
 
 node *neg(node *x)
 {
    ASSERT_NUM(x, "operand to - must be numeric");
 
-   node *ret;
-
    switch (x->type)
    {
       case t_int:
-         ret = mkint(-x->ival);
-         break;
+         return mkint(-x->ival);
       case t_float:
-         ret = mkfloat(-x->fval);
-         break;
+         return mkfloat(-x->fval);
    }
-
-   decref(x);
-
-   return ret;
 }
 
 node *mul(node *x, node *y)
@@ -905,22 +717,13 @@ node *mul(node *x, node *y)
    ASSERT_NUM(x, "left operand to * must be numeric");
    ASSERT_NUM(y, "right operand to * must be numeric");
 
-   node *ret;
-
    switch (NUMERIC_RETURN_TYPE(x, y))
    {
       case t_int:
-         ret = mkint(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
-         break;
+         return mkint(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
       case t_float:
-         ret = mkfloat(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
-         break;
+         return mkfloat(EXTRACT_NUMBER(x) * EXTRACT_NUMBER(y));
    }
-
-   decref(x);
-   decref(y);
-   
-   return ret;
 }
 
 node *dvd(node *x, node *y)
@@ -928,62 +731,33 @@ node *dvd(node *x, node *y)
    ASSERT_NUM(x, "left operand to / must be numeric");
    ASSERT_NUM(y, "right operand to / must be numeric");
 
-   node *ret;
-
    switch (DIVIDE_RETURN_TYPE(x, y))
    {
       case t_int:
-         ret = mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
-         break;
+         return mkint(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
       case t_float:
-         ret = mkfloat(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
-         break;
+         return mkfloat(EXTRACT_NUMBER(x) / EXTRACT_NUMBER(y));
    }
-
-   decref(x);
-   decref(y);
-
-   return ret;
 }
 
 node *lt(node *x, node *y)
 {
-   node *ret = EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-
-   decref(x);
-   decref(y);
-
-   return ret;
+   return EXTRACT_NUMBER(x) < EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node *gt(node *x, node *y)
 {
-   node *ret = EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-
-   decref(x);
-   decref(y);
-
-   return ret;
+   return EXTRACT_NUMBER(x) > EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node *lte(node *x, node *y)
 {
-   node *ret = EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-   
-   decref(x);
-   decref(y);
-
-   return ret;
+   return EXTRACT_NUMBER(x) <= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node *gte(node *x, node *y)
 {
-   node *ret = EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
-   
-   decref(x);
-   decref(y);
-
-   return ret;
+   return EXTRACT_NUMBER(x) >= EXTRACT_NUMBER(y) ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
 }
 
 node *list_eq(node *l1, node *l2)
@@ -991,14 +765,10 @@ node *list_eq(node *l1, node *l2)
    if (EMPTY(l1) && EMPTY(l2))
       return NODE_BOOL_TRUE;
 
-   /* TODO can this be simplified? */
    if ((CAR(l1) && EMPTY(l2)) || (EMPTY(l1) && CAR(l2)) ||
        (CDR(l1) && !CDR(l2)) || (!CDR(l1) && CDR(l2)))
       return NODE_BOOL_FALSE;
 	
-   incref(l1); //Compensate for the unwanted decref eq is
-   incref(l2); //about to perform. Not 100% sure about this one.
-
    if (eq(l1->pair->car, l2->pair->car)->ival == true)
    {
       if (CDR(l1) && CDR(l2))
@@ -1012,25 +782,18 @@ node *list_eq(node *l1, node *l2)
 
 node *eq(node *x, node *y)
 {
-   node *ret;
-
    if (x->type != y->type)
-      ret = NODE_BOOL_FALSE;
+      return NODE_BOOL_FALSE;
    else if (x->type == t_int || x->type == t_bool)
-      ret = x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+      return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    else if (x->type == t_float)
-      ret = x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+      return x->fval == y->fval ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    else if (x->type == t_char)
-      ret = x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
+      return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;
    else if (x->type == t_pair)
-      ret = list_eq(x, y);
+      return list_eq(x, y);
    else
-      ret = NODE_BOOL_FALSE;
-
-   decref(x);
-   decref(y);
-
-   return ret;
+      return NODE_BOOL_FALSE;
 }
 
 node *neq(node *x, node *y)
@@ -1043,17 +806,10 @@ node *and(node *x, node *y)
    ASSERT(x->type, t_bool, "left operand to and must be boolean");
    ASSERT(y->type, t_bool, "right operand to and must be boolean");
 
-   node *ret;
-
    if (x == NODE_BOOL_FALSE || y == NODE_BOOL_FALSE)
-      ret = NODE_BOOL_FALSE;
+      return NODE_BOOL_FALSE;
    else
-      ret = NODE_BOOL_TRUE;
-
-   decref(x);
-   decref(y);
-
-   return ret;
+      return NODE_BOOL_TRUE;
 }
 
 node *or(node *x, node *y)
@@ -1061,46 +817,27 @@ node *or(node *x, node *y)
    ASSERT(x->type, t_bool, "left operand to or must be boolean");
    ASSERT(y->type, t_bool, "right operand to or must be boolean");
 
-   node *ret;
-
    if (x->ival || y->ival)
-      ret = NODE_BOOL_TRUE;
+      return NODE_BOOL_TRUE;
    else
-      ret = NODE_BOOL_FALSE;
-
-   decref(x);
-   decref(y);
-
-   return ret;
+      return NODE_BOOL_FALSE;
 }
 
 node *not(node *x)
 {
    ASSERT(x->type, t_bool, "operand to not must be boolean");
 
-   node *ret;
-
    if (x->ival == true)
-      ret = NODE_BOOL_FALSE;
+      return NODE_BOOL_FALSE;
    else
-      ret = NODE_BOOL_TRUE;
-
-   decref(x);
-
-   return ret;
+      return NODE_BOOL_TRUE;
 }
 
 node *mod(node *x, node *y)
 {
    ASSERT(x->type, t_int, "left operand to mod must be integer");
    ASSERT(y->type, t_int, "right operand to mod must be integer");
-
-   node *retval = mkint(x->ival % y->ival);
-
-   decref(x);
-   decref(y);
-
-   return retval;
+   return mkint(x->ival % y->ival);
 }
 
 node *b_or(node *x, node *y)
@@ -1144,7 +881,6 @@ node *as(node *from, node *to)
    char buffer[10];
    int ival;
    float fval;
-   node *ret;
 
    if (from->type == target)
       return from;
@@ -1159,24 +895,21 @@ node *as(node *from, node *to)
             {
                ival = from->ival;
                sprintf(buffer, "%d", ival);
-               ret = str_to_node(buffer);
-               break;
+               return str_to_node(buffer);
             }
             
             case t_float:
             {
                fval = from->ival;
-               ret = mkfloat(fval);
-               break;
+               return mkfloat(fval);
             }
 
             case t_bool:
             {
                if (from->ival <= 0)
-                  ret = NODE_BOOL_FALSE;
+                  return NODE_BOOL_FALSE;
                else
-                  ret = NODE_BOOL_TRUE;
-               break;
+                  return NODE_BOOL_TRUE;
             }
 
             default:
@@ -1194,14 +927,12 @@ node *as(node *from, node *to)
             {
                fval = from->fval;
                sprintf(buffer, "%g", fval);
-               ret = str_to_node(buffer);
-               break;
+               return str_to_node(buffer);
             }
 
             case t_int:
             {
-               ret = mkint((int)from->fval);
-               break;
+               return mkint((int)from->fval);
             }
 
             default:
@@ -1216,16 +947,13 @@ node *as(node *from, node *to)
          switch (target)
          {
             case t_int:
-               ret = mkint(from->ival);
-               break;
+               return mkint(from->ival);
 
             case t_float:
-               ret = mkfloat(from->ival);
-               break;
+               return mkfloat(from->ival);
 
             case t_string:
-               ret = str_to_node(from->ival > 0 ? "true" : "false");
-               break;
+               return str_to_node(from->ival > 0 ? "true" : "false");
 
             default:
                error("cast from bool to unsupported type");
@@ -1242,22 +970,19 @@ node *as(node *from, node *to)
             {
                ival = from->ival;
                sprintf(buffer, "%c", ival);
-               ret = str_to_node(buffer);
-               break;
+               return str_to_node(buffer);
             }
 
             case t_int:
             {
                ival = from->ival;
-               ret = mkint(ival);
-               break;
+               return mkint(ival);
             }
 
             case t_float:
             {
                fval = from->ival;
-               ret = mkfloat(fval);
-               break;
+               return mkfloat(fval);
             }
 
             default:
@@ -1278,22 +1003,19 @@ node *as(node *from, node *to)
                case t_int:
                {
                   ival = atoi(str);
-                  ret = mkint(ival);
-                  break;
+                  return mkint(ival);
                }
 
                case t_float:
                {
                   fval = atof(str);
-                  ret = mkfloat(fval);
-                  break;
+                  return mkfloat(fval);
                }
 
                case t_char:
                {
                   ival = atoi(str);
-                  ret = mkchar(str[0]);
-                  break;
+                  return mkchar(str[0]);
                }
 
                default:
@@ -1311,11 +1033,6 @@ node *as(node *from, node *to)
          error("cast from unsupported type");
          break;
    }
-
-   decref(from);
-   decref(to);
-
-   return ret;
 }
 
 node *loadlib(char *name)
@@ -1357,4 +1074,19 @@ symbol intern(char *string)
 char *symname(symbol s)
 {
    return symtab[s];
+}
+
+bool fexists(const char *path)
+{
+   FILE *istream;
+	
+   if((istream = fopen(path, "r")) == NULL)
+   {
+      return false;
+   }
+   else
+   {
+      fclose(istream);
+      return true;
+   }
 }

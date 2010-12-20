@@ -51,7 +51,7 @@ void yyerror(char *);
 [a-zA-Z\_][a-zA-Z0-9]*                            { yylval.sval = strdup(yytext); return SYMBOL; }
 [0-9]+                                            { yylval.ival = atoi(yytext); return INTEGER; }
 [0-9]+"."[0-9]+                                   { yylval.fval = atof(yytext); return FLOAT; }
-\n                                                lineno++;
+\n                                                ;
 [-<>=+*/&|%{}.;:(){},\[\]]                        { return *yytext; }
 [ \t]+                                            ; /* ignore whitespace */
 .                                                 yyerror("Unknown character");

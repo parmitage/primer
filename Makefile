@@ -5,7 +5,7 @@ BIN	= primer
 CC	= gcc
 CFLAGS	= -std=gnu99
 
-main: utils parser lexer eval
+main: parser lexer eval
 	$(CC) $(DBG) $(CFLAGS) -c y.tab.c lex.yy.c
 	$(CC) $(DBG) *.o -o $(BINDIR)$(BIN)
 
@@ -17,9 +17,6 @@ lexer: parser
 
 parser:
 	bison -y -d parser.y
-
-utils: utils.c utils.h
-	$(CC) $(DBG) $(CFLAGS) -c utils.c
 
 docs:
 	pandoc readme.md -o index.html -c doc.css
