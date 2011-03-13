@@ -25,42 +25,38 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG DEF LAMBDA IF THEN ELSE ELIF COND APPLY
-%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE END LIST
-%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS WHERE RANGE
+%token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE APPLY
+%token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE LIST
+%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING
 %token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
+%token SEMICOLON LPAREN RPAREN LSQUARE RSQUARE
 
 %nonassoc ELSE
-%left PAREN
-%left NOT B_NOT
+%left IN
+%left LET DEF DEFINED LPAREN RPAREN NOT B_NOT
 %left AND OR APPEND
-%left GE LE EQ NE RANGE '>' '<'
+%left LT GT GE LE EQ NE RANGE '>' '<'
 %left '+' '-'
 %left '*' '/' MOD AT AS IS
-%left B_AND B_OR B_XOR B_LSHIFT B_RSHIFT
+%left B_AND B_OR B_XOR B_LSHIFT B_RSHIFT USING
 %right CONS
 %nonassoc UMINUS
 
-%type <nPtr> program stmts stmt expr list identifier
+%type <nPtr> program exprs expr list args identifier
 
 %%
 
 program :
-stmts                                                 { temp = $1; }
+exprs                                                 { temp = $1; }
 ;
 
-stmts:
-stmt                                                  { $$ = $1; }
-| stmt stmts                                          { $$ = mkast(t_seq, $1, $2, NULL); }
-;
-
-stmt:
-expr ':' expr                                         { $$ = mkast(t_def, $1, $3, NULL); }
-| expr                                                { $$ = $1; }
+exprs:
+expr SEMICOLON                                        { $$ = $1; }
+| expr SEMICOLON exprs                                { $$ = mkast(t_seq, $1, $3, NULL); }
 ;
 
 expr:
-'(' expr ')'                                          { $$ = $2; }
+LPAREN expr RPAREN                                    { $$ = $2; }
 | INTEGER                                             { $$ = mkint($1); }
 | FLOAT                                               { $$ = mkfloat($1); }
 | CHAR                                                { $$ = mkchar($1); }
@@ -68,16 +64,17 @@ expr:
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
 | identifier                                          { $$ = $1; }
-| LAMBDA '(' list ')' expr END                        { $$ = mkast(t_lambda, $3, $5, NULL); }
-| LAMBDA '(' list ')' expr WHERE stmts END            { $$ = mkast(t_lambda, $3, $5, $7); }
-| identifier '(' list ')'                             { $$ = mkast(t_apply, $1, $3, NULL); }
+| LET identifier DEF expr IN expr                     { $$ = mkast(t_let, $2, $4, $6); }
+| VAL identifier DEF expr                             { $$ = mkast(t_val, $2, $4, NULL);  }
+| LAMBDA args DEFINED expr                            { $$ = mkast(t_lambda, $2, $4, NULL); }
+| identifier LPAREN list RPAREN                       { $$ = mkast(t_apply, $1, $3, NULL); }
 | IF expr THEN expr ELSE expr                         { $$ = mkast(t_cond, $2, $4, $6); }
 | expr CONS expr                                      { $$ = mkast(t_cons, $1, $3, NULL); }
-| SHOW '(' expr ')'                                   { $$ = mkoperator(show, $3); }
-| LENGTH '(' expr ')'                                 { $$ = mkoperator(len, $3); }
-| HEAD '(' expr ')'                                   { $$ = mkast(t_car, $3, NULL, NULL); }
-| TAIL '(' expr ')'                                   { $$ = mkast(t_cdr, $3, NULL, NULL); }
-| RND '(' expr ')'                                    { $$ = mkoperator(rnd, $3); }
+| SHOW LPAREN expr RPAREN                             { $$ = mkoperator(show, $3); }
+| LENGTH LPAREN expr RPAREN                           { $$ = mkoperator(len, $3); }
+| HEAD LPAREN expr RPAREN                             { $$ = mkast(t_car, $3, NULL, NULL); }
+| TAIL LPAREN expr RPAREN                             { $$ = mkast(t_cdr, $3, NULL, NULL); }
+| RND LPAREN expr RPAREN                              { $$ = mkoperator(rnd, $3); }
 | expr '+' expr                                       { $$ = mkbinoperator(add, $1, $3); }
 | expr '-' expr                                       { $$ = mkbinoperator(sub, $1, $3); }
 | expr '*' expr                                       { $$ = mkbinoperator(mul, $1, $3); }
@@ -104,11 +101,17 @@ expr:
 | expr AS expr                                        { $$ = mkbinoperator(as, $1, $3); }
 | expr IS expr                                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS                               { $$ = mkoperator(neg, $2); }
-| '[' list ']'                                        { $$ = $2; }
+| USING expr                                          { $$ = mkoperator(using, $2); }
+| LSQUARE list RSQUARE                                { $$ = $2; }
 ;
 
 identifier:
 SYMBOL                                                { $$ = mksym($1); }
+;
+
+args:
+identifier                                            { $$ = mkpair(t_pair, $1, NULL); }
+| identifier args                                     { $$ = mkpair(t_pair, $1, $2); }
 ;
 
 list:

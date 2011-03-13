@@ -14,7 +14,7 @@ int main(int argc, char **argv)
    }
 
    init();
-   eval(loadlib("Library"), top);
+   //eval(loadlib("Library"), top);
    eval(parse(argv[1]), top);
 
    return 0;
@@ -67,15 +67,22 @@ node *eval(node *n, env *e)
             error("unbound symbol");
       }
 
-      case t_def:
+      case t_val:
       {
          extend(e, bindnew(n->ast->n1->ival, eval(n->ast->n2, e)));
          break;
       }
 
+      case t_let:
+      {
+         env *ext = envnew(e);
+         extend(ext, bindnew(n->ast->n1->ival, eval(n->ast->n2, ext)));
+         return eval(n->ast->n3, ext);
+      }
+
       case t_lambda:
       {
-         return mkclosure(n->ast->n1, n->ast->n2, n->ast->n3, e);
+         return mkclosure(n->ast->n1, n->ast->n2, e);
       }
 
       case t_operator:
@@ -114,10 +121,6 @@ node *eval(node *n, env *e)
          /* parameters */
          node *args = n->ast->n2;
          bind(fn->fn->args, args, ext, e);
-
-         /* where clause */
-         if (fn->fn->where != NULL)
-            eval(fn->fn->where, ext);
 
          /* function body */
          if (istailrecur(fn->fn->body, fsym))
@@ -400,7 +403,7 @@ char *node_to_str(node *node)
          node = NULL;
    }
 
-   str[i] = '\n';
+   //str[i] = '\n';
    return str;
 }
 
@@ -423,14 +426,13 @@ node *mkpair(t_type type, node *car, node* cdr)
    return p;
 }
 
-node *mkclosure(node *args, node *body, node *where, env *env)
+node *mkclosure(node *args, node *body, env *env)
 {
    node *p = prialloc();
    p->type = t_closure;
    p->fn = (struct closure*)malloc(sizeof(struct closure));
    p->fn->args = args;
    p->fn->body = body;
-   p->fn->where = where;
    p->fn->env = envnew(env);
    return p;
 }
@@ -669,6 +671,14 @@ node *show(node *args)
    pprint(args);
    printf("\n");
    return args;
+}
+
+node *using(node *args)
+{
+   //ASSERT(args->type, t_string, "using requires a symbolic parameter");
+   char *lib = node_to_str(args);
+   eval(loadlib(lib), top);
+   return mkbool(true);
 }
 
 node *add(node *x, node *y)
@@ -1037,6 +1047,9 @@ node *as(node *from, node *to)
 
 node *loadlib(char *name)
 {
+   // TODO maintain a list of loaded libraries and don't load one
+   // that's already been loaded
+
    char *libroot, libpath[500];
    libroot = getenv("PRIMER_LIBRARY_PATH");
   	
@@ -1046,7 +1059,7 @@ node *loadlib(char *name)
    sprintf(libpath, "%s%s.pri", libroot, name);
     
    if (!fexists(libpath))
-      error("Unable to find standard library");
+      error("unable to find library");
   
    return parse(libpath);
 }

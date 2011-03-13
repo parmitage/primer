@@ -35,7 +35,9 @@ typedef enum {
    t_def,
    t_cons,
    t_car,
-   t_cdr
+   t_cdr,
+   t_let,
+   t_val
 } t_type;
 
 typedef struct pair {
@@ -47,7 +49,6 @@ typedef struct pair {
 typedef struct closure {
    struct node *args;
    struct node *body;
-   struct node *where;
    struct env *env;
 } closure;
 
@@ -109,7 +110,7 @@ node *mkprimitive(struct node * (*primitive) (struct node *));
 node *mkoperator(struct node * (*op) (struct node *), node *arg1);
 node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2);
 node *mklambda(node *params, node *body, node *where);
-node *mkclosure(node *params, node *body, node *where, env *e);
+node *mkclosure(node *params, node *body, env *e);
 node *mkint(int value);
 node *mkint_literal(int value);
 node *mkfloat(float value);
@@ -188,6 +189,7 @@ node *as(node *x, node *y);
 /* primitive functions */
 node *rnd(node *node);
 node *show(node *args);
+node *using(node *args);
 
 /* utils */
 void init();

@@ -11,6 +11,12 @@ void yyerror(char *);
 
 %%
 
+";"                                               return SEMICOLON;
+"("                                               return LPAREN;
+")"                                               return RPAREN;
+"["                                               return LSQUARE;
+"]"                                               return RSQUARE;
+"="                                               return DEF;
 "not"                                             return NOT;
 ">="                                              return GE;
 "<="                                              return LE;
@@ -30,21 +36,24 @@ void yyerror(char *);
 "if"                                              return IF;
 "then"                                            return THEN;
 "else"                                            return ELSE;
-"fn"                                              return LAMBDA;
-"where"                                           return WHERE;
+"val"                                             return VAL;
+"let"                                             return LET;
+"in"                                              return IN;
+"fun"                                             return LAMBDA;
+"->"                                              return DEFINED;
 "true"                                            return TRUE;
 "false"                                           return FALSE;
-"end"                                             return END;
 "is"                                              return IS;
 "as"                                              return AS;
 "at"                                              return AT;
 "::"                                              return CONS;
-"Head"                                            return HEAD;
-"Tail"                                            return TAIL;
-"Show"                                            return SHOW;
-"Rnd"                                             return RND;
-"Type"                                            return TYPE;
-"Length"                                          return LENGTH;
+"head"                                            return HEAD;
+"tail"                                            return TAIL;
+"show"                                            return SHOW;
+"rnd"                                             return RND;
+"type"                                            return TYPE;
+"length"                                          return LENGTH;
+"using"                                           return USING;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }
 \#.*\n?                                           NULL; /* comments */
