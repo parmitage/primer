@@ -14,7 +14,6 @@ int main(int argc, char **argv)
    }
 
    init();
-   //eval(loadlib("Library"), top);
    eval(parse(argv[1]), top);
 
    return 0;
@@ -570,17 +569,29 @@ node *append(node *list1, node *list2)
    if (EMPTY(list1))
       return list2;
 
-   node *r = list1;
-   node *n = list1;
+   node *ptr = list1;
+   node *copy = mkpair(t_pair, CAR(ptr), NULL);
+   node *head = copy;
 	
-   while(n->pair->cdr != NULL && !EMPTY(n->pair->cdr))
+   while (CDR(ptr) != NULL && !EMPTY(CDR(ptr)))
    {
-      n = n->pair->cdr;
+      copy->pair->cdr = mkpair(t_pair, CADR(ptr), NULL);
+      copy = CDR(copy);
+      ptr = CDR(ptr);
+   }
+
+   ptr = list2;
+   copy->pair->cdr = mkpair(t_pair, CAR(ptr), NULL);
+   copy = CDR(copy);
+
+   while (CDR(ptr) != NULL && !EMPTY(CDR(ptr)))
+   {
+      copy->pair->cdr = mkpair(t_pair, CADR(ptr), NULL);
+      copy = CDR(copy);
+      ptr = CDR(ptr);
    }
 	
-   n->pair->cdr = list2;
-   
-   return r;
+   return head;
 }
 
 node *range(node *s, node *e)

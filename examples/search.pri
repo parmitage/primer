@@ -15,8 +15,8 @@ val binarySearch = fun xs x ->
 
 val listToSearch = 1..1000;
 
-binarySearch(listToSearch, 500);
-binarySearch(listToSearch, 1);
-binarySearch(listToSearch, 999);
-binarySearch(listToSearch, 1001);
-binarySearch(listToSearch, -1);
+show(binarySearch(listToSearch, 500));
+show(binarySearch(listToSearch, 1));
+show(binarySearch(listToSearch, 999));
+show(binarySearch(listToSearch, 1001));
+show(binarySearch(listToSearch, -1));

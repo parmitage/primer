@@ -1,3 +1,5 @@
+using "base";
+
 val add = fun d k v -> d ++ [[k, v]];
 
 val get = fun d k ->
@@ -24,14 +26,14 @@ val d1 = add(d, "one", 1);
 val d2 = add(d1, "two", 2);
 val d3 = add(d2, "three", 3);
 
-d3;
-get(d3, "one");
-get(d3, "four");
-update(d3, "one", 5);
-update(d3, "two", 5);
-update(d3, "three", 5);
-update(d3, "four", 5);
-remove(d3, "one");
-remove(d3, "two");
-remove(d3, "three");
-remove(d3, "four");
+show(d3);
+show(get(d3, "one"));
+show(get(d3, "four"));
+show(update(d3, "one", 5));
+show(update(d3, "two", 5));
+show(update(d3, "three", 5));
+show(update(d3, "four", 5));
+show(remove(d3, "one"));
+show(remove(d3, "two"));
+show(remove(d3, "three"));
+show(remove(d3, "four"));

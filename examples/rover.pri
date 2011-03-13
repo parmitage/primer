@@ -39,7 +39,7 @@ val print = fun r ->
    let x = roverX(r) in
    let y = roverY(r) in
    let d = (['W', 'S', 'E', 'N'] at roverH(r)) in
-   [x, y, d];
+   show([x, y, d]);
 
 val navigate = fun r s -> foldl(move, r, s);
 

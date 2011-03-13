@@ -8,6 +8,7 @@ typedef enum { false = 0, true = 1 } bool;
 
 #define CAR(p) (p != NULL && p->pair->car != NULL ? p->pair->car : NULL)
 #define CDR(p) (p != NULL && p->pair->cdr != NULL ? p->pair->cdr : NULL)
+#define CADR(p) (CAR(CDR(p)))
 #define EMPTY(p) (p == NULL || p->pair->car == NULL)
 
 #define EXTRACT_NUMBER(x) (x->type == t_float ? x->fval : x->ival)
