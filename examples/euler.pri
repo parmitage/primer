@@ -1,3 +1,5 @@
+using "base";
+
 ############################################################################
 # Project Euler Problem 1
 # 
@@ -15,7 +17,7 @@ val pe1 = fun limit ->
       else accum
    in inner(0, 0);
 
-pe1(1000);
+show(pe1(1000));
 
 ############################################################################
 # Project Euler Problem 2
@@ -36,7 +38,7 @@ val fib = fun n ->
       else inner(iter - 1, next, result + next)
    in inner(n, 0, 1);
 
-sum(filter(even, map(fib, 0..40)));
+show(sum(filter(even, map(fib, 0..40))));
 
 ############################################################################
 # Project Euler Problem 3
@@ -60,4 +62,4 @@ val pe3 = fun n ->
    let primeFactor = fun x -> prime(x) and factor(n, x) in
    last(filter(primeFactor, 2..n));
 
-pe3(6000);
+show(pe3(6000));

@@ -5,7 +5,7 @@ val fac1 = fun n ->
    then 1
    else n * fac1 (n - 1);
 
-fac1(10);
+show(fac1(10));
 
 # this version uses an accumulator
 
@@ -16,4 +16,4 @@ val fac2 = fun n ->
                   else inner (i - 1, acc * i)
    in inner (n, 1);
 
-fac2(10);
+show(fac2(10));
