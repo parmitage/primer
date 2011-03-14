@@ -1,8 +1,9 @@
-using "base";
+using base;
 
 val square = fun x -> x * x;
 val cube = fun x -> x * x * x;
 val abs = fun x -> if x >= 0 then x else -x;
+val factor = fun x y -> x mod y == 0;
 
 val sqrt = fun x ->
     let avg = fun x y -> (x + y) / 2 in

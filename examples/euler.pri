@@ -1,4 +1,5 @@
-using "base";
+using base;
+using math;
 
 ############################################################################
 # Project Euler Problem 1
@@ -55,8 +56,6 @@ val prime = fun x ->
            else inner(y + 1)
       else true
    in inner(2);
-
-val factor = fun x y -> x mod y == 0;
 
 val pe3 = fun n ->
    let primeFactor = fun x -> prime(x) and factor(n, x) in

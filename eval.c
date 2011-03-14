@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h>
 #include "eval.h"
 #include "y.tab.h"
 
@@ -9,7 +10,7 @@ int main(int argc, char **argv)
 {
    if (argc != 2)
    {
-      printf("usage: primer Program.pri\n");
+      printf("usage: primer prog.pri\n");
       return -1;
    }
 
@@ -21,6 +22,8 @@ int main(int argc, char **argv)
 
 void init()
 {
+   lastlib = 0;
+
    srand((unsigned)(time(0)));
 
    NODE_BOOL_TRUE = mkbool(true);
@@ -63,7 +66,7 @@ node *eval(node *n, env *e)
          if (b != NULL)
             return eval(b->node, e);
          else
-            error("unbound symbol");
+            error("unbound symbol '%s'", symname(n->ival));
       }
 
       case t_val:
@@ -105,6 +108,12 @@ node *eval(node *n, env *e)
       case t_cdr:
       {
          return cdr(eval(n->ast->n1, e));
+      }
+
+      case t_using:
+      {
+         using(n->ast->n1);
+         break;
       }
 
       case t_apply:
@@ -267,7 +276,7 @@ void extend(env *e, binding *nb)
    while (h != NULL)
    {
       if (s == h->sym)
-         error("symbol already bound in this env");
+         error("symbol '%s' already bound in this environment", symname(s));
 
       h = h->prev;
    }
@@ -327,7 +336,7 @@ struct node *prialloc()
    node *p;
 
    if ((p = (struct node*)malloc(sizeof(struct node))) == NULL)
-      error("Unable to allocate memory!");
+      error("unable to allocate memory");
 
    return p;
 }
@@ -402,7 +411,8 @@ char *node_to_str(node *node)
          node = NULL;
    }
 
-   //str[i] = '\n';
+   str[i] = '\0';
+
    return str;
 }
 
@@ -684,12 +694,11 @@ node *show(node *args)
    return args;
 }
 
-node *using(node *args)
+void using(node *args)
 {
-   //ASSERT(args->type, t_string, "using requires a symbolic parameter");
-   char *lib = node_to_str(args);
-   eval(loadlib(lib), top);
-   return mkbool(true);
+   ASSERT(args->type, t_symbol, "using requires a symbolic parameter");
+   char *name = symname(args->ival);
+   eval(loadlib(name), top);
 }
 
 node *add(node *x, node *y)
@@ -1056,10 +1065,29 @@ node *as(node *from, node *to)
    }
 }
 
+bool cached(char *name)
+{
+   /* search the 'cache' to see if a library has already been loaded */
+
+   int i;
+
+   for (i = 0; i < lastlib; ++i)
+   {
+      if (strcmp(libcache[i], name) == 0)
+         return true;
+   }
+
+   libcache[i] = (char*)malloc(sizeof(char) * (strlen(name) + 1));
+   strcpy(libcache[i], name);
+   lastlib++;
+
+   return false;   
+}
+
 node *loadlib(char *name)
 {
-   // TODO maintain a list of loaded libraries and don't load one
-   // that's already been loaded
+   if (cached(name))
+      return NODE_BOOL_FALSE;  // TODO a unit type would be nice here
 
    char *libroot, libpath[500];
    libroot = getenv("PRIMER_LIBRARY_PATH");
@@ -1070,14 +1098,21 @@ node *loadlib(char *name)
    sprintf(libpath, "%s%s.pri", libroot, name);
     
    if (!fexists(libpath))
-      error("unable to find library");
+      error("unable to find library '%s'", name);
   
    return parse(libpath);
 }
 
-void error(char *msg)
+void error(char* fmt, ...)
 {
-   printf("error: %s\n", msg);
+   // TODO wrapped format string can overflow its buffer
+   char fmt2[1000];
+   sprintf(fmt2, "error: %s\n", fmt);
+
+   va_list args;
+   va_start(args, fmt);
+   vprintf(fmt2, args);
+   va_end(args);
    exit(-1);
 }
 

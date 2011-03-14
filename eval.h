@@ -38,7 +38,8 @@ typedef enum {
    t_car,
    t_cdr,
    t_let,
-   t_val
+   t_val,
+   t_using
 } t_type;
 
 typedef struct pair {
@@ -97,6 +98,9 @@ typedef struct env {
 
 node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp;
 env *top, *tco_env;
+
+char *libcache[50];
+int lastlib;
 
 /* not a real type */
 #define t_string 9999
@@ -190,12 +194,12 @@ node *as(node *x, node *y);
 /* primitive functions */
 node *rnd(node *node);
 node *show(node *args);
-node *using(node *args);
+void using(node *args);
 
 /* utils */
 void init();
 node *loadlib(char *name);
-void error(char *msg);
+void error(char* fmt, ...);
 bool fexists(const char *path);
 
 #endif

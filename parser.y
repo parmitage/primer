@@ -74,6 +74,7 @@ LPAREN expr RPAREN                                    { $$ = $2; }
 | LENGTH LPAREN expr RPAREN                           { $$ = mkoperator(len, $3); }
 | HEAD LPAREN expr RPAREN                             { $$ = mkast(t_car, $3, NULL, NULL); }
 | TAIL LPAREN expr RPAREN                             { $$ = mkast(t_cdr, $3, NULL, NULL); }
+| USING identifier                                    { $$ = mkast(t_using, $2, NULL, NULL); }
 | RND LPAREN expr RPAREN                              { $$ = mkoperator(rnd, $3); }
 | expr '+' expr                                       { $$ = mkbinoperator(add, $1, $3); }
 | expr '-' expr                                       { $$ = mkbinoperator(sub, $1, $3); }
@@ -101,7 +102,6 @@ LPAREN expr RPAREN                                    { $$ = $2; }
 | expr AS expr                                        { $$ = mkbinoperator(as, $1, $3); }
 | expr IS expr                                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS                               { $$ = mkoperator(neg, $2); }
-| USING expr                                          { $$ = mkoperator(using, $2); }
 | LSQUARE list RSQUARE                                { $$ = $2; }
 ;
 
