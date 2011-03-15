@@ -36,28 +36,28 @@ val roverY = fun r -> r at 1;
 val roverH = fun r -> r at 2;
 
 val print = fun r ->
-   let x = roverX(r) in
-   let y = roverY(r) in
-   let d = (['W', 'S', 'E', 'N'] at roverH(r)) in
-   show([x, y, d]);
+    let x = roverX(r)
+        y = roverY(r)
+        d = (['W', 'S', 'E', 'N'] at roverH(r))
+    in show([x, y, d]);
 
 val navigate = fun r s -> foldl(move, r, s);
 
 val move = fun r c ->
-   if c == 'L' or c == 'R'
-   then rotate(r, c)
-   else translate(r, c as int - '0' as int);
+    if c == 'L' or c == 'R'
+    then rotate(r, c)
+    else translate(r, c as int - '0' as int);
 
 val translate = fun r c ->
-   if even(roverH(r))
-   then rover(roverX(r) + ((roverH(r) - 1) * c), roverY(r), roverH(r))
-   else rover(roverX(r), roverY(r) + ((roverH(r) - 2) * c), roverH(r));
+    if even(roverH(r))
+    then rover(roverX(r) + ((roverH(r) - 1) * c), roverY(r), roverH(r))
+    else rover(roverX(r), roverY(r) + ((roverH(r) - 2) * c), roverH(r));
 
 val rotate = fun r d ->
-   if d == 'L'
-   then rover(roverX(r), roverY(r), (roverH(r) + 1) mod 4)
-   else rover(roverX(r), roverY(r), (if roverH(r) - 1 == 0
-                                     then 4
-                                     else roverH(r)) - 1);
+    if d == 'L'
+    then rover(roverX(r), roverY(r), (roverH(r) + 1) mod 4)
+    else rover(roverX(r), roverY(r), (if roverH(r) - 1 == 0
+                                      then 4
+                                      else roverH(r)) - 1);
 
 print(navigate(rover(10, 10, n), "R1R3L2L1"));

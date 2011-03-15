@@ -42,7 +42,7 @@
 %right CONS
 %nonassoc UMINUS
 
-%type <nPtr> program exprs expr list args identifier
+%type <nPtr> program exprs expr list args identifier letblock def
 
 %%
 
@@ -64,7 +64,7 @@ LPAREN expr RPAREN                                    { $$ = $2; }
 | FALSE                                               { $$ = NODE_BOOL_FALSE; }
 | STRING                                              { $$ = mkstr($1); }
 | identifier                                          { $$ = $1; }
-| LET identifier DEF expr IN expr                     { $$ = mkast(t_let, $2, $4, $6); }
+| LET letblock IN expr                                { $$ = mkast(t_let, $2, $4, NULL); }
 | VAL identifier DEF expr                             { $$ = mkast(t_val, $2, $4, NULL);  }
 | LAMBDA args DEFINED expr                            { $$ = mkast(t_lambda, $2, $4, NULL); }
 | identifier LPAREN list RPAREN                       { $$ = mkast(t_apply, $1, $3, NULL); }
@@ -107,6 +107,15 @@ LPAREN expr RPAREN                                    { $$ = $2; }
 
 identifier:
 SYMBOL                                                { $$ = mksym($1); }
+;
+
+letblock:
+def                                                   { $$ = mkast(t_seq, $1, NULL, NULL); }
+| def letblock                                        { $$ = mkast(t_seq, $1, $2, NULL); }
+;
+
+def:
+identifier DEF expr                                   { $$ = mkast(t_val, $1, $3, NULL);  }
 ;
 
 args:

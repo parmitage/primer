@@ -78,8 +78,16 @@ node *eval(node *n, env *e)
       case t_let:
       {
          env *ext = envnew(e);
-         extend(ext, bindnew(n->ast->n1->ival, eval(n->ast->n2, ext)));
-         return eval(n->ast->n3, ext);
+         node *bindings = n->ast->n1;
+
+         while (bindings != NULL)
+         {
+            node *exp = bindings->ast->n1;
+            extend(ext, bindnew(exp->ast->n1->ival, eval(exp->ast->n2, ext)));
+            bindings = bindings->ast->n2;
+         }
+
+         return eval(n->ast->n2, ext);
       }
 
       case t_lambda:
