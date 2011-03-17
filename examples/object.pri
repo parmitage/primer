@@ -1,31 +1,33 @@
 ##############################################################################
 ###
 ### A port of Oleg's "A trivial delegation-based OO system"
-### (http://okmij.org/ftp/Scheme/oop-in-fp.txt) from Scheme to primer.
+### (http://okmij.org/ftp/Scheme/oop-in-fp.txt) from Scheme to Primer.
 ###
-### Note that without quoted symbols we have to dispatch on strings and that
-### we fake optional parameters by relying on no arity checking.
+### Note that without symbols we have to dispatch on strings and that
+### we fake optional parameters by performing no arity checking.
 ###
-### Note that upper case function names have been used to represent
-### constructors.
+### Also note that upper case function names have been used to represent
+### 'constructors'.
 ###
 ##############################################################################
 
 val Point2D = fun x y ->
     let Transform = fun dx dy -> Point2D(x + dx, y + dy) in
         fun selector ->
-            if selector == "GetX" then x
-            else if selector == "GetY" then y
-            else if selector == "Transform" then Transform(arg1, arg2)
-            else "message not supported";
+            match selector
+               with "GetX"      then x
+               with "GetY"      then y
+               with "Transform" then Transform(arg1, arg2)
+               with _           then "message not supported";
 
 val Point3D = fun x y z ->
     let Transform = fun dx dy dz -> Point3D(x + dx, y + dy, z + dz) in
     let Parent = Point2D(x, y) in
         fun selector arg1 arg2 arg3 ->
-            if selector == "GetZ" then z
-            else if selector == "Transform" then Transform(arg1, arg2, arg3)
-            else Parent(selector);
+            match selector
+               with "GetZ"      then z
+               with "Transform" then Transform(arg1, arg2, arg3)
+               with _           then Parent(selector);
 
 val delta2D = fun p1 p2 -> [p2("GetX") - p1("GetX"), p2("GetY") - p1("GetY")];
 

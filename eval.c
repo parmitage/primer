@@ -22,6 +22,7 @@ int main(int argc, char **argv)
 
 void init()
 {
+   /* initial library 'cache' has no items in it */
    lastlib = 0;
 
    srand((unsigned)(time(0)));
@@ -29,6 +30,10 @@ void init()
    NODE_BOOL_TRUE = mkbool(true);
    NODE_BOOL_FALSE = mkbool(false);
 
+   /* the magic '_' value used in pattern matching */
+   NODE_ANY = mkbool(-1);
+
+   /* top level environment has no parent */
    top = envnew(NULL);
 
    extend(top, bindnew(intern("newline"), mkchar('\n')));
@@ -88,6 +93,30 @@ node *eval(node *n, env *e)
          }
 
          return eval(n->ast->n2, ext);
+      }
+
+      case t_match:
+      {
+         node *exp = eval(n->ast->n1, e);
+         node *iter = n->ast->n2;
+
+         while (iter != NULL)
+         {
+            node *match = CAR(iter);
+            node *pattern = eval(CAR(match), e);
+
+            if (is_any_pattern(pattern))
+               return eval(CDR(match), e);
+
+            node *equal = eq(exp, pattern);
+
+            if (equal->ival == true)
+               return eval(CDR(match), e);
+
+            iter = CDR(iter);
+         }
+
+         error("non-exhaustive pattern");
       }
 
       case t_lambda:
@@ -1071,6 +1100,11 @@ node *as(node *from, node *to)
          error("cast from unsupported type");
          break;
    }
+}
+
+bool is_any_pattern(node *n)
+{
+   return n->type == t_bool && n->ival == -1;
 }
 
 bool cached(char *name)

@@ -39,7 +39,9 @@ typedef enum {
    t_cdr,
    t_let,
    t_val,
-   t_using
+   t_using,
+   t_match,
+   t_case
 } t_type;
 
 typedef struct pair {
@@ -96,7 +98,7 @@ typedef struct env {
    binding *bind;
 } env;
 
-node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *temp;
+node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *NODE_ANY, *temp;
 env *top, *tco_env;
 
 char *libcache[50];
@@ -201,5 +203,6 @@ void init();
 node *loadlib(char *name);
 void error(char* fmt, ...);
 bool fexists(const char *path);
+bool is_any_pattern(node *n);
 
 #endif
