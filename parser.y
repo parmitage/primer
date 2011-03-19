@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE LIST
-%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING MATCH WITH ANY
+%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING SWITCH CASE ANY
 %token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
 %token SEMICOLON LPAREN RPAREN LSQUARE RSQUARE
 
@@ -42,7 +42,7 @@
 %right CONS
 %nonassoc UMINUS
 
-%type <nPtr> program exprs expr match_exp match_block match list args identifier let_block def
+%type <nPtr> program exprs expr case_exp case_block case list args identifier let_block def
 
 %%
 
@@ -103,7 +103,7 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | expr IS expr                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS               { $$ = mkoperator(neg, $2); }
 | LSQUARE list RSQUARE                { $$ = $2; }
-| MATCH expr match_block              { $$ = mkast(t_match, $2, $3, NULL); }
+| SWITCH expr case_block              { $$ = mkast(t_switch, $2, $3, NULL); }
 ;
 
 identifier:
@@ -130,16 +130,16 @@ expr                                  { $$ = mkpair(t_pair, $1, NULL); }
 | /* empty list */                    { $$ = mkpair(t_pair, NULL, NULL); }
 ;
 
-match_block:
-match                                 { $$ = mkpair(t_pair, $1, NULL); }
-| match match_block                   { $$ = mkpair(t_pair, $1, $2); }
+case_block:
+case                                  { $$ = mkpair(t_pair, $1, NULL); }
+| case case_block                     { $$ = mkpair(t_pair, $1, $2); }
 ;
 
-match:
-WITH match_exp THEN expr              { $$ = mkpair(t_case, $2, $4); }
+case:
+CASE case_exp THEN expr               { $$ = mkpair(t_case, $2, $4); }
 ;
 
-match_exp:
+case_exp:
 INTEGER                               { $$ = mkint($1); }
 | FLOAT                               { $$ = mkfloat($1); }
 | CHAR                                { $$ = mkchar($1); }
@@ -147,6 +147,7 @@ INTEGER                               { $$ = mkint($1); }
 | FALSE                               { $$ = NODE_BOOL_FALSE; }
 | STRING                              { $$ = mkstr($1); }
 | identifier                          { $$ = $1; }
+| LSQUARE list RSQUARE                { $$ = $2; }
 | ANY                                 { $$ = NODE_ANY; }
 ;
 

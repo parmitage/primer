@@ -40,7 +40,7 @@ typedef enum {
    t_let,
    t_val,
    t_using,
-   t_match,
+   t_switch,
    t_case
 } t_type;
 
