@@ -54,8 +54,8 @@ void yyerror(char *);
 "type"                                            return TYPE;
 "length"                                          return LENGTH;
 "using"                                           return USING;
-"switch"                                          return SWITCH;
-"case"                                            return CASE;
+"match"                                           return MATCH;
+"with"                                            return WITH;
 "_"                                               return ANY;
 \'[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]\'         { yylval.ival = yytext[1]; return CHAR; }
 \"[-<>=+*/&|%{}.;:(){},\[\]! a-zA-Z0-9]*\"        { yylval.sval = strdup(yytext); return STRING; }

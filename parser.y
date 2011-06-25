@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE LIST
-%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING SWITCH CASE ANY
+%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING MATCH WITH ANY
 %token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
 %token SEMICOLON LPAREN RPAREN LSQUARE RSQUARE
 
@@ -42,7 +42,7 @@
 %right CONS
 %nonassoc UMINUS
 
-%type <nPtr> program exprs expr case_exp case_block case list args identifier let_block def
+%type <nPtr> program exprs expr pattern_exp pattern_block pattern list args identifier let_block def
 
 %%
 
@@ -103,7 +103,7 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | expr IS expr                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS               { $$ = mkoperator(neg, $2); }
 | LSQUARE list RSQUARE                { $$ = $2; }
-| SWITCH expr case_block              { $$ = mkast(t_switch, $2, $3, NULL); }
+| MATCH expr pattern_block            { $$ = mkast(t_match, $2, $3, NULL); }
 ;
 
 identifier:
@@ -130,16 +130,16 @@ expr                                  { $$ = mkpair(t_pair, $1, NULL); }
 | /* empty list */                    { $$ = mkpair(t_pair, NULL, NULL); }
 ;
 
-case_block:
-case                                  { $$ = mkpair(t_pair, $1, NULL); }
-| case case_block                     { $$ = mkpair(t_pair, $1, $2); }
+pattern_block:
+pattern                               { $$ = mkpair(t_pair, $1, NULL); }
+| pattern pattern_block               { $$ = mkpair(t_pair, $1, $2); }
 ;
 
-case:
-CASE case_exp THEN expr               { $$ = mkpair(t_case, $2, $4); }
+pattern:
+WITH pattern_exp THEN expr         { $$ = mkpair(t_pattern, $2, $4); }
 ;
 
-case_exp:
+pattern_exp:
 INTEGER                               { $$ = mkint($1); }
 | FLOAT                               { $$ = mkfloat($1); }
 | CHAR                                { $$ = mkchar($1); }

@@ -40,8 +40,8 @@ typedef enum {
    t_let,
    t_val,
    t_using,
-   t_switch,
-   t_case
+   t_match,
+   t_pattern
 } t_type;
 
 typedef struct pair {

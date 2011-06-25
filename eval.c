@@ -95,7 +95,7 @@ node *eval(node *n, env *e)
          return eval(n->ast->n2, ext);
       }
 
-      case t_switch:
+      case t_match:
       {
          node *exp = eval(n->ast->n1, e);
          node *iter = n->ast->n2;
@@ -116,7 +116,7 @@ node *eval(node *n, env *e)
             iter = CDR(iter);
          }
 
-         error("non-exhaustive switch statement");
+         error("non-exhaustive patterns in match statement");
       }
 
       case t_lambda:
