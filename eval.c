@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include "gc.h"
 #include "eval.h"
 #include "y.tab.h"
 
@@ -283,7 +284,7 @@ void bind(node *args, node *params, env *fnenv, env *argenv)
 binding* bindnew(symbol s, node *n)
 {
    size_t sz = sizeof(binding);
-   binding *b = (binding *) malloc(sz);	
+   binding *b = (binding *) GC_MALLOC(sz);	
    b->sym = s;
    b->node = n;
    b->prev = NULL;
@@ -293,7 +294,7 @@ binding* bindnew(symbol s, node *n)
 env *envnew(env *parent)
 {
    size_t sz = sizeof(env);
-   env *e = (env *) malloc(sz);
+   env *e = (env *) GC_MALLOC(sz);
    e->parent = parent;
    e->bind = NULL;
    return e;
@@ -372,7 +373,7 @@ struct node *prialloc()
 {
    node *p;
 
-   if ((p = (struct node*)malloc(sizeof(struct node))) == NULL)
+   if ((p = (struct node*)GC_MALLOC(sizeof(struct node))) == NULL)
       error("unable to allocate memory");
 
    return p;
@@ -415,7 +416,7 @@ node* mkstr(char* value)
    int srclen = strlen(value);
    int destlen = srclen - 1;
    int copylen = srclen - 2;
-   char* temp = (char*)malloc(destlen + 1);
+   char* temp = (char*)GC_MALLOC(destlen + 1);
    strncpy(temp, value + 1, copylen);
    temp[copylen] = '\0';
    return str_to_node(temp);
@@ -433,7 +434,7 @@ node* str_to_node(char* value)
 
 char *node_to_str(node *node)
 {
-   char *str = (char*)malloc(50);
+   char *str = (char*)GC_MALLOC(50);
    int i = 0;
 
    while (node != NULL)
@@ -465,7 +466,7 @@ node *mkpair(t_type type, node *car, node* cdr)
 {
    node *p = prialloc();
    p->type = t_pair;
-   p->pair = (struct pair*) malloc(sizeof(struct pair));
+   p->pair = (struct pair*) GC_MALLOC(sizeof(struct pair));
    p->pair->type = type;
    p->pair->car = car;
    p->pair->cdr = cdr;
@@ -476,7 +477,7 @@ node *mkclosure(node *args, node *body, env *env)
 {
    node *p = prialloc();
    p->type = t_closure;
-   p->fn = (struct closure*)malloc(sizeof(struct closure));
+   p->fn = (struct closure*)GC_MALLOC(sizeof(struct closure));
    p->fn->args = args;
    p->fn->body = body;
    p->fn->env = envnew(env);
@@ -487,7 +488,7 @@ node *mkoperator(struct node * (*op) (struct node *), node *arg1)
 {
    node *p = prialloc();
    p->type = t_operator;
-   p->op = (struct operator*)malloc(sizeof(struct operator));
+   p->op = (struct operator*)GC_MALLOC(sizeof(struct operator));
    p->op->op = op;
    p->op->arity = 1;
    p->op->arg1 = arg1;
@@ -499,7 +500,7 @@ node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node 
 {
    node *p = prialloc();
    p->type = t_operator;
-   p->op = (struct operator*)malloc(sizeof(struct operator));
+   p->op = (struct operator*)GC_MALLOC(sizeof(struct operator));
    p->op->binop = binop;
    p->op->arity = 2;
    p->op->arg1 = arg1;
@@ -511,7 +512,7 @@ node *mkast(t_type type, node *n1, node *n2, node *n3)
 {
    node *p = prialloc();
    p->type = type;
-   p->ast = (struct ast*)malloc(sizeof(struct ast));
+   p->ast = (struct ast*)GC_MALLOC(sizeof(struct ast));
    p->ast->n1 = n1;
    p->ast->n2 = n2;
    p->ast->n3 = n3;
@@ -1119,7 +1120,7 @@ bool cached(char *name)
          return true;
    }
 
-   libcache[i] = (char*)malloc(sizeof(char) * (strlen(name) + 1));
+   libcache[i] = (char*)GC_MALLOC(sizeof(char) * (strlen(name) + 1));
    strcpy(libcache[i], name);
    lastlib++;
 

@@ -7,10 +7,10 @@ val geneCount = 12;
 val population = 16;
 
 ### The number of generations to run the algorithm for
-val generations = 250;
+val generations = 1000;
 
 ### The weight limit of the knapsack
-val weightLimit = 7;
+val weightLimit = 6.9;
 
 ### The list of items to pack
 val items = [[ "Book", 2, 0 ],
@@ -37,12 +37,12 @@ val mutate = fun c ->
 
 ### Evaluate the fitness of a chromosome
 val fitness = fun c ->
-   let items = chromosomeItems(c) in
-   let importance = importanceOfItems(items) in
-   let weight = weightOfItems(items) in
-   if weight <= weightLimit
-   then importance * weight
-   else weight * -5;
+    let items = chromosomeItems(c)
+        importance = importanceOfItems(items)
+        weight = weightOfItems(items)
+    in if weight <= weightLimit
+       then importance * weight
+       else weight * -5;
 
 ### Generate a random 12 bit number to represent a chromosome
 val chromosomeNew = fun x -> rnd(4095);
@@ -67,7 +67,6 @@ val weightOfItems = fun items -> foldl(fun x y -> x + (y at 1), 0, items);
 val importanceOfItems = fun items -> foldl(fun x y -> x + (y at 2), 0, items);
 
 ### Create a new generation of random chromosomes
-# TODO how to pass single argument function to Collect?
 val generationNew = fun size -> collect(chromosomeNew, size);
 
 ### Create the next generation by reproducing the best of the previous one
