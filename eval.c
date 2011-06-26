@@ -98,20 +98,25 @@ node *eval(node *n, env *e)
 
       case t_match:
       {
-         node *exp = eval(n->ast->n1, e);
+         node *exp = n->ast->n1;
          node *iter = n->ast->n2;
-         
+
          while (iter != NULL)
          {
             node *match = CAR(iter);
-            node *pattern = eval(CAR(match), e);
+            node *pattern = match;
+            bool pass = true;
 
-            if (is_any_pattern(pattern))
-               return eval(CDR(match), e);
+            while (pass == true && pattern != NULL)
+            {
+               node *p = eval(CAR(match), e);
+               node *ex = eval(exp, e);
 
-            node *equal = eq(exp, pattern);
+               pass = eq(ex, p)->ival;
+               pattern = CDR(pattern);
+            }
 
-            if (equal->ival == true)
+            if (pass == true)
                return eval(CDR(match), e);
 
             iter = CDR(iter);
@@ -850,7 +855,9 @@ node *list_eq(node *l1, node *l2)
 
 node *eq(node *x, node *y)
 {
-   if (x->type != y->type)
+   if (ASSERT_ANY(x) || ASSERT_ANY(y))
+      return NODE_BOOL_TRUE;
+   else if (x->type != y->type)
       return NODE_BOOL_FALSE;
    else if (x->type == t_int || x->type == t_bool)
       return x->ival == y->ival ? NODE_BOOL_TRUE : NODE_BOOL_FALSE;

@@ -42,7 +42,7 @@
 %right CONS
 %nonassoc UMINUS
 
-%type <nPtr> program exprs expr pattern_exp pattern_block pattern list args identifier let_block def
+%type <nPtr> program exprs expr pattern_block pattern list args identifier let_block def
 
 %%
 
@@ -64,6 +64,7 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | FALSE                               { $$ = NODE_BOOL_FALSE; }
 | STRING                              { $$ = mkstr($1); }
 | identifier                          { $$ = $1; }
+| ANY                                 { $$ = NODE_ANY; }
 | LET let_block IN expr               { $$ = mkast(t_let, $2, $4, NULL); }
 | VAL identifier DEF expr             { $$ = mkast(t_val, $2, $4, NULL);  }
 | LAMBDA args DEFINED expr            { $$ = mkast(t_lambda, $2, $4, NULL); }
@@ -103,7 +104,7 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | expr IS expr                        { $$ = mkbinoperator(is, $1, $3); }
 | '-' expr %prec UMINUS               { $$ = mkoperator(neg, $2); }
 | LSQUARE list RSQUARE                { $$ = $2; }
-| MATCH expr pattern_block            { $$ = mkast(t_match, $2, $3, NULL); }
+| MATCH list pattern_block            { $$ = mkast(t_match, $2, $3, NULL); }
 ;
 
 identifier:
@@ -136,19 +137,7 @@ pattern                               { $$ = mkpair(t_pair, $1, NULL); }
 ;
 
 pattern:
-WITH pattern_exp THEN expr         { $$ = mkpair(t_pattern, $2, $4); }
-;
-
-pattern_exp:
-INTEGER                               { $$ = mkint($1); }
-| FLOAT                               { $$ = mkfloat($1); }
-| CHAR                                { $$ = mkchar($1); }
-| TRUE                                { $$ = NODE_BOOL_TRUE; }
-| FALSE                               { $$ = NODE_BOOL_FALSE; }
-| STRING                              { $$ = mkstr($1); }
-| identifier                          { $$ = $1; }
-| LSQUARE list RSQUARE                { $$ = $2; }
-| ANY                                 { $$ = NODE_ANY; }
+WITH list THEN expr                   { $$ = mkpair(t_pattern, $2, $4); }
 ;
 
 %%
@@ -164,7 +153,7 @@ node* parse(char* filename)
 {
    if ((yyin = fopen(filename, "r")) == NULL)
    {
-      printf("Error reading input file\n");
+      error("unable to read input file");
    }
    
    yyparse();

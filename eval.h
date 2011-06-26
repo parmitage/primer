@@ -18,7 +18,10 @@ typedef enum { false = 0, true = 1 } bool;
                                    && x->ival % y->ival != 0) ? t_float : t_int)
 
 #define ASSERT(x, t, m) if (x != t) error(m)
-#define ASSERT_NUM(x, m) if (!(x->type == t_int || x->type == t_float || x->type == t_char)) error(m)
+#define ASSERT_NUM(x, m) if (!(x->type == t_int || \
+                               x->type == t_float || \
+                               x->type == t_char)) error(m)
+#define ASSERT_ANY(x) (x->type == t_bool && x->ival == -1)
 
 typedef enum {
    t_int,
