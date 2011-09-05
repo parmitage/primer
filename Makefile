@@ -3,18 +3,21 @@ DBG		= $(CFLAGS) -g3 -D__DEBUG__
 REL		= $(CFLAGS) -O2
 BIN		= primer
 CC		= gcc
-CFLAGS	= -std=gnu99 -I/usr/include/gc
+CFLAGS	= -std=gnu99
 
 debug: parser lexer eval
 	$(CC) $(DBG) $(CFLAGS) -c y.tab.c lex.yy.c
-	$(CC) $(DBG) -lgc *.o -o $(BINDIR)$(BIN)
+	$(CC) $(DBG) *.o -o $(BINDIR)$(BIN)
 
 release: parser lexer eval
 	$(CC) $(REL) $(CFLAGS) -c y.tab.c lex.yy.c
-	$(CC) $(REL) -lgc *.o -o $(BINDIR)$(BIN)
+	$(CC) $(REL) *.o -o $(BINDIR)$(BIN)
 
-eval: parser lexer eval.c eval.h
+eval: parser lexer gc eval.c eval.h
 	$(CC) $(DBG) $(CFLAGS) -c eval.c
+
+gc: gc.c gc.h
+	$(CC) $(DBG) $(CFLAGS) -c gc.c
 
 lexer: parser lexer.l
 	flex lexer.l
