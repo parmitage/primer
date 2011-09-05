@@ -1,3 +1,5 @@
+pragma GC_DISABLE;
+
 using base;
 
 ### The number of genes in our chromosome (number of items to pack)
@@ -7,7 +9,7 @@ val geneCount = 12;
 val population = 16;
 
 ### The number of generations to run the algorithm for
-val generations = 1000;
+val generations = 200;
 
 ### The weight limit of the knapsack
 val weightLimit = 6.9;

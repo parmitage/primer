@@ -1,3 +1,4 @@
+pragma GC_DISABLE;
 using base;
 
 # The classic fizzbuzz program implemented three different ways

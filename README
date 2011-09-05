@@ -1,0 +1,289 @@
+Primer
+======
+Primer is a simple functional programming language which I wrote for my own amusement. While it's nothing more than my hobby language, a couple of people have found it worth playing with either to learn functional programming or to study a simple language implementation.
+
+Primer in bullet points:
+
+- immutable
+- dynamically typed
+- strict evaluation
+- higher order functions
+- closures
+- simple tail call elimination
+- garbage collected (mostly...!)
+
+Primer is open source software and distributed under the MIT license.
+
+If you have any questions about Primer then please feel free to [email](mailto:philip.armitage@gmail.com) me.
+
+Hello, World!
+-------------
+As with most modern languages, Hello World is just a literal string and the usual FPL equivalent is `fac` or `fib` which rubs people up the wrong way so I'll instead follow the Haskell guys and use Quicksort as my Hello World:
+
+    val sort = fun xs ->
+       let lt = fun a -> a < head(xs)
+           gte = fun a -> a >= head(xs)
+       in if head(xs) != [] then
+             sort(filter(lt, tail(xs))) ++ [head(xs)]
+                             ++ sort(filter(gte, tail(xs)))
+          else [] ;
+
+Note that this version of Quicksort is nice for showing off how the language looks but is not tail-recursive so would blow the stack on longer lists. The standard library has a tail recursive version of Quicksort implemented using CPS but it's not as easy to follow.
+
+Download and install
+--------------------
+The latest version of Primer can always be found on [GitHub](http://github.com/parmitage/primer). I will also aim to make tarballs whenever I think a version is stable enough to play with. The latest of these will be available from the download tab on the above page.
+
+Inside the tarball you'll find the following folders:
+
+src/       - the C source code for Primer
+lib/       - the Primer standard library
+emacs/     - an Emacs major mode for Primer
+examples/  - some example Primer programs
+proto/     - the OCaml source code of the Primer prototype
+
+You should also find this README and a LICENSE file.
+
+To install a binary release of Primer, unpack the tarball into a directory on your system and set the environment variable `PRIMER_LIBRARY_PATH` to point to the Primer `lib` directory on your system. If you're using Bash then this should do it:
+
+    export PRIMER_LIBRARY_PATH=/path/to/primer/lib/
+
+On a Windows system, environment variables are set through the control panel.
+
+The interpreter is invoked as follows:
+
+    ./primer program.pri
+
+If you receive a message that Primer is unable to find its standard library then you may need to restart your shell for the above change to take effect.
+
+Primer is developed on Linux using gcc but should build cleanly on Linux, Mac and Windows. Currently you need to have gcc, GNU make, flex and bison installed. A simple call to make should suffice on all three platforms.
+
+The distribution contains a number of small programs in the `examples` directory which are described below under the heading 'Example programs'.
+
+A quick tour of Primer
+----------------------
+
+Bindings are immutable.
+
+    val pi = 3.14;
+
+Primer is lexically scoped and bindings can be shadowed.
+
+    let pi = 3.14159
+        r  = 2
+    in pi * r * r;
+
+Functions are first class objects.
+
+    val funSquared = fun f x -> f(x) * f(x);
+    funSquared(fun x -> x / 3, 12);
+
+Primer supports closures.
+
+    val makeAdder = fun y -> fun a -> y + a;
+    val add1 = makeAdder(1);
+    val add2 = makeAdder(2);
+    add1(2);
+    add2(2);
+
+Lists can be nested and are heterogeneous.
+
+    val xs = [4, [5.32, [pi], [], true], funSquared, 'a', "aaa"];
+
+Several built-in functions operate on lists.
+ 
+    head(xs);
+    tail(xs);
+    last(xs1);
+    length(xs);
+
+A list can by accessed by index with the __at__ operator.
+
+    xs at 4;
+
+An item can be prepended to a list with the __cons__ operator.
+
+    1 :: [2,3,4];
+
+To concatenate two lists use the __append__ operator.
+
+    [1,2,3] ++ [4,5,6];
+
+Strings are lists of characters.
+
+    head("hello");
+    "hello" ! 3;
+
+Comments are introduced with the # character.
+
+    # comments extend to the end of the line
+    # there are no block comments
+
+The type of a value can be tested with the __is__ operator.
+
+    123.45 is string;                       # false
+    pi is float;                            # true
+
+The __as__ operator converts between types.
+
+    123.45 as string;                       # "123.45"
+    "123.45" as float;                      # 123.45
+    1 as bool;                              # true
+
+The __if__ statement is an expression so the __else__ branch is mandatory.
+
+    val count = fun xs ->
+        if xs != []
+        then 1 + count(tail(xs))
+        else 0;
+
+The __match__ statement ...
+
+Tail-recursive functions are optimised as in this accumulator version of count.
+
+    val count = fun xs ->
+        let counter = fn (a, xs)
+            if xs != []
+            then counter(a + 1, tail(xs))
+            else a
+        in counter(0, xs);
+
+
+Using Libraries
+---------------
+Primer allows you to put code into files under the `lib` directory and load them with the __using__ statement:
+
+    using base;
+
+This is nothing more than a simple textual include and there are currently no packages, modules or namespaces.
+
+The base library contains the most commonly used functions - the sort of things you'd expect to find in the prelude of any functional language. The rest of this section briefly documents them.
+
+__map__ applies a function to every element in a list.
+
+    map(fun x -> 2 * x, [1,2,3,4,5]);       # [2,4,6,8,10]
+
+__foldl__ and __foldr__ combine successive list elements.
+
+    foldl(fun x y -> x + y, 0, [1,2,3,4]);  # (((0+1)+2)+3)+4 = 10
+    foldr(fun x y -> x + y, 0, [1,2,3,4]);  # 1+(2+(3+4)) = 10
+
+__filter__ returns list elements which satisfy a predicate function.
+
+    filter(odd, [1,2,3,2,4,5,6]);           # [1,3,5]
+
+__zip__ combines two lists pairwise to return a new list of 2-tuples.
+
+    zip(l1, [4,5,6]);                       # [[1,4],[2,5],[3,6]]
+
+__reverse__ returns a new list in reverse order.
+
+    reverse("hello");                       # "olleh"
+
+__intersperse__ an atom between list elements.
+
+    intersperse('A', l1);                   # [1,'A',2,'A',3]
+
+__take__ the first n elements of a list.
+
+    take(2, [1,2,3,4,5,6]);                 # [1,2]
+
+__drop__ the first n elements from a list.
+
+    drop(1, [1,2,3,4,5,6]);                 # [2,3,4,5,6]
+
+__takeWhile__ returns items from a list until a predicate returns false.
+
+    takeWhile(even, [2,4,6,1,3,5]);         # [2,4,6]
+
+__dropWhile__ drops items from a list until a predicate returns false.
+
+    dropWhile(odd, [1,3,5,2,4,6]);          # [2,4,6]
+
+__any__ returns true if any item in a list satisfies a predicate.
+
+    any(even, [1,2,3,4,5,6]);               # true
+
+__all__ returns true if all items in a list satisfy a predicate.
+
+    all(odd, [1,2,3,4,5,6]);                # false
+
+__min__ returns the smallest item in a list of orderable items.
+
+    min([7,2,4,5,3,8,6]);                   # 2
+
+__max__ returns the largest item in a list of orderable items.
+
+    max([7,2,4,5,3,8,6]);                   # 8
+
+__sum__ returns the sum of items in a numeric list.
+
+    sum([1,2,3,4,5]);                       # 15
+
+__product__ returns the product of items in a numeric list.
+
+    product([1,2,3,4,5]);                   # 120
+
+__sort__ an orderable list of items.
+
+    sort([4,2,8,1]);                        # [1,2,4,8]
+
+__find__ an element in a list.
+
+    find(3, [1,2,3,4,5]);                   # 3
+
+__findByFun__ find an element in a list with a predicate.
+
+    findByFun('b', key, [[a,1], [b,2]]);    # [b,2]
+
+__replace__ an element in a list.
+
+    replace(2, 'a', [1,2,3,4,5]);           # [1,'a',3,4,5]
+
+__partition__ a list into elements which do and don't satisfy a predicate.
+
+    partition(even, [1,2,3,4,5,6]);         # [[6,4,2],[5,3,1]]
+
+__group__ a list into a list of lists of equal adjacent elements.
+
+    group([1,1,2,3,4,4,5,6,6,6]);           # [[1,1],[2],[3],[4,4],[5],[6,6,6]]
+
+__mapPair__
+
+__collect__
+
+There is also the beginnings of a math library which includes a few basic statistical functions. If you want to add your own functions to the libraries you can or you can create your own library and add it to your lib directory.
+
+Example programs
+----------------
+The Primer distribution includes a few little example programs. They're mostly academic curiosities there to show the features of the language.
+
+...
+
+Implementation
+--------------
+- evaluator (SICP)
+- GC (Armstrong paper)
+- pragma
+
+History
+-------
+The first working prototype of Primer was implemented in OCaml. In my opinion, ML family languages are the best way to prototype a new language. If you have a look in the `proto` directory of the Primer distribution you can find the OCaml source code of the prototype. Ironically, this still serves as the reference implementation for Primer as it's the only version with complete memory management and a REPL - features still missing or broken in the C version. The OCaml version should still build cleanly using the supplied Makefile on any system with the OCaml 3.11 or higher release installed.
+
+There are a couple of features missing from the prototype - in particular the ability to load additional libraries (there is no using statement). Also, the `match` statement is not present in the prototype.
+
+The problem with implementing a language in OCaml is that it's a bit too easy! While that's a nice problem to have, I didn't feel that I'd had the chance to learn a lot of things I wanted to learn along the way so decided to re-implement the language using C. That's the project that's currently under way and progressing fairly well.
+
+Future
+------
+There are still many things that I want to do with Primer and I suspect it will never be truly finished. The current list of things I plan to work on are listed below although I should stress that these are not necessarily in the order that I intend to tackle them.
+
+1. Finish the GC implementation. Currently the GC is very flaky and several programs need to run with it disabled. Obviously this is a priority to fix.
+
+2. A hand written lexer and parser. While lex and yacc style parsing is great for getting a language up and running quickly, they are quite inflexible, especially when it comes to reporting errors.
+
+3. A REPL. The prototype has a nice REPL which just works with the OCaml version of lex and yacc but I've been unable to get this working with flex and bison so this probably depends on the hand written parser.
+
+4. A compiler to JavaScript. Everything must run in the browser these days so I think the first compilation target for Primer should be JavaScript.
+
+5. A compiler to C. Native code compilation would also be nice and the easiest way I can see of doing this is to go via C. Another option may be to target LLVM bytecode which is pretty fashionable at the moment.
