@@ -3,9 +3,9 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-#include "gc.h"
 #include "eval.h"
 #include "y.tab.h"
+#include "gc.h"
 
 int main(int argc, char **argv)
 {
@@ -15,16 +15,32 @@ int main(int argc, char **argv)
       return -1;
    }
 
-   init();
-   eval(parse(argv[1]), top);
+   init_stage1();
+   node *n = parse(argv[1]);
+   init_stage2();
+   eval(n, top);
 
    return 0;
 }
 
-void init()
+void init_stage1()
 {
    /* initial library 'cache' has no items in it */
    lastlib = 0;
+
+   /* initialise all pragmas */
+   pragma_gc_disable = false;
+
+   /* Initialise the garbage collector but immediatly disable collection
+      as we don't want anything to be collected during read time (if a program
+      text is larger than the available heap then the memory allocated will
+      most likely be collected because none of the data is interned during
+      read time so it is unreachable by the mark phase of the collector).
+      Disabling the collector means that the memory allocated comes directly
+      from the C heap rather than Primer's managed heap and so will never 
+      be collected. */
+   GC_init();
+   GC_disable();
 
    srand((unsigned)(time(0)));
 
@@ -36,6 +52,8 @@ void init()
 
    /* top level environment has no parent */
    top = envnew(NULL);
+
+   GC_DISABLE = intern("GC_DISABLE");
 
    extend(top, bindnew(intern("newline"), mkchar('\n')));
    extend(top, bindnew(intern("tab"), mkchar('\t')));
@@ -49,12 +67,24 @@ void init()
    extend(top, bindnew(intern("lambda"), mkint(t_closure)));
 }
 
+void init_stage2()
+{
+   if (!pragma_gc_disable)
+      GC_enable();
+}
+
 node *eval(node *n, env *e)
 {
    if (!n)
       return NODE_BOOL_FALSE;
 
   eval_start:
+
+   /* It's important that we track the 'current environment' so that the
+      garbage collector knows where it should walk roots from. However,
+      I'm not convinced that this is the correct or only place that this
+      needs to be set. */
+   cenv = e;
 
    switch (n->type)
    {
@@ -98,28 +128,53 @@ node *eval(node *n, env *e)
 
       case t_match:
       {
-         node *exp = n->ast->n1;
-         node *iter = n->ast->n2;
+         /* Some terminology:
 
-         while (iter != NULL)
+            match e1, e2
+               with p1a, p1b then r1
+               with p2a, p2b then r2
+               with _, _     then r3
+
+            e1                    => a test
+            e1, e2                => the tests
+            with p1a, p1b then r1 => a case
+            with..with..with      => the cases
+            p1a                   => a pattern   
+            p1a, p1b              => the patterns
+            r1                    => a result
+          */
+
+         node *lhs = n->ast->n1;
+         node *tests = lhs;
+         node *cases = n->ast->n2;
+
+         while (cases != NULL)
          {
-            node *match = CAR(iter);
-            node *pattern = match;
+            node *acase = CAR(cases);
+            node *patterns = CAR(acase);
             bool pass = true;
 
-            while (pass == true && pattern != NULL)
+            while (tests != NULL && patterns != NULL)
             {
-               node *p = eval(CAR(match), e);
-               node *ex = eval(exp, e);
+               node *test = CAR(tests);
+               node *pattern = CAR(patterns);
 
-               pass = eq(ex, p)->ival;
-               pattern = CDR(pattern);
+               node *n1 = eval(test, e);
+               node *n2 = eval(pattern, e);
+               pass = eq(n1, n2)->ival;
+
+               if (!pass)
+                  break;               
+
+               tests = CDR(tests);
+               patterns = CDR(patterns);
             }
 
-            if (pass == true)
-               return eval(CDR(match), e);
+            if (pass)
+               return eval(CDR(acase), e);
 
-            iter = CDR(iter);
+            cases = CDR(cases);
+            tests = lhs;
          }
 
          error("non-exhaustive patterns in match statement");
@@ -133,14 +188,20 @@ node *eval(node *n, env *e)
       case t_operator:
       {
          if (n->op->arity == 2)
-            return n->op->binop(eval(n->op->arg1, e), eval(n->op->arg2, e));
+         {
+            node *ret = n->op->binop(eval(n->op->arg1, e), eval(n->op->arg2, e));
+            //GC_recursive_markbit_set(ret, 0);
+            return ret;
+         }
          else
             return n->op->op(eval(n->op->arg1, e));
       }
 
       case t_cons:
       {
-         return cons(eval(n->ast->n1, e), eval(n->ast->n2, e));
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return cons(lhs, rhs);
       }
 
       case t_car:
@@ -171,6 +232,7 @@ node *eval(node *n, env *e)
 
          /* parameters */
          node *args = n->ast->n2;
+
          bind(fn->fn->args, args, ext, e);
 
          /* function body */
@@ -181,12 +243,14 @@ node *eval(node *n, env *e)
                
             n = fn->fn->body;
             e = tco_env = ext;
+
             goto eval_start;
          }
          else
          {
             node *ret = eval(fn->fn->body, ext);
             e = envdel(ext);
+            GC_recursive_markbit_set(ret, 0);
             return ret;
          }
       }
@@ -289,7 +353,7 @@ void bind(node *args, node *params, env *fnenv, env *argenv)
 binding* bindnew(symbol s, node *n)
 {
    size_t sz = sizeof(binding);
-   binding *b = (binding *) GC_MALLOC(sz);	
+   binding *b = (binding *) malloc(sz);	
    b->sym = s;
    b->node = n;
    b->prev = NULL;
@@ -299,16 +363,42 @@ binding* bindnew(symbol s, node *n)
 env *envnew(env *parent)
 {
    size_t sz = sizeof(env);
-   env *e = (env *) GC_MALLOC(sz);
+   env *e = (env *) malloc(sz);
    e->parent = parent;
    e->bind = NULL;
+   cenv = e;
    return e;
 }
 
 env *envdel(env *e)
 {
    env *parent = e->parent;
+   cenv = parent;
    return parent;
+}
+
+void envprint(env *e, bool depth)
+{
+   while (e != NULL)
+   {
+      binding *b = e->bind;
+
+      while (b != NULL)
+      {
+         printf("%s <-", symname(b->sym));
+         pprint(b->node);
+         printf("\n");
+
+         b = b->prev;
+      }
+
+      printf("-----------------\n");
+
+      if (depth)
+         e = e->parent;
+      else
+         break;
+   }
 }
 
 void extend(env *e, binding *nb)
@@ -327,6 +417,10 @@ void extend(env *e, binding *nb)
    /* binding wasn't found so create a new one */
    nb->prev = e->bind;
    e->bind = nb;
+
+   /* object has been fully constructed and bound so is
+      eligible for inspection by the gc */
+   GC_recursive_markbit_set(nb->node, 0);
 }
 
 binding* envlookup(env *e, symbol sym)
@@ -374,19 +468,9 @@ bool istailrecur(node *expr, symbol s)
    }
 }
 
-struct node *prialloc()
-{
-   node *p;
-
-   if ((p = (struct node*)GC_MALLOC(sizeof(struct node))) == NULL)
-      error("unable to allocate memory");
-
-   return p;
-}
-
 node *mkint(int value)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_int;
    p->ival = value;
    return p;
@@ -394,7 +478,7 @@ node *mkint(int value)
 
 node *mkfloat(float value)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_float;
    p->fval = value;
    return p;
@@ -402,7 +486,7 @@ node *mkfloat(float value)
 
 node *mkbool(int value)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_bool;
    p->ival = value;
    return p;
@@ -410,7 +494,7 @@ node *mkbool(int value)
 
 node* mkchar(char c)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_char;
    p->ival = c;
    return p;
@@ -421,7 +505,7 @@ node* mkstr(char* value)
    int srclen = strlen(value);
    int destlen = srclen - 1;
    int copylen = srclen - 2;
-   char* temp = (char*)GC_MALLOC(destlen + 1);
+   char* temp = (char*)malloc(destlen + 1);
    strncpy(temp, value + 1, copylen);
    temp[copylen] = '\0';
    return str_to_node(temp);
@@ -439,7 +523,7 @@ node* str_to_node(char* value)
 
 char *node_to_str(node *node)
 {
-   char *str = (char*)GC_MALLOC(50);
+   char *str = (char*)malloc(50);
    int i = 0;
 
    while (node != NULL)
@@ -461,7 +545,7 @@ char *node_to_str(node *node)
 
 node *mksym(char* s)
 {
-   node *p = prialloc();
+   node *p = GC_static_alloc();
    p->type = t_symbol;
    p->ival = intern(s);
    return p;
@@ -469,9 +553,9 @@ node *mksym(char* s)
 
 node *mkpair(t_type type, node *car, node* cdr)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_pair;
-   p->pair = (struct pair*) GC_MALLOC(sizeof(struct pair));
+   p->pair = (struct pair*) malloc(sizeof(struct pair));
    p->pair->type = type;
    p->pair->car = car;
    p->pair->cdr = cdr;
@@ -480,9 +564,9 @@ node *mkpair(t_type type, node *car, node* cdr)
 
 node *mkclosure(node *args, node *body, env *env)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_closure;
-   p->fn = (struct closure*)GC_MALLOC(sizeof(struct closure));
+   p->fn = (struct closure*)malloc(sizeof(struct closure));
    p->fn->args = args;
    p->fn->body = body;
    p->fn->env = envnew(env);
@@ -491,9 +575,9 @@ node *mkclosure(node *args, node *body, env *env)
 
 node *mkoperator(struct node * (*op) (struct node *), node *arg1)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_operator;
-   p->op = (struct operator*)GC_MALLOC(sizeof(struct operator));
+   p->op = (struct operator*)malloc(sizeof(struct operator));
    p->op->op = op;
    p->op->arity = 1;
    p->op->arg1 = arg1;
@@ -503,9 +587,9 @@ node *mkoperator(struct node * (*op) (struct node *), node *arg1)
 
 node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2)
 {
-   node *p = prialloc();
+   node *p = GC_alloc();
    p->type = t_operator;
-   p->op = (struct operator*)GC_MALLOC(sizeof(struct operator));
+   p->op = (struct operator*)malloc(sizeof(struct operator));
    p->op->binop = binop;
    p->op->arity = 2;
    p->op->arg1 = arg1;
@@ -515,9 +599,9 @@ node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node 
 
 node *mkast(t_type type, node *n1, node *n2, node *n3)
 {
-   node *p = prialloc();
+   node *p = GC_static_alloc();
    p->type = type;
-   p->ast = (struct ast*)GC_MALLOC(sizeof(struct ast));
+   p->ast = (struct ast*)malloc(sizeof(struct ast));
    p->ast->n1 = n1;
    p->ast->n2 = n2;
    p->ast->n3 = n3;
@@ -737,11 +821,38 @@ node *show(node *args)
    return args;
 }
 
+node *reads(node *args)
+{
+   char input[81];
+
+   if (NULL != fgets(input, sizeof input, stdin))
+   {
+      char *nlptr = strchr(input, '\n');
+      if (nlptr) *nlptr = '\0';
+   }
+
+   return str_to_node(input);
+}
+
 void using(node *args)
 {
    ASSERT(args->type, t_symbol, "using requires a symbolic parameter");
    char *name = symname(args->ival);
+   GC_disable();
    eval(loadlib(name), top);
+
+   if (!pragma_gc_disable)
+      GC_enable();
+}
+
+void pragma(node *args)
+{
+   ASSERT(args->type, t_symbol, "pragma requires a symbolic parameter");
+
+   if (args->ival == GC_DISABLE)
+      pragma_gc_disable = true;
+   else
+      error("unknown pragma");
 }
 
 node *add(node *x, node *y)
@@ -1127,7 +1238,7 @@ bool cached(char *name)
          return true;
    }
 
-   libcache[i] = (char*)GC_MALLOC(sizeof(char) * (strlen(name) + 1));
+   libcache[i] = (char*)malloc(sizeof(char) * (strlen(name) + 1));
    strcpy(libcache[i], name);
    lastlib++;
 

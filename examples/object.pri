@@ -13,21 +13,21 @@
 
 val Point2D = fun x y ->
     let Transform = fun dx dy -> Point2D(x + dx, y + dy) in
-        fun selector ->
-            switch selector
-              case "GetX"      then x
-              case "GetY"      then y
-              case "Transform" then Transform(arg1, arg2)
-              case _           then "message not supported";
+        fun selector arg1 arg2 ->
+            match selector
+               with "Transform" then Transform(arg1, arg2)
+               with "GetX"      then x
+               with "GetY"      then y
+               with _           then "message not supported";
 
 val Point3D = fun x y z ->
     let Transform = fun dx dy dz -> Point3D(x + dx, y + dy, z + dz) in
     let Parent = Point2D(x, y) in
         fun selector arg1 arg2 arg3 ->
-            switch selector
-              case "GetZ"      then z
-              case "Transform" then Transform(arg1, arg2, arg3)
-              case _           then Parent(selector);
+            match selector
+               with "GetZ"      then z
+               with "Transform" then Transform(arg1, arg2, arg3)
+               with _           then Parent(selector);
 
 val delta2D = fun p1 p2 -> [p2("GetX") - p1("GetX"), p2("GetY") - p1("GetY")];
 
