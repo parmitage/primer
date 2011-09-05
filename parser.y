@@ -25,9 +25,9 @@
 %token <sval> SYMBOL STRING
 %token <ival> INTEGER CHAR
 %token <fval> FLOAT
-%token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE APPLY
+%token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE MATCH WITH ANY APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE LIST
-%token HEAD TAIL SHOW RND TYPE IS AS LENGTH AT CONS RANGE USING MATCH WITH ANY
+%token HEAD TAIL SHOW READ RND TYPE IS AS LENGTH AT CONS RANGE USING PRAGMA
 %token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
 %token SEMICOLON LPAREN RPAREN LSQUARE RSQUARE
 
@@ -72,10 +72,12 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | IF expr THEN expr ELSE expr         { $$ = mkast(t_cond, $2, $4, $6); }
 | expr CONS expr                      { $$ = mkast(t_cons, $1, $3, NULL); }
 | SHOW LPAREN expr RPAREN             { $$ = mkoperator(show, $3); }
+| READ LPAREN RPAREN                  { $$ = mkoperator(reads, NULL); }
 | LENGTH LPAREN expr RPAREN           { $$ = mkoperator(len, $3); }
 | HEAD LPAREN expr RPAREN             { $$ = mkast(t_car, $3, NULL, NULL); }
 | TAIL LPAREN expr RPAREN             { $$ = mkast(t_cdr, $3, NULL, NULL); }
 | USING identifier                    { $$ = mkast(t_using, $2, NULL, NULL); }
+| PRAGMA identifier                   { pragma($2); }
 | RND LPAREN expr RPAREN              { $$ = mkoperator(rnd, $3); }
 | expr '+' expr                       { $$ = mkbinoperator(add, $1, $3); }
 | expr '-' expr                       { $$ = mkbinoperator(sub, $1, $3); }
