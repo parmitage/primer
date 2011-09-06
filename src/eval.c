@@ -700,6 +700,13 @@ node *append(node *list1, node *list2)
    ASSERT(list1->type, t_pair, "left operand to append must be a list");
    ASSERT(list2->type, t_pair, "right operand to append must be a list");
 
+   t_type type;
+
+   if (list1->pair->type == t_string || list2->pair->type == t_string)
+      type = t_string;
+   else
+      type = t_pair;
+
    if (EMPTY(list2))
       return list1;
 
@@ -707,9 +714,9 @@ node *append(node *list1, node *list2)
       return list2;
 
    node *ptr = list1;
-   node *copy = mkpair(t_pair, CAR(ptr), NULL);
+   node *copy = mkpair(type, CAR(ptr), NULL);
    node *head = copy;
-	
+
    while (CDR(ptr) != NULL && !EMPTY(CDR(ptr)))
    {
       copy->pair->cdr = mkpair(t_pair, CADR(ptr), NULL);
@@ -727,7 +734,7 @@ node *append(node *list1, node *list2)
       copy = CDR(copy);
       ptr = CDR(ptr);
    }
-	
+
    return head;
 }
 

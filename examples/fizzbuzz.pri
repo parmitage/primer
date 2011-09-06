@@ -1,24 +1,16 @@
-pragma GC_DISABLE;
 using base;
 
-# The classic fizzbuzz program implemented three different ways
-
-# 1. using nested if statements
-
-map(fun x -> if x mod 3 == 0 and x mod 5 == 0 then show("fizzbuzz")
-             else if x mod 3 == 0 then show("fizz")
-             else if x mod 5 == 0 then show("buzz")
-             else show(x), 1..100);
-
-# 2. abusing the match statement
-
-map(fun x -> match true
-             with x mod 3 == 0 and x mod 5 == 0 then show("fizzbuzz")
-             with x mod 3 == 0 then show("fizz")
-             with x mod 5 == 0 then show("buzz")
-             with _ then show(x), 1..100);
-
-# 3. slightly more conventional (though inefficient) use of match
+# An implementaton of the classic Fizz buzz program.
+#
+# From Wikipedia:
+#
+# Fizz buzz is a group word game frequently encountered as a drinking game.
+# Players generally sit in a circle. The player designated to go first says
+# the number "1", and each player thenceforth counts one number in turn.
+# However, any number divisible by three is replaced by the word fizz and
+# any divisible by five by the word buzz. Numbers divisible by both become
+# bizz buzz. A player who hesitates or makes a mistake is either eliminated
+# or must pay a forfeit, such as taking a drink.
 
 map(fun x -> match x mod 3, x mod 5
              with 0, 0 then show("fizzbuzz")

@@ -1,6 +1,6 @@
 #############################################################################
 #
-# This is the rational number example from SICP.
+# Based on the rational number example from SICP.
 #
 #############################################################################
 
@@ -10,23 +10,27 @@ val gcd = fun a b ->
     else gcd(b, a mod b);
 
 val makeRat = fun n d ->
-    let g = gcd(n, d) in
-    (n / g) :: (d / g) :: [];
+    let g = gcd(n, d)
+    in (n / g) :: (d / g) :: [];
 
 val numer = fun x -> x at 0;
 val denom = fun x -> x at 1;
 
-val printRat = fun x -> show(numer(x) as string ++ "/" ++ denom(x) as string);
+val printRat = fun x ->
+    let numer = numer(x) as string
+        denom = denom(x) as string
+        ret = numer ++ "/" ++ denom
+    in show(ret);
 
 val addRat = fun x y ->
-    let n = (numer(x) * denom(y)) + (numer(y) * denom(x)) in
-    let d = denom(x) * denom(y) in
-    makeRat(n, d);
+    let numer = (numer(x) * denom(y)) + (numer(y) * denom(x))
+        denom = denom(x) * denom(y)
+    in makeRat(numer, denom);
 
 val mulRat = fun x y ->
-    let n = numer(x) * numer(y) in
-    let d = denom(x) * denom(y) in
-    makeRat(n, d);
+    let numer = numer(x) * numer(y)
+        denom = denom(x) * denom(y)
+    in makeRat(numer, denom);
 
 val oneHalf = makeRat(1, 2);
 val oneThird = makeRat(1, 3);
