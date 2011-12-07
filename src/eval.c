@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 {
    if (argc != 2)
    {
-      printf("usage: primer prog.pri\n");
+      printf("usage: pri prog.pri\n");
       return -1;
    }
 
@@ -29,7 +29,7 @@ void init_stage1()
    lastlib = 0;
 
    /* initialise all pragmas */
-   pragma_gc_disable = false;
+   pragma_gc_disable = true;
 
    /* Initialise the garbage collector but immediatly disable collection
       as we don't want anything to be collected during read time (if a program
@@ -104,6 +104,10 @@ node *eval(node *n, env *e)
          else
             error("unbound symbol '%s'", symname(n->ival));
       }
+
+      /**********************************************************************
+                                special operators
+      **********************************************************************/
 
       case t_val:
       {
@@ -185,35 +189,6 @@ node *eval(node *n, env *e)
          return mkclosure(n->ast->n1, n->ast->n2, e);
       }
 
-      case t_operator:
-      {
-         if (n->op->arity == 2)
-         {
-            node *ret = n->op->binop(eval(n->op->arg1, e), eval(n->op->arg2, e));
-            //GC_recursive_markbit_set(ret, 0);
-            return ret;
-         }
-         else
-            return n->op->op(eval(n->op->arg1, e));
-      }
-
-      case t_cons:
-      {
-         node *lhs = eval(n->ast->n1, e);
-         node *rhs = eval(n->ast->n2, e);
-         return cons(lhs, rhs);
-      }
-
-      case t_car:
-      {
-         return car(eval(n->ast->n1, e));
-      }
-
-      case t_cdr:
-      {
-         return cdr(eval(n->ast->n1, e));
-      }
-
       case t_using:
       {
          using(n->ast->n1);
@@ -285,6 +260,229 @@ node *eval(node *n, env *e)
       {
          node *ret = evlis(n, e);
          return ret;
+      }
+
+      /**********************************************************************
+                                binary operators
+      **********************************************************************/
+
+      case t_add:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return add(lhs, rhs);
+      }
+
+      case t_sub:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return sub(lhs, rhs);
+      }
+
+      case t_mul:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return mul(lhs, rhs);
+      }
+
+      case t_dvd:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return dvd(lhs, rhs);
+      }
+
+      case t_lt:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return lt(lhs, rhs);
+      }
+
+      case t_gt:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return gt(lhs, rhs);
+      }
+
+      case t_gte:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return gte(lhs, rhs);
+      }
+
+      case t_lte:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return lte(lhs, rhs);
+      }
+
+      case t_neq:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return neq(lhs, rhs);
+      }
+
+      case t_eq:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return eq(lhs, rhs);
+      }
+
+      case t_and:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return and(lhs, rhs);
+      }
+
+      case t_or:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return or(lhs, rhs);
+      }
+
+      case t_b_and:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return b_and(lhs, rhs);
+      }
+
+      case t_b_or:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return b_or(lhs, rhs);
+      }
+
+      case t_b_xor:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return b_xor(lhs, rhs);
+      }
+
+      case t_b_lshift:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return b_lshift(lhs, rhs);
+      }
+
+      case t_b_rshift:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return b_rshift(lhs, rhs);
+      }
+
+      case t_mod:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return mod(lhs, rhs);
+      }
+
+      case t_append:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return append(lhs, rhs);
+      }
+
+      case t_range:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return range(lhs, rhs);
+      }
+
+      case t_at:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return at(lhs, rhs);
+      }
+
+      case t_as:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return as(lhs, rhs);
+      }
+
+      case t_is:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return is(lhs, rhs);
+      }
+
+      case t_cons:
+      {
+         node *lhs = eval(n->ast->n1, e);
+         node *rhs = eval(n->ast->n2, e);
+         return cons(lhs, rhs);
+      }
+
+      /**********************************************************************
+                                unary operators
+      **********************************************************************/
+
+      case t_car:
+      {
+         return car(eval(n->ast->n1, e));
+      }
+
+      case t_cdr:
+      {
+         return cdr(eval(n->ast->n1, e));
+      }
+
+      case t_neg:
+      {
+         return neg(eval(n->ast->n1, e));
+      }
+
+      case t_show:
+      {
+         node *ret = eval(n->ast->n1, e);
+         show(ret);
+         return ret;
+      }
+
+      case t_reads:
+      {
+         return reads();
+      }
+
+      case t_len:
+      {
+         return len(eval(n->ast->n1, e));
+      }
+
+      case t_rnd:
+      {
+         return rnd(eval(n->ast->n1, e));
+      }
+
+      case t_not:
+      {
+         return not(eval(n->ast->n1, e));
+      }
+
+      case t_bnot:
+      {
+         return b_not(eval(n->ast->n1, e));
       }
    }
 }
@@ -573,18 +771,6 @@ node *mkclosure(node *args, node *body, env *env)
    return p;
 }
 
-node *mkoperator(struct node * (*op) (struct node *), node *arg1)
-{
-   node *p = GC_alloc();
-   p->type = t_operator;
-   p->op = (struct operator*)malloc(sizeof(struct operator));
-   p->op->op = op;
-   p->op->arity = 1;
-   p->op->arg1 = arg1;
-   p->op->arg2 = NULL;
-   return p;
-}
-
 node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2)
 {
    node *p = GC_alloc();
@@ -700,13 +886,6 @@ node *append(node *list1, node *list2)
    ASSERT(list1->type, t_pair, "left operand to append must be a list");
    ASSERT(list2->type, t_pair, "right operand to append must be a list");
 
-   t_type type;
-
-   if (list1->pair->type == t_string || list2->pair->type == t_string)
-      type = t_string;
-   else
-      type = t_pair;
-
    if (EMPTY(list2))
       return list1;
 
@@ -714,9 +893,9 @@ node *append(node *list1, node *list2)
       return list2;
 
    node *ptr = list1;
-   node *copy = mkpair(type, CAR(ptr), NULL);
+   node *copy = mkpair(t_pair, CAR(ptr), NULL);
    node *head = copy;
-
+	
    while (CDR(ptr) != NULL && !EMPTY(CDR(ptr)))
    {
       copy->pair->cdr = mkpair(t_pair, CADR(ptr), NULL);
@@ -734,7 +913,7 @@ node *append(node *list1, node *list2)
       copy = CDR(copy);
       ptr = CDR(ptr);
    }
-
+	
    return head;
 }
 
@@ -828,7 +1007,7 @@ node *show(node *args)
    return args;
 }
 
-node *reads(node *args)
+node *reads()
 {
    char input[81];
 

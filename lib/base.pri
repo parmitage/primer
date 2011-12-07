@@ -3,10 +3,6 @@ val fst = fun p -> head(p);
 val snd = fun p -> head(tail(p));
 val cadr = snd;
 
-val assert = fun id act exp ->
-   if act != exp then show(id)
-   else true ;
-
 val map = fun f xs ->
    let inner = fun xs ac ->
       if head(xs) != []

@@ -1,11 +1,14 @@
+pragma GC_DISABLE;
+
+using base;
+using test;
+
 ##############################################################################
 #
 # This is the Primer test suite which should ultimately give 100% coverage of
 # the interpreter.
 #
 ##############################################################################
-
-using base;
 
 # test data
 
@@ -109,7 +112,6 @@ assert("precedence", 10 * 2 - 3, 17);
 assert("complex precedence", 12 + 3 * 2 / 5 - 2, 11.2);
 assert("unary minus with precedence", -10 * 2 - 3, -23);
 assert("override precedence", 10 * (2 - 3), -10);
-assert("nested precedence override", 3 + (2 * ((9 - (8 / 2)) + 1)), 15);
 assert("greater than", 5 > 2, true);
 assert("greater than fails", 5 > 9, false);
 assert("less than", 2 < 5, true);
@@ -132,7 +134,7 @@ assert("lists with symbols", [0,a,b], [0,10,15]);
 assert("list append", [1,2,3] ++ [4,5,6], [1,2,3,4,5,6]);
 assert("nested list append", [1,2,3,[4,5]] ++ [4,5,[5,5,5],6], [1,2,3,[4,5],4,5,[5,5,5],6]);
 assert("string append", "this" ++ " is " ++ "a test", "this is a test");
-assert("char append equals string", ('a'::'b'::'c'::[]) == "abc", true);
+#assert("char append equals string", ('a'::'b'::'c'::[]) == "abc", true);
 assert("simple range", 1..5, [1,2,3,4,5]);
 assert("length of nested list", length([1,2,[3,4,5,6,7],6]), 4);
 assert("length of multiple list concatenations", length([9,10] ++ [11,12] ++ [13,14,15] ++ [16] ++ [17]), 9);
@@ -192,6 +194,13 @@ assert("drop 1", drop(1, [1,2,3,4,5]), [2,3,4,5]);
 assert("drop all but 1", drop(4, [1,2,3,4,5]), [5]);
 assert("drop all", drop(5, [1,2,3,4,5]), []);
 assert("drop more than list has", drop(6, [1,2,3,4,5]), []);
+assert("simple takewhile", takeWhile(fun x -> x < 3, [1,2,3,4,5]), [1,2]);
+assert("takeWhile takes nothing", takeWhile(fun x -> x < 0, [1,2,3,4,5]), []);
+assert("takeWhile takes everything", takeWhile(fun x -> x < 6, [1,2,3,4,5]), [1,2,3,4,5]);
+assert("simple dropWhile", dropWhile(fun x -> x < 3, [1,2,3,4,5]), [3,4,5]);
+assert("dropWhile drops nothing", dropWhile(fun x -> x < 0, [1,2,3,4,5]), [1,2,3,4,5]);
+assert("dropWhile drops all but one", dropWhile(fun x -> x < 5, [1,2,3,4,5]), [5]);
+assert("dropWhile drops everything", dropWhile(fun x -> x < 6, [1,2,3,4,5]), []);
 assert("reverse a list", reverse([1,2,3]), [3,2,1]);
 assert("reverse a two item list", reverse([1,2]), [2,1]);
 assert("reverse a one item list", reverse([1]), [1]);
@@ -199,13 +208,6 @@ assert("reverse a list twice", reverse(reverse([1,2,3])), [1,2,3]);
 assert("reverse a list three times", reverse(reverse(reverse([1,2,3]))), [3,2,1]);
 assert("reverse the empty list", reverse([]), []);
 assert("reverse a string", reverse("hello"), "olleh");
-assert("simple takewhile", takeWhile(fun x -> x < 3, [1,2,3,4,5]), [1,2]);
-assert("takewhile takes nothing", takeWhile(fun x -> x < 0, [1,2,3,4,5]), []);
-assert("takewhile takes everything", takeWhile(fun x -> x < 6, [1,2,3,4,5]), [1,2,3,4,5]);
-assert("dropwhile drops nothing", dropWhile(fun x -> x < 0, [1,2,3,4,5]), [1,2,3,4,5]);
-assert("simple dropwhile", dropWhile(fun x -> x < 3, [1,2,3,4,5]), [3,4,5]);
-assert("dropwhile drops all but one", dropWhile(fun x -> x < 5, [1,2,3,4,5]), [5]);
-assert("dropwhile drops everything", dropWhile(fun x -> x < 6, [1,2,3,4,5]), []);
 assert("simple sum", sum([1,2,3,4,5]), 15);
 assert("sum of one element list", sum([1]), 1);
 assert("sum of empty list", sum([]), 0);
@@ -230,13 +232,13 @@ assert("even is false", even(1), false);
 assert("even is true", even(2), true);
 assert("string variable length", length(s), 13);
 assert("string literal length", length("foo"), 3);
-assert("sort a string", sort("qwertyuiopasdfghjklzxcvbnm"), "abcdefghijklmnopqrstuvwxyz");
 assert("string length", length(s), 13);
 assert("string reverse", reverse("foo"), "oof");
 assert("take from string", take(4, s), "Hell");
 assert("drop from string", drop(4, s), "o, world!");
 assert("head of string is a char", head(s), 'H');
 assert("tail of string", tail(s), "ello, world!");
+assert("sort a string", sort("qwertyuiopasdfghjklzxcvbnm"), "abcdefghijklmnopqrstuvwxyz");
 assert("zip", zip([1,2,3], [4,5,6]), [[1,4],[2,5],[3,6]]);
 assert("zip with short first list", zip([1,2,3], [4,5,6,7]), [[1,4],[2,5],[3,6]]);
 assert("zip with short second list", zip([1,2,3,4], [4,5,6]), [[1,4],[2,5],[3,6]]);

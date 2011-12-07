@@ -19,7 +19,6 @@ node *parse(char *filename);
 node *mkpair(t_type type, node *car, node* cdr);
 node *mksym(char *s);
 node *mkprimitive(struct node * (*primitive) (struct node *));
-node *mkoperator(struct node * (*op) (struct node *), node *arg1);
 node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2);
 node *mklambda(node *params, node *body, node *where);
 node *mkclosure(node *params, node *body, env *e);
@@ -102,7 +101,7 @@ node *as(node *x, node *y);
 /* primitive functions */
 node *rnd(node *node);
 node *show(node *args);
-node *reads(node *args);
+node *reads();
 
 /* pre-processing */
 void using(node *args);

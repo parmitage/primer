@@ -1,7 +1,8 @@
 lex.yy.c
 y.tab.c
 y.tab.h
-primer
+pri
+prc
 *.[oa]
 *~
 *.DS_Store

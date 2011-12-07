@@ -45,7 +45,37 @@ typedef enum {
    t_using,
    t_pragma,
    t_match,
-   t_pattern
+   t_pattern,
+   t_add,
+   t_sub,
+   t_mul,
+   t_dvd,
+   t_lt,
+   t_gt,
+   t_gte,
+   t_lte,
+   t_neq,
+   t_eq,
+   t_and,
+   t_or,
+   t_b_and,
+   t_b_or,
+   t_b_xor,
+   t_b_lshift,
+   t_b_rshift,
+   t_mod,
+   t_append,
+   t_range,
+   t_at,
+   t_as,
+   t_is,
+   t_neg,
+   t_show,
+   t_reads,
+   t_len,
+   t_rnd,
+   t_not,
+   t_bnot
 } t_type;
 
 /* not a real type */
@@ -67,10 +97,7 @@ typedef struct operator {
    int arity;
    struct node *arg1;
    struct node *arg2;
-   union {
-      struct node * (*op) (struct node *);
-      struct node * (*binop) (struct node *, struct node *);
-   };
+   struct node * (*binop) (struct node *, struct node *);
 } operator;
 
 typedef struct ast {
