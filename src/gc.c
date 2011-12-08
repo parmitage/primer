@@ -238,17 +238,6 @@ void GC_recursive_markbit_set(node *n, bool m)
          GC_recursive_markbit_set(iter->pair->cdr, m);
          break;
       }
-
-      case t_operator:
-      {
-         if (n->op->arity == 2)
-         {
-            GC_recursive_markbit_set(n->op->arg1, m);
-            GC_recursive_markbit_set(n->op->arg2, m);
-         }
-         else
-            GC_recursive_markbit_set(n->op->arg1, m);
-      }
    }
 }
 

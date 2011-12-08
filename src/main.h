@@ -31,7 +31,6 @@ typedef enum {
    t_char,
    t_pair,
    t_closure,
-   t_operator,
    t_apply,
    t_lambda,
    t_cond,
@@ -93,13 +92,6 @@ typedef struct closure {
    struct env *env;
 } closure;
 
-typedef struct operator {
-   int arity;
-   struct node *arg1;
-   struct node *arg2;
-   struct node * (*binop) (struct node *, struct node *);
-} operator;
-
 typedef struct ast {
    struct node *n1;
    struct node *n2;
@@ -114,7 +106,6 @@ typedef struct node {
       int ival;
       float fval;
       closure *fn;
-      operator *op;
       ast *ast;
       pair *pair;
    };

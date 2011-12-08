@@ -771,18 +771,6 @@ node *mkclosure(node *args, node *body, env *env)
    return p;
 }
 
-node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2)
-{
-   node *p = GC_alloc();
-   p->type = t_operator;
-   p->op = (struct operator*)malloc(sizeof(struct operator));
-   p->op->binop = binop;
-   p->op->arity = 2;
-   p->op->arg1 = arg1;
-   p->op->arg2 = arg2;
-   return p;
-}
-
 node *mkast(t_type type, node *n1, node *n2, node *n3)
 {
    node *p = GC_static_alloc();
@@ -939,24 +927,31 @@ void pprint(node *node)
       case t_int:
          printf("%i", node->ival);
          break;
+
       case t_float:
          printf("%g", node->fval);
          break;
+
       case t_bool:
          printf("%s", node->ival > 0 ? "true" : "false");
          break;
+
       case t_char:
          printf("%c", node->ival);
          break;
+
       case t_symbol:
          printf("%s", symname(node->ival));
          break;
+
       case LAMBDA:
          printf("#<lambda>");
          break;
+
       case t_closure:
          printf("#<closure>");
          break;
+
       case t_pair:
          switch (node->pair->type)
          {
@@ -996,6 +991,7 @@ void pprint(node *node)
                printf("]");
                break;
          }
+
          break;
    }
 }
@@ -1486,7 +1482,7 @@ bool fexists(const char *path)
 {
    FILE *istream;
 	
-   if((istream = fopen(path, "r")) == NULL)
+   if ((istream = fopen(path, "r")) == NULL)
    {
       return false;
    }
