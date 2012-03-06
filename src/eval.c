@@ -28,9 +28,6 @@ void init_stage1()
    /* initial library 'cache' has no items in it */
    lastlib = 0;
 
-   /* initialise all pragmas */
-   pragma_gc_disable = true;
-
    /* Initialise the garbage collector but immediatly disable collection
       as we don't want anything to be collected during read time (if a program
       text is larger than the available heap then the memory allocated will
@@ -53,8 +50,6 @@ void init_stage1()
    /* top level environment has no parent */
    top = envnew(NULL);
 
-   GC_DISABLE = intern("GC_DISABLE");
-
    extend(top, bindnew(intern("newline"), mkchar('\n')));
    extend(top, bindnew(intern("tab"), mkchar('\t')));
 
@@ -69,8 +64,7 @@ void init_stage1()
 
 void init_stage2()
 {
-   if (!pragma_gc_disable)
-      GC_enable();
+   //GC_enable();
 }
 
 node *eval(node *n, env *e)
@@ -1022,19 +1016,7 @@ void using(node *args)
    char *name = symname(args->ival);
    GC_disable();
    eval(loadlib(name), top);
-
-   if (!pragma_gc_disable)
-      GC_enable();
-}
-
-void pragma(node *args)
-{
-   ASSERT(args->type, t_symbol, "pragma requires a symbolic parameter");
-
-   if (args->ival == GC_DISABLE)
-      pragma_gc_disable = true;
-   else
-      error("unknown pragma");
+   //GC_enable();
 }
 
 node *add(node *x, node *y)

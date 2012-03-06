@@ -21,6 +21,8 @@ void GC_init()
 
 node *GC_static_alloc()
 {
+   //printf("GC_static_alloc\n");
+
    node *n;
 
    if ((n = (struct node*)malloc(sizeof(struct node))) == NULL)
@@ -79,6 +81,8 @@ node *GC_alloc()
       can never be freed - the question is how much? */
    temp->mark = -1;
 
+   printf("GC_alloc\n");
+
    return temp;
 }
 
@@ -133,6 +137,8 @@ void GC_mark_roots(env *env)
 
 void GC_collect()
 {
+   printf("GC_collect\n");
+
    if (!gc_enabled)
       return;
 
@@ -161,9 +167,9 @@ void GC_collect()
          }
          else
          {
-            //printf("collecting: ");
-            //pprint(tmp);
-            //printf("\n"); fflush(stdout);
+            printf("collecting: ");
+            pprint(tmp);
+            printf("\n"); fflush(stdout);
             
             SCAV = GC_get_prev(SCAV);
             GC_relink_nodes(last, SCAV);

@@ -1,5 +1,3 @@
-pragma GC_DISABLE;
-
 using base;
 using test;
 

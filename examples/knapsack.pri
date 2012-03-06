@@ -1,5 +1,3 @@
-pragma GC_DISABLE;
-
 using base;
 
 ### The number of genes in our chromosome (number of items to pack)

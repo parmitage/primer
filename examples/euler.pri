@@ -1,4 +1,3 @@
-pragma GC_DISABLE;
 using base;
 using math;
 

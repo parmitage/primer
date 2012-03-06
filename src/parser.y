@@ -27,7 +27,7 @@
 %token <fval> FLOAT
 %token PROG LET VAL DEF DEFINED IN LAMBDA IF THEN ELSE MATCH WITH ANY APPLY
 %token GE LE NE EQ NOT AND OR MOD APPEND TRUE FALSE LIST
-%token HEAD TAIL SHOW READ RND TYPE IS AS LENGTH AT CONS RANGE USING PRAGMA
+%token HEAD TAIL SHOW READ RND TYPE IS AS LENGTH AT CONS RANGE USING
 %token B_AND B_OR B_XOR B_NOT B_LSHIFT B_RSHIFT
 %token SEMICOLON LPAREN RPAREN LSQUARE RSQUARE
 
@@ -66,7 +66,6 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | identifier                          { $$ = $1; }
 | ANY                                 { $$ = NODE_ANY; }
 | LSQUARE list RSQUARE                { $$ = $2; }
-| PRAGMA identifier                   { pragma($2); }
 | LET let_block IN expr               { $$ = mkast(t_let, $2, $4, NULL); }
 | VAL identifier DEF expr             { $$ = mkast(t_val, $2, $4, NULL);  }
 | LAMBDA args DEFINED expr            { $$ = mkast(t_lambda, $2, $4, NULL); }
