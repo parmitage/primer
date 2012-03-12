@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
-#include "eval.h"
+#include "pri.h"
 #include "y.tab.h"
 #include "gc.h"
 

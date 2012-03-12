@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "eval.h"
+#include "pri.h"
 
    void yyerror(char *s);
    extern FILE *yyin;

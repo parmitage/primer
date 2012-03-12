@@ -37,16 +37,16 @@ ifeq ($(uname_O), MinGW)
 	delete = del
 endif
 
-debug: parser lexer eval
+debug: parser lexer pri
 	$(CC) $(DBG) $(CFLAGS) -c y.tab.c lex.yy.c
 	$(CC) $(DBG) *.o -o $(bin_i)
 
-release: parser lexer eval
+release: parser lexer pri
 	$(CC) $(REL) $(CFLAGS) -c y.tab.c lex.yy.c
 	$(CC) $(REL) *.o -o $(bin_i)
 
-eval: parser lexer gc eval.c eval.h
-	$(CC) $(DBG) $(CFLAGS) -c eval.c
+pri: parser lexer gc pri.c pri.h
+	$(CC) $(DBG) $(CFLAGS) -c pri.c
 
 gc: gc.c gc.h
 	$(CC) $(DBG) $(CFLAGS) -c gc.c
@@ -61,5 +61,4 @@ docs: README.md
 	pandoc README.md -o index.html -c doc.css
 
 clean:
-	delete $(bin_i) lex.yy.c y.tab.c y.tab.h *.o
-	delete primer
+	$(delete) $(bin_i) lex.yy.c y.tab.c y.tab.h *.o
