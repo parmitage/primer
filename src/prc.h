@@ -19,5 +19,11 @@ char *Compile_symbol(node *n);
 char *Compile_val(node *n);
 char *Compile_let(node *n);
 char *Compile_lambda(node *n);
+char *Compile_cons(node *n);
+char *Compile_car(node *n);
+char *Compile_cdr(node *n);
+char *Compile_cond(node *n);
+char *Compile_binop(node *n, char *op);
+char *Compile_at(node *n);
 
 #endif

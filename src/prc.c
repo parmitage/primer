@@ -100,81 +100,32 @@ char *Compile(node *n)
          return Compile_let(n);
       }
 
-      // TODO
       case t_match:
       {
+         // TODO
          break;
       }
 
       case t_lambda:
-      case t_closure:
       {
          return Compile_lambda(n);
       }
 
-      case t_cons:
-      {
-         // n->ast->n1
-         // n->ast->n2
-         break;
-      }
-
-      case t_car:
-      {
-         //n->ast->n1
-         break;
-      }
-
-      case t_cdr:
-      {
-         //n->ast->n1
-         break;
-      }
-
       case t_using:
       {
-         //n->ast->n1
+         // TODO
          break;
       }
 
       case t_apply:
       {
-         /* Compile(n->ast->n1); */
-
-         /* output("("); */
-
-         /* node *params = n->ast->n2; */
-
-         /* while (params != NULL) */
-         /* { */
-         /*    if (CAR(params)) */
-         /*    { */
-         /*       Compile(CAR(params)); */
-							
-         /*       if (CDR(params)) */
-         /*          output(", "); */
-							
-         /*       params = CDR(params); */
-         /*    } */
-         /*    else */
-         /*       params = NULL; */
-         /* } */
-					
-         /* output(")"); */
-								
+         // TODO
          break;
       }
 
       case t_cond:
       {            
-         /* output("if(");  			 */
-         /* Compile(n->ast->n1); */
-         /* output(")\n{\n"); */
-         /* Compile(n->ast->n2); */
-         /* output(";\n}\nelse\n{\n"); */
-         /* Compile(n->ast->n3); */
-         /* output(";\n}\n"); */
-         break;
+         return Compile_cond(n);
       }
 
       case t_seq:
@@ -195,6 +146,193 @@ char *Compile(node *n)
 
       case t_pair:
       {
+         // TODO
+         break;
+      }
+
+      /**********************************************************************
+                                binary operators
+      **********************************************************************/
+
+      case t_add:
+      {
+         return Compile_binop(n, "+");
+      }
+
+      case t_sub:
+      {
+         return Compile_binop(n, "-");
+      }
+
+      case t_mul:
+      {
+         return Compile_binop(n, "*");
+      }
+
+      case t_dvd:
+      {
+         return Compile_binop(n, "/");
+      }
+
+      case t_lt:
+      {
+         return Compile_binop(n, "<");
+      }
+
+      case t_gt:
+      {
+         return Compile_binop(n, ">");
+      }
+
+      case t_gte:
+      {
+         return Compile_binop(n, ">=");
+      }
+
+      case t_lte:
+      {
+         return Compile_binop(n, "<=");
+      }
+
+      case t_neq:
+      {
+         // TODO -- JavaScript doesn't support array equality
+         break;
+      }
+
+      case t_eq:
+      {
+         // TODO -- JavaScript doesn't support array equality
+         break;
+      }
+
+      case t_and:
+      {
+         return Compile_binop(n, "&&");
+      }
+
+      case t_or:
+      {
+         return Compile_binop(n, "||");
+      }
+
+      case t_b_and:
+      {
+         return Compile_binop(n, "&");
+      }
+
+      case t_b_or:
+      {
+         return Compile_binop(n, "|");
+      }
+
+      case t_b_xor:
+      {
+         return Compile_binop(n, "^");
+      }
+
+      case t_b_lshift:
+      {
+         return Compile_binop(n, "<<");
+      }
+
+      case t_b_rshift:
+      {
+         return Compile_binop(n, ">>");
+      }
+
+      case t_mod:
+      {
+         return Compile_binop(n, "%");
+      }
+
+      case t_append:
+      {
+         // TODO -- call special append function
+         break;
+      }
+
+      case t_range:
+      {
+         // TODO -- call special range function
+         break;
+      }
+
+      case t_at:
+      {
+         return Compile_at(n);
+      }
+
+      case t_as:
+      {
+         // TODO
+         break;
+      }
+
+      case t_is:
+      {
+         // TODO
+         break;
+      }
+
+      case t_cons:
+      {
+         return Compile_cons(n);
+      }
+
+      /**********************************************************************
+                                unary operators
+      **********************************************************************/
+
+      case t_car:
+      {
+         return Compile_car(n);
+      }
+
+      case t_cdr:
+      {
+         return Compile_cdr(n);
+      }
+
+      case t_neg:
+      {
+         // TODO
+         break;
+      }
+
+      case t_show:
+      {
+         // TODO
+         break;
+      }
+
+      case t_reads:
+      {
+         // TODO
+         break;
+      }
+
+      case t_len:
+      {
+         // TODO
+         break;
+      }
+
+      case t_rnd:
+      {
+         // TODO
+         break;
+      }
+
+      case t_not:
+      {
+         // TODO
+         break;
+      }
+
+      case t_bnot:
+      {
+         // TODO
          break;
       }
    }
@@ -315,6 +453,77 @@ char *Compile_lambda(node *n)
    int sz = snprintf(NULL, 0, "function (%s) {\n    return%s;\n}", params_str, body);
    char *p = (char*)malloc(sz + 1);
    sprintf(p, "function (%s) {\n    return %s;\n}", params_str, body);
+
+   return p;
+}
+
+char *Compile_cons(node *n)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "cons(%s, %s)", lhs, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "cons(%s, %s)", lhs, rhs);
+
+   return p;
+}
+
+char *Compile_car(node *n)
+{
+   char *e = Compile(n->ast->n1);
+
+   int sz = snprintf(NULL, 0, "head(%s)", e);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "head(%s)", e);
+
+   return p;
+}
+
+char *Compile_cdr(node *n)
+{
+   char *e = Compile(n->ast->n1);
+
+   int sz = snprintf(NULL, 0, "%s.slice(1)", e);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "%s.slice(1)", e);
+
+   return p;
+}
+
+char *Compile_cond(node *n)
+{
+   char *pred = Compile(n->ast->n1);
+   char *cond = Compile(n->ast->n2);
+   char *alt = Compile(n->ast->n3);
+
+   int sz = snprintf(NULL, 0, "(%s) ? (%s) : (%s)", pred, cond, alt);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "(%s) ? (%s) : (%s)", pred, cond, alt);
+
+   return p;
+}
+
+char *Compile_binop(node *n, char *op)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "(%s %s %s)", lhs, op, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "(%s %s %s)", lhs, op, rhs);
+
+   return p;
+}
+
+char *Compile_at(node *n)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "%s[%s]", lhs, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "%s[%s]", lhs, rhs);
 
    return p;
 }
