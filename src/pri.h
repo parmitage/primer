@@ -3,42 +3,10 @@
 
 #include "main.h"
 
-char *symtab[MAX_SYMBOLS];
-
-node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *NODE_ANY, *temp;
 env *top, *cenv, *tco_env;
-
 char *libcache[50];
 int lastlib;
 bool pragma_gc_disable;
-
-/* abstract syntax tree */
-node *parse(char *filename);
-
-/* constructors */
-node *mkpair(t_type type, node *car, node* cdr);
-node *mksym(char *s);
-node *mkprimitive(struct node * (*primitive) (struct node *));
-node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2);
-node *mklambda(node *params, node *body, node *where);
-node *mkclosure(node *params, node *body, env *e);
-node *mkint(int value);
-node *mkint_literal(int value);
-node *mkfloat(float value);
-node *mkbool(int value);
-node *mkchar(char value);
-node *mkstr(char *value);
-node *mkapply(node *fn, node *args);
-node *mkcond(node *predicate, node *consequent, node *alternate);
-node *mkseq(node *this, node *next);
-node *mkast(t_type type, node *n1, node *n2, node *n3);
-
-/* primer 'string' handling */ 
-node *str_to_node(char *value);
-char *node_to_str(node *node);
-
-/* memory management */
-struct node *prialloc();
 
 /* evaluation */
 node *eval(node *p, env *e);
@@ -51,8 +19,7 @@ env *envdel(env* e);
 void envprint(env *e, bool depth);
 void extend(env *e, binding *binding);
 binding *envlookup(env *e, symbol sym);
-symbol intern(char *string);
-char *symname(symbol s);
+node *mkclosure(node *args, node *body, env *env);
 
 /* special forms */
 void pprint(node *node);

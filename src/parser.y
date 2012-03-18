@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "pri.h"
+#include "main.h"
 
    void yyerror(char *s);
    extern FILE *yyin;
@@ -67,7 +67,7 @@ LPAREN expr RPAREN                    { $$ = $2; }
 | ANY                                 { $$ = NODE_ANY; }
 | LSQUARE list RSQUARE                { $$ = $2; }
 | LET let_block IN expr               { $$ = mkast(t_let, $2, $4, NULL); }
-| VAL identifier DEF expr             { $$ = mkast(t_val, $2, $4, NULL);  }
+| VAL identifier DEF expr             { $$ = mkast(t_val, $2, $4, NULL); }
 | LAMBDA args DEFINED expr            { $$ = mkast(t_lambda, $2, $4, NULL); }
 | identifier LPAREN list RPAREN       { $$ = mkast(t_apply, $1, $3, NULL); }
 | IF expr THEN expr ELSE expr         { $$ = mkast(t_cond, $2, $4, $6); }

@@ -1,6 +1,11 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
 typedef enum { false = 0, true = 1 } bool;
 
 #define when(pred, expr) if (pred) expr
@@ -124,10 +129,41 @@ typedef struct env {
    binding *bind;
 } env;
 
-symbol GC_DISABLE;
+char *symtab[MAX_SYMBOLS];
+node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *NODE_ANY, *temp;
 
 extern void error(char* fmt, ...);
 extern void pprint(node *node);
 extern void envprint(env *e, bool depth);
+
+/* abstract syntax tree */
+node *parse(char *filename);
+
+/* constructors */
+node *mkpair(t_type type, node *car, node* cdr);
+node *mksym(char *s);
+node *mkprimitive(struct node * (*primitive) (struct node *));
+node *mkbinoperator(struct node * (*binop) (struct node *, struct node *), node *arg1, node *arg2);
+node *mklambda(node *params, node *body, node *where);
+node *mkint(int value);
+node *mkfloat(float value);
+node *mkbool(int value);
+node *mkchar(char value);
+node *mkstr(char *value);
+node *mkapply(node *fn, node *args);
+node *mkcond(node *predicate, node *consequent, node *alternate);
+node *mkseq(node *this, node *next);
+node *mkast(t_type type, node *n1, node *n2, node *n3);
+
+/* primer 'string' handling */ 
+node *str_to_node(char *value);
+char *node_to_str(node *node);
+
+/* symbol table */
+symbol intern(char *string);
+char *symname(symbol s);
+
+/* memory management */
+struct node *prialloc();
 
 #endif

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
+#include "main.h"
 #include "pri.h"
 #include "y.tab.h"
 #include "gc.h"
@@ -639,6 +640,17 @@ binding* envlookup(env *e, symbol sym)
    return NULL;
 }
 
+node *mkclosure(node *args, node *body, env *env)
+{
+   node *p = prialloc();
+   p->type = t_closure;
+   p->fn = (struct closure*)malloc(sizeof(struct closure));
+   p->fn->args = args;
+   p->fn->body = body;
+   p->fn->env = envnew(env);
+   return p;
+}
+
 bool istailrecur(node *expr, symbol s)
 {
    switch (expr->type)
@@ -658,122 +670,6 @@ bool istailrecur(node *expr, symbol s)
       default:
          return false;
    }
-}
-
-node *mkint(int value)
-{
-   node *p = GC_alloc();
-   p->type = t_int;
-   p->ival = value;
-   return p;
-}
-
-node *mkfloat(float value)
-{
-   node *p = GC_alloc();
-   p->type = t_float;
-   p->fval = value;
-   return p;
-}
-
-node *mkbool(int value)
-{
-   node *p = GC_alloc();
-   p->type = t_bool;
-   p->ival = value;
-   return p;
-}
-
-node* mkchar(char c)
-{
-   node *p = GC_alloc();
-   p->type = t_char;
-   p->ival = c;
-   return p;
-}
-
-node* mkstr(char* value)
-{
-   int srclen = strlen(value);
-   int destlen = srclen - 1;
-   int copylen = srclen - 2;
-   char* temp = (char*)malloc(destlen + 1);
-   strncpy(temp, value + 1, copylen);
-   temp[copylen] = '\0';
-   return str_to_node(temp);
-}
-
-node* str_to_node(char* value)
-{
-   int len = strlen(value);
-
-   if (len > 1)
-      return mkpair(t_string, mkchar(value[0]), str_to_node(value + 1));
-   else
-      return mkpair(t_string, mkchar(value[0]), NULL);
-}
-
-char *node_to_str(node *node)
-{
-   char *str = (char*)malloc(50);
-   int i = 0;
-
-   while (node != NULL)
-   {
-      if (CAR(node))
-      {
-         str[i] = node->pair->car->ival;
-         node = node->pair->cdr;
-         ++i;
-      }
-      else
-         node = NULL;
-   }
-
-   str[i] = '\0';
-
-   return str;
-}
-
-node *mksym(char* s)
-{
-   node *p = GC_static_alloc();
-   p->type = t_symbol;
-   p->ival = intern(s);
-   return p;
-}
-
-node *mkpair(t_type type, node *car, node* cdr)
-{
-   node *p = GC_alloc();
-   p->type = t_pair;
-   p->pair = (struct pair*) malloc(sizeof(struct pair));
-   p->pair->type = type;
-   p->pair->car = car;
-   p->pair->cdr = cdr;
-   return p;
-}
-
-node *mkclosure(node *args, node *body, env *env)
-{
-   node *p = GC_alloc();
-   p->type = t_closure;
-   p->fn = (struct closure*)malloc(sizeof(struct closure));
-   p->fn->args = args;
-   p->fn->body = body;
-   p->fn->env = envnew(env);
-   return p;
-}
-
-node *mkast(t_type type, node *n1, node *n2, node *n3)
-{
-   node *p = GC_static_alloc();
-   p->type = type;
-   p->ast = (struct ast*)malloc(sizeof(struct ast));
-   p->ast->n1 = n1;
-   p->ast->n2 = n2;
-   p->ast->n3 = n3;
-   return p;
 }
 
 node *car(node *node)
@@ -1439,25 +1335,6 @@ void error(char* fmt, ...)
    vprintf(fmt2, args);
    va_end(args);
    exit(-1);
-}
-
-symbol intern(char *string)
-{
-   static int new_symbol_index = 0;
-
-   for (int i = 0; i < new_symbol_index; i++)
-   {
-      if (strcmp(string, symtab[i]) == 0)
-         return i;
-   }
-  
-   symtab[new_symbol_index] = string;
-   return new_symbol_index++;
-}
-
-char *symname(symbol s)
-{
-   return symtab[s];
 }
 
 bool fexists(const char *path)

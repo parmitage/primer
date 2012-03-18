@@ -37,25 +37,35 @@ ifeq ($(uname_O), MinGW)
 	delete = del
 endif
 
-debug: parser lexer pri
+debug: pri prc
 	$(CC) $(DBG) $(CFLAGS) -c y.tab.c lex.yy.c
-	$(CC) $(DBG) *.o -o $(bin_i)
+	$(CC) $(DBG) main.o lex.yy.o y.tab.o gc.o pri.o -o $(bin_i)
+	$(CC) $(DBG) main.o pstring.o lex.yy.o y.tab.o prc.o -o $(bin_c)
 
-release: parser lexer pri
+release: pri prc
 	$(CC) $(REL) $(CFLAGS) -c y.tab.c lex.yy.c
 	$(CC) $(REL) *.o -o $(bin_i)
 
-pri: parser lexer gc pri.c pri.h
+pri: main parser lexer gc pri.c pri.h
 	$(CC) $(DBG) $(CFLAGS) -c pri.c
+
+prc: main parser lexer pstring prc.c prc.h
+	$(CC) $(DBG) $(CFLAGS) -c prc.c
 
 gc: gc.c gc.h
 	$(CC) $(DBG) $(CFLAGS) -c gc.c
 
-lexer: parser lexer.l
+pstring: pstring.h pstring.c
+	$(CC) $(DBG) $(CFLAGS) -c pstring.c
+
+lexer: main parser lexer.l
 	flex lexer.l
 
-parser: parser.y
+parser: main parser.y
 	bison -y -d parser.y
+
+main: main.h main.c
+	$(CC) $(DBG) $(CFLAGS) -c main.c
 
 docs: README.md
 	pandoc README.md -o index.html -c doc.css
