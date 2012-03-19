@@ -296,14 +296,22 @@ char *Compile(node *n)
 
       case t_neg:
       {
-         // TODO
-         break;
+         return Compile_uniop(n, "-");
+      }
+
+      case t_not:
+      {
+         return Compile_uniop(n, "!");
+      }
+
+      case t_bnot:
+      {
+         return Compile_uniop(n, "~");
       }
 
       case t_show:
       {
-         // TODO
-         break;
+         return Compile_show(n);
       }
 
       case t_reads:
@@ -314,26 +322,12 @@ char *Compile(node *n)
 
       case t_len:
       {
-         // TODO
-         break;
+         return Compile_len(n);
       }
 
       case t_rnd:
       {
-         // TODO
-         break;
-      }
-
-      case t_not:
-      {
-         // TODO
-         break;
-      }
-
-      case t_bnot:
-      {
-         // TODO
-         break;
+         return Compile_rnd(n);
       }
    }
 }
@@ -516,6 +510,17 @@ char *Compile_binop(node *n, char *op)
    return p;
 }
 
+char *Compile_uniop(node *n, char *op)
+{
+   char *exp = Compile(n->ast->n1);
+
+   int sz = snprintf(NULL, 0, "%s%s", op, exp);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "%s%s", op, exp);
+
+   return p;
+}
+
 char *Compile_at(node *n)
 {
    char *lhs = Compile(n->ast->n1);
@@ -524,6 +529,39 @@ char *Compile_at(node *n)
    int sz = snprintf(NULL, 0, "%s[%s]", lhs, rhs);
    char *p = (char*)malloc(sz + 1);
    sprintf(p, "%s[%s]", lhs, rhs);
+
+   return p;
+}
+
+char *Compile_show(node *n)
+{
+   char *exp = Compile(n->ast->n1);
+
+   int sz = snprintf(NULL, 0, "document.write(%s + \"<br/>\");", exp);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "document.write(%s + \"<br/>\");", exp);
+
+   return p;
+}
+
+char *Compile_len(node *n)
+{
+   char *exp = Compile(n->ast->n1);
+
+   int sz = snprintf(NULL, 0, "%s.length", exp);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "%s.length", exp);
+
+   return p;
+}
+
+char *Compile_rnd(node *n)
+{
+   int x = n->ast->n1->ival + 1;
+
+   int sz = snprintf(NULL, 0, "Math.floor(Math.random() * %i)", x);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "Math.floor(Math.random() * %i)", x);
 
    return p;
 }

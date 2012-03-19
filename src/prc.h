@@ -24,6 +24,10 @@ char *Compile_car(node *n);
 char *Compile_cdr(node *n);
 char *Compile_cond(node *n);
 char *Compile_binop(node *n, char *op);
+char *Compile_uniop(node *n, char *op);
 char *Compile_at(node *n);
+char *Compile_show(node *n);
+char *Compile_len(node *n);
+char *Compile_rnd(node *n);
 
 #endif
