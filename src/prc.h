@@ -25,9 +25,13 @@ char *Compile_cdr(node *n);
 char *Compile_cond(node *n);
 char *Compile_binop(node *n, char *op);
 char *Compile_uniop(node *n, char *op);
+char *Compile_append(node *n);
+char *Compile_range(node *n);
 char *Compile_at(node *n);
 char *Compile_show(node *n);
 char *Compile_len(node *n);
 char *Compile_rnd(node *n);
+char *Compile_eq(node *n);
+char *Compile_neq(node *n);
 
 #endif

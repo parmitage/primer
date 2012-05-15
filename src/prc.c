@@ -196,14 +196,12 @@ char *Compile(node *n)
 
       case t_neq:
       {
-         // TODO -- JavaScript doesn't support array equality
-         break;
+         return Compile_neq(n);
       }
 
       case t_eq:
       {
-         // TODO -- JavaScript doesn't support array equality
-         break;
+         return Compile_eq(n);
       }
 
       case t_and:
@@ -248,14 +246,12 @@ char *Compile(node *n)
 
       case t_append:
       {
-         // TODO -- call special append function
-         break;
+         return Compile_append(n);
       }
 
       case t_range:
       {
-         // TODO -- call special range function
-         break;
+         return Compile_range(n);
       }
 
       case t_at:
@@ -521,6 +517,30 @@ char *Compile_uniop(node *n, char *op)
    return p;
 }
 
+char *Compile_append(node *n)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "%s.concat(%s)", lhs, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "%s.concat(%s)", lhs, rhs);
+
+   return p;
+}
+
+char *Compile_range(node *n)
+{
+   int from = n->ast->n1->ival;
+   int to = n->ast->n2->ival;
+
+   int sz = snprintf(NULL, 0, "range(%i, %i)", from, to);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "range(%i, %i)", from, to);
+
+   return p;
+}
+
 char *Compile_at(node *n)
 {
    char *lhs = Compile(n->ast->n1);
@@ -562,6 +582,30 @@ char *Compile_rnd(node *n)
    int sz = snprintf(NULL, 0, "Math.floor(Math.random() * %i)", x);
    char *p = (char*)malloc(sz + 1);
    sprintf(p, "Math.floor(Math.random() * %i)", x);
+
+   return p;
+}
+
+char *Compile_eq(node *n)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "equals(%s, %s)", lhs, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "equals(%s, %s)", lhs, rhs);
+
+   return p;
+}
+
+char *Compile_neq(node *n)
+{
+   char *lhs = Compile(n->ast->n1);
+   char *rhs = Compile(n->ast->n2);
+
+   int sz = snprintf(NULL, 0, "!equals(%s, %s)", lhs, rhs);
+   char *p = (char*)malloc(sz + 1);
+   sprintf(p, "!equals(%s, %s)", lhs, rhs);
 
    return p;
 }
