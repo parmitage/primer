@@ -119,10 +119,10 @@ node *prialloc()
    return n;
 }
 
+static int new_symbol_index = 0;
+
 symbol intern(char *string)
 {
-   static int new_symbol_index = 0;
-
    for (int i = 0; i < new_symbol_index; i++)
    {
       if (strcmp(string, symtab[i]) == 0)
@@ -136,4 +136,54 @@ symbol intern(char *string)
 char *symname(symbol s)
 {
    return symtab[s];
+}
+
+int SymbolTable_value(char *string)
+{
+   for (int i = 0; i < new_symbol_index; i++)
+   {
+      if (strcmp(string, symtab[i]) == 0)
+         return i;
+   }
+
+   return -1;
+}
+
+bool SymbolTable_is_interned(char *string)
+{
+   for (int i = 0; i < new_symbol_index; i++)
+   {
+      if (strcmp(string, symtab[i]) == 0)
+         return true;
+   }
+
+   return false;
+}
+
+void error(char* fmt, ...)
+{
+   // TODO wrapped format string can overflow its buffer
+   char fmt2[1000];
+   sprintf(fmt2, "error: %s\n", fmt);
+
+   va_list args;
+   va_start(args, fmt);
+   vprintf(fmt2, args);
+   va_end(args);
+   exit(-1);
+}
+
+bool fexists(const char *path)
+{
+   FILE *istream;
+	
+   if ((istream = fopen(path, "r")) == NULL)
+   {
+      return false;
+   }
+   else
+   {
+      fclose(istream);
+      return true;
+   }
 }

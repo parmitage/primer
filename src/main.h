@@ -131,8 +131,10 @@ typedef struct env {
 
 char *symtab[MAX_SYMBOLS];
 node *NODE_BOOL_TRUE, *NODE_BOOL_FALSE, *NODE_ANY, *temp;
+symbol s_newline, s_tab, s_int, s_float, s_bool, s_char, s_list, s_string, s_lambda;
 
-extern void error(char* fmt, ...);
+void error(char* fmt, ...);
+bool fexists(const char *path);
 extern void pprint(node *node);
 extern void envprint(env *e, bool depth);
 
@@ -162,6 +164,8 @@ char *node_to_str(node *node);
 /* symbol table */
 symbol intern(char *string);
 char *symname(symbol s);
+int SymbolTable_value(char *string);
+bool SymbolTable_is_interned(char *string);
 
 /* memory management */
 struct node *prialloc();
