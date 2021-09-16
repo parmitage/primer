@@ -1,6 +1,6 @@
 Primer
 ======
-Primer is my hobby programming language. If you have any questions about Primer then please send me an [email](mailto:philip.armitage@gmail.com).
+Primer is the scripting language used in the PAGE1 game engine.
 
 Primer in bullet points
 -----------------------
@@ -12,14 +12,8 @@ Primer in bullet points
 - builds on Linux, Mac and Windows
 - MIT licensed
 
-Project Status
---------------
-The repository contains both a prototype implementation, written in OCaml, and a second implementation in C which will ultimately have the same set of features. As such, the prototype is still the "reference" implementation and this document assumes that you are using it.
-
 Download and install
 --------------------
-The latest version of Primer can be pulled from [GitHub](http://github.com/parmitage/primer).
-
 Inside the tarball you'll find the following:
 
 - src/       - the C source code
@@ -31,9 +25,11 @@ Inside the tarball you'll find the following:
 - README.md  - this file
 - LICENSE    - the MIT license
 
-To get started with the prototype implementation, you must install OCaml (at least version 3.11) as well as GNU Make. The makefile builds across Linux, Mac and Windows without the use of autotools so there is no separate configure step. Once Primer has built, set the environment variable __PRIMER_LIBRARY_PATH__ to point to the __lib__ directory on your computer.
+If you wish to use the C implementation, you must install gcc, GNU Make, flex and bison.
 
-If you wish to use the experimental C implementation, you must install gcc, GNU Make, flex and bison.
+To get started with the prototype implementation, you must install OCaml (at least version 3.11) as well as GNU Make.
+
+The makefile builds across Linux, Mac and Windows without the use of autotools so there is no separate configure step. Once Primer has built, set the environment variable __PRIMER_LIBRARY_PATH__ to point to the __lib__ directory on your computer.
 
 Hello, World!
 -------------
@@ -339,13 +335,3 @@ You can compile the example programs with:
 Editing
 -------
 Emacs users will find the beginnings of a major mode in the __emacs__ directory of the source distribution. It currently provides only syntax highlighting but may be extended to support automatic indentation as well as integration with Primer's REPL and compiler.
-
-To-do
------
-1. Complete all features from the prototype in the C implementation.
-
-2. Type checker with sum and product types.
-
-3. A byte-code interpreter.
-
-4. A native code compiler (either via C or LLVM).
